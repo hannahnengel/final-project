@@ -1,0 +1,15 @@
+* {
+  font-family: Raleway, sans-serif;
+  line-height: 150%;
+}
+
+h1 {
+  font-family: Poppins, sans-serif;
+  font-style: normal;
+  font-size: 45px;
+  line-height: 54px;
+}
+
+p {
+  font-size: 25px;
+}
