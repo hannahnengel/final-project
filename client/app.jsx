@@ -1,5 +1,6 @@
 import React from 'react';
 import { parseRoute } from './lib';
+import AppContext from './lib/app-context';
 import Home from './pages/home';
 import AuthForm from './components/auth-form';
 import Navbar from './components/navbar';
@@ -31,13 +32,17 @@ export default class App extends React.Component {
   }
 
   render() {
+    const { route } = this.state;
+    const contextValue = { route };
     return (
-      <>
-      <Navbar />
-      <div className='container'>
-        { this.renderPage() }
-      </div>
-      </>
+      <AppContext.Provider value={contextValue}>
+        <>
+        <Navbar />
+        <div className='container'>
+          { this.renderPage() }
+        </div>
+        </>
+      </AppContext.Provider>
     );
   }
 }

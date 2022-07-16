@@ -1,9 +1,13 @@
 import React from 'react';
+import AppContext from '../lib/app-context';
 
-function AuthForm() {
-  const header = 'REGISTER';
+export default class AuthForm extends React.Component {
 
-  return (
+  render() {
+    const { route } = this.context;
+    let header;
+    route.path === 'sign-in' ? header = 'HELLO' : header = 'REGISTER';
+    return (
     <div className="vh-100 text-center d-flex flex-column align-items-center justify-content-center">
       <div className='row'>
         <div className="col">
@@ -15,7 +19,8 @@ function AuthForm() {
         </div>
       </div>
     </div>
-  );
+    );
+  }
 }
 
-export default AuthForm;
+AuthForm.contextType = AppContext;
