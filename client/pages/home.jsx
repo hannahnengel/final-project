@@ -1,7 +1,16 @@
 import React from 'react';
 
-export default function Home(props) {
-  return (
+export default class Home extends React.Component {
+  handleSignInClick() {
+    window.location.href = '#sign-in';
+  }
+
+  handleRegisterClick() {
+    window.location.href = '#register';
+  }
+
+  render() {
+    return (
     <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
       <div className='row m-5'>
           <div className='col'>
@@ -10,22 +19,18 @@ export default function Home(props) {
         </div>
         <div className="row">
           <div className="col">
-            <p>A different approach to making new friends...</p>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col">
-            <p className='p-5'>Let mutual hatred fuel the fire! &#128293;</p>
+          <p className='px-3'>A different approach to making new friends...<br /> <br /> Let mutual hatred fuel the fire! &#128293;</p>
           </div>
         </div>
       <div className="row m-5">
           <div className="col">
-            <a href='#auth-form'>Sign In</a>
+          <button className='red-btn' onClick={this.handleSignInClick}><i className="fa-solid fa-arrow-right-to-bracket p-2"></i>Sign In</button>
           </div>
         <div className="col">
-          <a href='#auth-form'>Register</a>
+            <button className='red-btn' onClick={this.handleRegisterClick}><i className="fa-solid fa-user p-2"></i>Register</button>
         </div>
         </div>
     </div>
-  );
+    );
+  }
 }

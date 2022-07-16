@@ -22,7 +22,7 @@ export default class App extends React.Component {
     if (route.path === '') {
       return <Home />;
     }
-    if (route.path === 'auth-form') {
+    if (route.path === 'register' || route.path === 'sign-in') {
       return <AuthForm />;
     }
   }
