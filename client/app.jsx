@@ -3,6 +3,7 @@ import { parseRoute } from './lib';
 import Home from './pages/home';
 import AuthForm from './components/auth-form';
 import Navbar from './components/navbar';
+import NotFound from './pages/not-found';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -26,6 +27,7 @@ export default class App extends React.Component {
     if (route.path === 'register' || route.path === 'sign-in') {
       return <AuthForm />;
     }
+    return <NotFound />;
   }
 
   render() {

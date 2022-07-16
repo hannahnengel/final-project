@@ -22,6 +22,20 @@ button {
   border-radius: 6px;
 }
 
+.danger {
+  color: #ab1716;
+  font-size: 55px;
+}
+
+a {
+  color: #ab1716;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #d68785;
+}
+
 .lt-red-btn {
   background-color: #d68785;
   color: white;
@@ -48,10 +62,6 @@ button {
 button:focus,
 a:focus {
   outline: none;
-}
-
-.a-nav:hover {
-  color: #d68785;
 }
 
 .navbar-toggler:focus {
