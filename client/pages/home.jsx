@@ -12,7 +12,7 @@ export default class Home extends React.Component {
   render() {
     return (
     <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-      <div className='row m-5'>
+      <div className='row mb-5'>
           <div className='col'>
             <h1>WELCOME</h1>
           </div>
@@ -22,14 +22,20 @@ export default class Home extends React.Component {
           <p className='px-3'>A different approach to making new friends...<br /> <br /> Let mutual hatred fuel the fire! &#128293;</p>
           </div>
         </div>
-      <div className="row m-5">
-          <div className="col">
-          <button className='red-btn' onClick={this.handleSignInClick}><i className="fa-solid fa-arrow-right-to-bracket p-2"></i>Sign In</button>
+        <div className="row m-5">
+          <div className="col-md-6 d-flex justify-content-center">
+            <button className='lt-red-btn' onClick={this.handleSignInClick}>
+            <i className="fa-solid fa-arrow-right-to-bracket p-2" />
+            Sign In
+          </button>
           </div>
-        <div className="col">
-            <button className='red-btn' onClick={this.handleRegisterClick}><i className="fa-solid fa-user p-2"></i>Register</button>
+          <div className="col-md-6 d-flex justify-content-center">
+            <button className='lt-red-btn' onClick={this.handleRegisterClick}>
+              <i className="fa-solid fa-user p-2"/>
+              Register
+            </button>
         </div>
-        </div>
+      </div>
     </div>
     );
   }

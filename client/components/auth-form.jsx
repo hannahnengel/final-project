@@ -12,7 +12,6 @@ function AuthForm() {
       </div>
       <div className="row mt-5">
         <div className="col">
-          <a href=''>Home</a>
         </div>
       </div>
     </div>
