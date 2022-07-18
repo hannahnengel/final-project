@@ -2,6 +2,7 @@ import React from 'react';
 import { parseRoute } from './lib';
 import AppContext from './lib/app-context';
 import Home from './pages/home';
+import PageContainer from './components/page-container';
 import Auth from './pages/auth';
 import Navbar from './components/navbar';
 import NotFound from './pages/not-found';
@@ -38,9 +39,9 @@ export default class App extends React.Component {
       <AppContext.Provider value={contextValue}>
         <>
         <Navbar />
-        <div className='container'>
+       <PageContainer>
           { this.renderPage() }
-        </div>
+        </PageContainer>
         </>
       </AppContext.Provider>
     );
