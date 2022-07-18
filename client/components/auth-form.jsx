@@ -1,4 +1,5 @@
 import React from 'react';
+import Modal from './modal';
 
 export default class AuthForm extends React.Component {
   constructor(props) {
@@ -115,7 +116,7 @@ export default class AuthForm extends React.Component {
           name='password'
           onChange={handleChange}
           className='form-control input-sm form-font border-0' />
-        <a href='#forgot-password' className='form-font py-3'> Forgot Password? </a>
+        <a href='#sign-in' className='form-font py-3' data-bs-toggle="modal" data-bs-target="#forgotPassword"> Forgot Password? </a>
       </>;
 
     const inputs = action === 'sign-in'
@@ -139,16 +140,19 @@ export default class AuthForm extends React.Component {
       : registerButton;
 
     return (
-      <form onSubmit={handleSubmit}>
-        <div className="card border-0 shadow p-4 m-1" style={style}>
-          { inputs }
-        </div>
-        <div className='d-flex justify-content-center'>
-          <button className='lt-red-btn mt-4 mx-0'>
-            { buttonText }
-          </button>
-        </div>
+      <>
+        <Modal />
+        <form onSubmit={handleSubmit}>
+          <div className="card border-0 shadow p-4 m-1" style={style}>
+            { inputs }
+          </div>
+          <div className='d-flex justify-content-center'>
+            <button className='lt-red-btn mt-4 mx-0'>
+              { buttonText }
+            </button>
+          </div>
       </form>
+      </>
     );
   }
 }
