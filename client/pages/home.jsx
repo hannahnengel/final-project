@@ -25,13 +25,13 @@ export default class Home extends React.Component {
         <div className="row m-5">
           <div className="col-md-6 d-flex justify-content-center">
             <button className='lt-red-btn' onClick={this.handleSignInClick}>
-            <i className="fa-solid fa-arrow-right-to-bracket p-2" />
+            <i className="fa-solid fa-arrow-right-to-bracket py-2 pe-2" />
             Sign In
           </button>
           </div>
           <div className="col-md-6 d-flex justify-content-center">
             <button className='lt-red-btn' onClick={this.handleRegisterClick}>
-              <i className="fa-solid fa-user p-2"/>
+              <i className="fa-solid fa-user py-2 pe-2"/>
               Register
             </button>
         </div>

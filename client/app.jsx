@@ -2,7 +2,7 @@ import React from 'react';
 import { parseRoute } from './lib';
 import AppContext from './lib/app-context';
 import Home from './pages/home';
-import AuthForm from './components/auth-form';
+import Auth from './pages/auth';
 import Navbar from './components/navbar';
 import NotFound from './pages/not-found';
 
@@ -26,7 +26,7 @@ export default class App extends React.Component {
       return <Home />;
     }
     if (route.path === 'register' || route.path === 'sign-in') {
-      return <AuthForm />;
+      return <Auth />;
     }
     return <NotFound />;
   }
