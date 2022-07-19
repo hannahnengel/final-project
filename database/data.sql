@@ -1,67 +1,19 @@
 insert into "users" (
   "firstName",
   "email",
-  "hashedPassword",
-  "city",
-  "zipCode",
-  "latitude",
-  "longitude",
-  "birthday",
-  "age",
-  "gender",
-  "locationRange",
-  "friendGenderPreference",
-  "friendAgePreference",
-  "phone",
-  "preferredContact"
+  "hashedPassword"
 ) values (
   'Hannah',
   'hannah@example.com',
-  '12345Iamahashedpassword',
-  'irvine',
-  92618,
-  33.665031,
-  -117.746658,
-  '1994-07-02',
-  28,
-  'female',
-  65,
-  'all',
-  '25-35',
-  '9491111111',
-  'both'
+  '12345Iamahashedpassword'
 ), (
   'Kilian',
   'kilian@example.com',
-  '12345Iamahashedpassword1',
-  'irvine',
-  92618,
-  33.665031,
-  -117.746658,
-  '1992-07-21',
-  29,
-  'male',
-  50,
-  'all',
-  '25-35',
-  '9491111112',
-  'email'
+  '12345Iamahashedpassword1'
 ), (
   'Megan',
   'megan@example.com',
-  '12345Iamahashedpassword2',
-  'laguna niguel',
-  92677,
-  33.535730,
-  -117.702910,
-  '1996-08-31',
-  25,
-  'female',
-  100,
-  'all',
-  '25-35',
-  '9492222222',
-  'phone'
+  '12345Iamahashedpassword2'
 );
 
 insert into "categories"

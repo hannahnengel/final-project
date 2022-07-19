@@ -9,6 +9,14 @@ CREATE TABLE "users" (
   "firstName" TEXT NOT NULL,
   "email" TEXT NOT NULL UNIQUE,
   "hashedPassword" TEXT NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL default now(),
+  CONSTRAINT "users_pk" PRIMARY KEY ("userId")
+) WITH (
+  OIDS=FALSE
+);
+
+CREATE TABLE "userInfos" (
+  "userId" integer NOT NULL,
   "city" TEXT NOT NULL,
   "zipCode" integer NOT NULL,
   "latitude" decimal NOT NULL,
@@ -21,11 +29,11 @@ CREATE TABLE "users" (
   "friendAgePreference" TEXT NOT NULL,
   "phone" TEXT NOT NULL,
   "preferredContact" TEXT NOT NULL,
-  "createdAt" TIMESTAMPTZ NOT NULL default now(),
-  CONSTRAINT "users_pk" PRIMARY KEY ("userId")
+  CONSTRAINT "userInfos_pk" PRIMARY KEY ("userId")
 ) WITH (
   OIDS=FALSE
 );
+
 CREATE TABLE "forgottenPasswords" (
   "forgottenPasswordId" serial NOT NULL,
   "userId" integer NOT NULL,
@@ -36,6 +44,7 @@ CREATE TABLE "forgottenPasswords" (
 ) WITH (
   OIDS=FALSE
 );
+
 CREATE TABLE "userMatches" (
   "matchId" serial NOT NULL,
   "userId1" integer NOT NULL,
