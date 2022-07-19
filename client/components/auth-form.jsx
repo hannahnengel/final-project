@@ -35,7 +35,7 @@ export default class AuthForm extends React.Component {
     };
 
     const signInCardStyle = {
-      width: 500,
+      width: 370,
       height: 350,
       backgroundColor: '#F0F0F0'
     };
