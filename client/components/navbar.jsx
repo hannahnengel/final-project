@@ -1,20 +1,16 @@
 import React from 'react';
+import AppContext from '../lib/app-context';
 
 export default class Navbar extends React.Component {
 
-  handleSignInClick() {
-    window.location.href = '#sign-in';
-  }
-
-  handleRegisterClick() {
-    window.location.href = '#register';
-  }
-
   render() {
+    const { user, handleSignOut } = this.context;
+
     const navStyle = {
       color: 'white',
       backgroundColor: '#ab1716'
     };
+
     const brandLogoStyle = {
       color: 'white',
       fontFamily: 'Berkshire Swash',
@@ -37,6 +33,8 @@ export default class Navbar extends React.Component {
               <li className="nav-item">
                 <a href="#" className="a-nav">Home</a>
               </li>
+              {(user === null) &&
+              <>
               <li className="nav-item">
                 <a href="#sign-in" className="a-nav">
                   <i className="fa-solid fa-arrow-right-to-bracket pe-2" />
@@ -49,6 +47,38 @@ export default class Navbar extends React.Component {
                   Register
                 </a>
               </li>
+              </>
+              }
+
+              {user !== null &&
+              <>
+                <li className="navitem">
+                  <a href="" className="a-nav">My Profile</a>
+                </li>
+                <li className="navitem">
+                  <a href="" className="a-nav">Matches</a>
+                </li>
+                <li className="navitem">
+                  <a href="" className="a-nav">
+                    <i className="fa-solid fa-location-dot pe-2"/>
+                    Map
+                  </a>
+                </li>
+                <li className="navitem">
+                  <a href="" className="a-nav" onClick={handleSignOut}>
+                    <i className="fa-solid fa-gear pe-2"/>
+                    Settings
+                  </a>
+                </li>
+                <li className="navitem">
+                  <a href="" className="a-nav">
+                    <i className="fa-solid fa-arrow-right-from-bracket pe-2"/>
+                    Sign Out
+                  </a>
+                </li>
+              </>
+              }
+
             </ul>
           </div>
         </div>
@@ -56,3 +86,5 @@ export default class Navbar extends React.Component {
     );
   }
 }
+
+Navbar.contextType = AppContext;
