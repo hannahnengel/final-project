@@ -1,10 +1,14 @@
 import React from 'react';
 import AuthForm from '../components/auth-form';
 import AppContext from '../lib/app-context';
+import Redirect from '../components/redirect';
 
 export default class Auth extends React.Component {
   render() {
-    const { route, handleSignIn } = this.context;
+    const { user, route, handleSignIn } = this.context;
+
+    if (user) return <Redirect to='' />;
+
     const header = route.path === 'sign-in' ? 'HELLO' : 'REGISTER';
 
     return (

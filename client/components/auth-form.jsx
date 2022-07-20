@@ -32,14 +32,14 @@ export default class AuthForm extends React.Component {
     fetch(`/api/auth/${action}`, req)
       .then(res => res.json())
       .then(result => {
+        if (action === 'register') {
+          window.location.hash = 'sign-in';
+        }
         if (result.user && result.token) {
           this.props.onSignIn(result);
         }
       });
   }
-  // if (action === 'register' && passwordMatch) {
-
-  // }
 
   render() {
     const { handleChange, handleSubmit } = this;
