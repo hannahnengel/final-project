@@ -63,9 +63,12 @@ app.post('/api/auth/sign-in', (req, res, next) => {
 });
 
 app.post('/api/auth/register', (req, res, next) => {
-  const { firstName, email, password } = req.body;
+  const { firstName, email, password, confirmPassword } = req.body;
   if (!firstName || !email || !password) {
     throw new ClientError(400, 'username and password are required fields');
+  }
+  if (password !== confirmPassword) {
+    throw new ClientError(400, 'passwords do not match');
   }
   argon2
     .hash(password)

@@ -5,9 +5,10 @@ export default class AuthForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      firstName: '',
       email: '',
       password: '',
-      confirmedPassword: ''
+      confirmPassword: ''
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -20,11 +21,27 @@ export default class AuthForm extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    // const { action } = this.props;
+    const { action } = this.props;
+    const req = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(this.state)
+    };
+    fetch(`/api/auth/${action}`, req)
+      .then(res => res.json())
+      .then(result => {
+        if (result.user && result.token) {
+          this.props.onSignIn(result);
+        }
+      });
   }
+  // if (action === 'register' && passwordMatch) {
+
+  // }
 
   render() {
-
     const { handleChange, handleSubmit } = this;
     const { action } = this.props;
 
@@ -43,6 +60,15 @@ export default class AuthForm extends React.Component {
     const style = action === 'sign-in'
       ? signInCardStyle
       : registerCardStyle;
+
+    let confirmClass = 'hidden';
+    let doesNotMatchClass = 'hidden';
+    const { password, confirmPassword } = this.state;
+    if (password.length > 0 && confirmPassword.length > 0 && password === confirmPassword) {
+      confirmClass = '';
+    } else if (confirmPassword.length > 0 && password !== confirmPassword) {
+      doesNotMatchClass = '';
+    }
 
     const registerInputs =
       <>
@@ -81,6 +107,7 @@ export default class AuthForm extends React.Component {
           className='form-control input-sm form-font border-0' />
         <label htmlFor='confirmPassword' className='form-label pt-3 px-2 text-start'>
           Confirm Password
+          <span className={`${confirmClass} ps-1`}><i className="fa-solid fa-circle-check green"></i></span>
         </label>
         <input
           required
@@ -90,6 +117,7 @@ export default class AuthForm extends React.Component {
           name='confirmPassword'
           onChange={handleChange}
           className='form-control input-sm form-font border-0' />
+        <span className={`${doesNotMatchClass} danger form-font mt-1 text-start`}>Passwords Do Not Match</span>
       </>;
 
     const signInInputs =

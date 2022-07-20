@@ -4,7 +4,7 @@ import AppContext from '../lib/app-context';
 
 export default class Auth extends React.Component {
   render() {
-    const { route } = this.context;
+    const { route, handleSignIn } = this.context;
     const header = route.path === 'sign-in' ? 'HELLO' : 'REGISTER';
 
     return (
@@ -17,6 +17,7 @@ export default class Auth extends React.Component {
         <AuthForm
         key={route.path}
         action={route.path}
+        onSignIn={handleSignIn}
         />
       </div>
     );
