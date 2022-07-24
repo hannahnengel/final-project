@@ -34,6 +34,10 @@ button {
   color: #4ad969;
 }
 
+.grey {
+  color: #6d6969;
+}
+
 a {
   color: #ab1716;
   text-decoration: none;
@@ -51,6 +55,11 @@ a:hover {
 .lt-red-btn:hover {
   background-color: #d9d9d9;
   color: black;
+}
+
+.next-back-btn {
+  width: 155px;
+  justify-content: space-between;
 }
 
 .a-nav {

@@ -34,6 +34,17 @@ CREATE TABLE "userInfos" (
   OIDS=FALSE
 );
 
+CREATE TABLE "friendPreferences" (
+  "userId" integer NOT NULL,
+  "locationRange" integer NOT NULL,
+  "friendGenderPreference" TEXT NOT NULL,
+  "friendAgePreference" TEXT NOT NULL,
+  CONSTRAINT "friendPreferences_pk" PRIMARY KEY ("userId")
+) WITH (
+  OIDS=FALSE
+);
+
+
 CREATE TABLE "forgottenPasswords" (
   "forgottenPasswordId" serial NOT NULL,
   "userId" integer NOT NULL,

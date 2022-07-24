@@ -1,4 +1,5 @@
 import React from 'react';
+import jwtDecode from 'jwt-decode';
 import { parseRoute } from './lib';
 import AppContext from './lib/app-context';
 import Home from './pages/home';
@@ -6,6 +7,7 @@ import PageContainer from './components/page-container';
 import Auth from './pages/auth';
 import Navbar from './components/navbar';
 import NotFound from './pages/not-found';
+import ProfileInfo from './pages/profile-info';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -34,6 +36,9 @@ export default class App extends React.Component {
     onhashchange = event => {
       this.setState({ route: parseRoute(window.location.hash) });
     };
+    const token = window.localStorage.getItem('react-context-jwt');
+    const user = token ? jwtDecode(token) : null;
+    this.setState({ user, isAuthorizing: false });
   }
 
   renderPage() {
@@ -43,6 +48,9 @@ export default class App extends React.Component {
     }
     if (route.path === 'register' || route.path === 'sign-in') {
       return <Auth />;
+    }
+    if (route.path === 'profile-info') {
+      return <ProfileInfo />;
     }
     return <NotFound />;
   }

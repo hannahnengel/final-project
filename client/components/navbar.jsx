@@ -18,7 +18,7 @@ export default class Navbar extends React.Component {
     };
 
     return (
-      <nav className="navbar navbar-expand-md" style={navStyle}>
+      <nav className="navbar navbar-expand-lg" style={navStyle}>
         <div className="container">
           <a className="navbar-brand" href="#" style={brandLogoStyle}>
             HateMate
