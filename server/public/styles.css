@@ -26,6 +26,16 @@ button {
   font-size: 20px;
 }
 
+.form-font-sm {
+  font-size: 15px;
+}
+
+.small-header {
+  font-family: Raleway, sans-serif;
+  line-height: 150%;
+  font-size: 30px;
+}
+
 .danger {
   color: #ab1716;
 }

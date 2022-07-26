@@ -28,7 +28,7 @@ export default class App extends React.Component {
   }
 
   handleSignOut() {
-    window.localStorage.getItem('react-context-jwt');
+    window.localStorage.removeItem('react-context-jwt');
     this.setState({ user: null });
   }
 
@@ -49,7 +49,7 @@ export default class App extends React.Component {
     if (route.path === 'register' || route.path === 'sign-in') {
       return <Auth />;
     }
-    if (route.path === 'profile-info') {
+    if (route.path === 'profile-info' || route.path === 'friend-preferences') {
       return <ProfileInfo />;
     }
     return <NotFound />;

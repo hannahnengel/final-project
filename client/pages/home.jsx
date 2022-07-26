@@ -1,4 +1,6 @@
 import React from 'react';
+import AppContext from '../lib/app-context';
+import Redirect from '../components/redirect';
 
 export default class Home extends React.Component {
   handleSignInClick() {
@@ -10,6 +12,12 @@ export default class Home extends React.Component {
   }
 
   render() {
+
+    const { user } = this.context;
+    if (user) {
+      return <Redirect to='#profile-info'/>;
+    }
+
     return (
     <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
       <div className='row mb-5'>
@@ -40,3 +48,5 @@ export default class Home extends React.Component {
     );
   }
 }
+
+Home.contextType = AppContext;
