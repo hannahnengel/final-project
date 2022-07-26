@@ -1,5 +1,6 @@
 import React from 'react';
 import Map from './map';
+
 export default class ProfileInfoForm extends React.Component {
 
   constructor(props) {
@@ -17,7 +18,11 @@ export default class ProfileInfoForm extends React.Component {
       },
       phone: null,
       city: '',
+      coordsCity: '',
       zipCode: null,
+      coordsZipCode: null,
+      lat: null,
+      lng: null,
       mileRadius: 50,
       friendGender: {
         selections: [],
@@ -32,6 +37,7 @@ export default class ProfileInfoForm extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.getCoords = this.getCoords.bind(this);
   }
 
   handleSubmit(event) {
@@ -95,11 +101,43 @@ export default class ProfileInfoForm extends React.Component {
         }
       }
       this.setState({ [name]: stateCopy });
-
-    } else {
-      this.setState({ [name]: value });
+      return;
     }
+    this.setState({ [name]: value });
+    if (name === 'city' || name === 'zipCode') {
+      if (this.state.city === '') {
+        this.setState({ zipCode: null });
+      }
+    }
+  }
 
+  getCoords() {
+    fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${this.state.city}%20${this.state.zipCode}&key=${process.env.GOOGLE_API_KEY}`)
+      .then(response => response.json())
+      .then(data => {
+        const latitude = data.results[0].geometry.location.lat;
+        const longitude = data.results[0].geometry.location.lng;
+        let city = '';
+        let zipCode = '';
+        for (let i = 0; i < data.results[0].address_components.length; i++) {
+          if (data.results[0].address_components[i].types[0] === 'locality') {
+            city = data.results[0].address_components[i].long_name;
+          }
+          if (data.results[0].address_components[i].types[0] === 'postal_code') {
+            zipCode = data.results[0].address_components[i].long_name;
+          }
+        }
+        this.setState({
+          coordsCity: city,
+          coordsZipCode: zipCode,
+          city,
+          zipCode,
+          lat: latitude,
+          lng: longitude
+        });
+      }
+      )
+      .catch(err => alert(err));
   }
 
   render() {
@@ -126,6 +164,17 @@ export default class ProfileInfoForm extends React.Component {
     const handleSubmit = this.handleSubmit;
 
     const radius = this.state.mileRadius;
+    const lat = this.state.lat;
+    const lng = this.state.lng;
+
+    const city = this.state.city;
+    const zipCode = this.state.zipCode === null ? '' : this.state.zipCode;
+
+    if (this.state.city !== '' && this.state.zipCode !== null && this.state.zipCode.length === 5) {
+      if (this.state.city !== this.state.coordsCity || this.state.zipCode !== this.state.coordsZipCode) {
+        this.getCoords();
+      }
+    }
 
     const profileInfoInputs =
       <>
@@ -263,7 +312,7 @@ export default class ProfileInfoForm extends React.Component {
         <div className="row">
           <div className="col">
             <p className='mb-1'>Your Location</p>
-            <Map radius={radius}/>
+            <Map radius={radius} lat={lat} lng={lng}/>
           </div>
         </div>
 
@@ -274,6 +323,7 @@ export default class ProfileInfoForm extends React.Component {
               autoFocus
               id='city'
               type='text'
+              value={city}
               name='city'
               style={{ height: '45px', maxWidth: '10rem' }}
               className='form-control input-sm form-font border-0'
@@ -288,6 +338,7 @@ export default class ProfileInfoForm extends React.Component {
               autoFocus
               id='zipCode'
               type='number'
+              value={zipCode}
               name='zipCode'
               min='00501'
               max='99950'

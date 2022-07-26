@@ -9,8 +9,14 @@ export default function Map(props) {
   if (loadError) return 'Error loading maps';
   if (!isLoaded) return 'Loading Maps';
 
-  const lat = 33.6652;
-  const lng = -117.7491;
+  let { lat } = props;
+
+  let { lng } = props;
+
+  if (lat === null) {
+    lat = 33.6652;
+    lng = -117.7491;
+  }
 
   const center = {
     lat,
@@ -208,13 +214,31 @@ export default function Map(props) {
 
   let { radius } = props;
   radius = radius * 1609.34;
+  let zoom;
+  if (radius < 10000) {
+    zoom = 11;
+  } else if (radius < 20000) {
+    zoom = 10;
+  } else if (radius < 40000) {
+    zoom = 9;
+  } else if (radius < 72000) {
+    zoom = 8;
+  } else if (radius < 320200) {
+    zoom = 7;
+  } else if (radius < 480000) {
+    zoom = 5;
+  } else if (radius < 600000) {
+    zoom = 4;
+  } else if (radius < 5000000) {
+    zoom = 3;
+  }
 
   return (
     <>
        <GoogleMap
        mapContainerStyle={mapContainerStyle}
        center={center}
-       zoom={6}
+       zoom={zoom}
        options={options}
        >
        <Marker position={{ lat, lng }} icon={{
