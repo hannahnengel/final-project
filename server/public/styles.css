@@ -106,3 +106,22 @@ i:hover {
 .hidden {
   visibility: hidden;
 }
+
+.locate {
+  position: absolute;
+  top: 2.5rem;
+  right: 2.5rem;
+  width: 45px;
+  background: none;
+  border: none;
+  z-index: 10;
+}
+
+.locate:hover {
+  cursor: pointer;
+}
+
+.locate-icon {
+  cursor: pointer;
+  font-size: 45px;
+}

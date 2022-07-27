@@ -5,6 +5,11 @@ export default function Map(props) {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.GOOGLE_API_KEY
   });
+  // const mapRef = React.useRef();
+  // const panTo = React.useCallback(({ lat, lng }) => {
+  //   mapRef.current.panTo({ lat, lng });
+  //   mapRef.current.setZoom(14);
+  // }, []);
 
   if (loadError) return 'Error loading maps';
   if (!isLoaded) return 'Loading Maps';

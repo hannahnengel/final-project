@@ -1,5 +1,6 @@
 import React from 'react';
 import Map from './map';
+import Locate from './locate';
 
 export default class ProfileInfoForm extends React.Component {
 
@@ -23,6 +24,7 @@ export default class ProfileInfoForm extends React.Component {
       coordsZipCode: null,
       lat: null,
       lng: null,
+      position: { lat: null, lng: null },
       mileRadius: 50,
       friendGender: {
         selections: [],
@@ -37,7 +39,11 @@ export default class ProfileInfoForm extends React.Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.getCoords = this.getCoords.bind(this);
+    this.inputGetCoords = this.inputGetCoords.bind(this);
+    this.geoLocate = this.geoLocate.bind(this);
+    this.geoGetCoords = this.geoGetCoords.bind(this);
+    this.handleLocationError = this.handleLocationError.bind(this);
+    this.reverseGeoLocate = this.reverseGeoLocate.bind(this);
   }
 
   handleSubmit(event) {
@@ -63,7 +69,6 @@ export default class ProfileInfoForm extends React.Component {
           alert('Must select at least one preferred method of contact.');
           return;
         }
-        // if(this.state.friendAge)
       }
 
       window.location.hash = 'friend-preferences';
@@ -105,13 +110,26 @@ export default class ProfileInfoForm extends React.Component {
     }
     this.setState({ [name]: value });
     if (name === 'city' || name === 'zipCode') {
+      if (this.state.zipCode !== null && this.state.zipCode.length < 5) {
+        this.setState({
+          city: '',
+          position: { lat: null, lng: null },
+          coordsCity: '',
+          coordsZipCode: null
+        });
+      }
       if (this.state.city === '') {
-        this.setState({ zipCode: null });
+        this.setState({
+          zipCode: null,
+          position: { lat: null, lng: null },
+          coordsCity: '',
+          coordsZipCode: null
+        });
       }
     }
   }
 
-  getCoords() {
+  inputGetCoords() {
     fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${this.state.city}%20${this.state.zipCode}&key=${process.env.GOOGLE_API_KEY}`)
       .then(response => response.json())
       .then(data => {
@@ -140,8 +158,75 @@ export default class ProfileInfoForm extends React.Component {
       .catch(err => alert(err));
   }
 
+  geoLocate() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(this.geoGetCoords, this.handleLocationError);
+    }
+  }
+
+  geoGetCoords(position) {
+    this.reverseGeoLocate();
+    this.setState({
+      position: {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      }
+    });
+
+  }
+
+  reverseGeoLocate() {
+
+    const lat = this.state.position.lat;
+    const lng = this.state.position.lng;
+    if (lat !== null && (lat !== this.state.lat && lng !== this.state.lng)) {
+      fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&sensor=false&key=${process.env.GOOGLE_API_KEY}`)
+        .then(response => response.json())
+        .then(data => {
+          let city = '';
+          let zipCode = '';
+
+          for (let i = 0; i < data.results[0].address_components.length; i++) {
+            if (data.results[0].address_components[i].types[0] === 'locality') {
+              city = data.results[0].address_components[i].long_name;
+            }
+            if (data.results[0].address_components[i].types[0] === 'postal_code') {
+              zipCode = data.results[0].address_components[i].long_name;
+            }
+          }
+          this.setState({
+            lat,
+            lng,
+            city,
+            zipCode
+          });
+        }
+        )
+        .catch(err => alert(err));
+    }
+
+  }
+
+  handleLocationError(error) {
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        alert('User denied the request for Geolocation');
+        break;
+      case error.POSITION_UNAVAILABLE:
+        alert('Location information is unavailable');
+        break;
+      case error.TIMEOUT:
+        alert('The request to get user location timed out');
+        break;
+      case error.UNKNOWN_ERROR:
+        alert('An unknown error occurred');
+        break;
+      default:
+        alert('An unknown error occurred');
+    }
+  }
+
   render() {
-    // console.log('STATE', this.state);
     const { action } = this.props;
 
     const maxWidth = action === 'profile-info'
@@ -170,10 +255,16 @@ export default class ProfileInfoForm extends React.Component {
     const city = this.state.city;
     const zipCode = this.state.zipCode === null ? '' : this.state.zipCode;
 
+    const geoLocate = this.geoLocate;
+
+    if (this.state.position.lat !== null && this.state.lat !== this.state.position.lat && this.state.lng !== this.state.position.lng) {
+      this.reverseGeoLocate();
+    }
     if (this.state.city !== '' && this.state.zipCode !== null && this.state.zipCode.length === 5) {
       if (this.state.city !== this.state.coordsCity || this.state.zipCode !== this.state.coordsZipCode) {
-        this.getCoords();
+        this.inputGetCoords();
       }
+
     }
 
     const profileInfoInputs =
@@ -312,6 +403,7 @@ export default class ProfileInfoForm extends React.Component {
         <div className="row">
           <div className="col">
             <p className='mb-1'>Your Location</p>
+            <Locate geoLocate={geoLocate}/>
             <Map radius={radius} lat={lat} lng={lng}/>
           </div>
         </div>
@@ -333,7 +425,7 @@ export default class ProfileInfoForm extends React.Component {
               City
             </label>
           </div>
-          <div className="col-6">
+          <div className="col-6 d-flex row justify-content-end text-end m-0">
             <input required
               autoFocus
               id='zipCode'
@@ -346,7 +438,7 @@ export default class ProfileInfoForm extends React.Component {
               className='form-control input-sm form-font border-0'
               onChange={handleChange}>
             </input>
-            <label htmlFor='zipCode' className='form-label form-font mb-1'>
+            <label htmlFor='zipCode' className='form-label form-font mb-1 px-0'>
               Zip Code
             </label>
           </div>
@@ -417,10 +509,9 @@ export default class ProfileInfoForm extends React.Component {
             </div>
           </div>
 
-          <div className="col-md-3">
-            <div className="row mt-2">
+          <div className="col-md-6">
+            <div className="row d-flex justify-content-end text-md-center mt-2">
               <p className='mb-1'>Age</p>
-              <label htmlFor='friendAge'></label>
               <select
                 required
                 className='form-select-lg border-0'
