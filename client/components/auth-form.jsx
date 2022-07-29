@@ -1,5 +1,5 @@
 import React from 'react';
-import Modal from './modal';
+import ForgotPassword from './forgot-password';
 
 export default class AuthForm extends React.Component {
   constructor(props) {
@@ -169,7 +169,7 @@ export default class AuthForm extends React.Component {
 
     return (
       <>
-        <Modal />
+        <ForgotPassword action='forgot-password' />
         <form onSubmit={handleSubmit}>
           <div className="card border-0 shadow p-4 m-1" style={style}>
             { inputs }

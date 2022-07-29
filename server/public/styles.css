@@ -107,6 +107,10 @@ i:hover {
   visibility: hidden;
 }
 
+.invisible {
+  display: none;
+}
+
 .locate {
   position: absolute;
   top: 2.5rem;
