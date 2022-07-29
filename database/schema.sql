@@ -17,18 +17,10 @@ CREATE TABLE "users" (
 
 CREATE TABLE "userInfos" (
   "userId" integer NOT NULL,
-  "city" TEXT NOT NULL,
-  "zipCode" integer NOT NULL,
-  "latitude" decimal NOT NULL,
-  "longitude" decimal NOT NULL,
   "birthday" DATE NOT NULL,
-  "age" integer NOT NULL,
   "gender" TEXT NOT NULL,
-  "locationRange" integer NOT NULL,
-  "friendGenderPreference" TEXT NOT NULL,
-  "friendAgePreference" TEXT NOT NULL,
-  "phone" TEXT NOT NULL,
-  "preferredContact" TEXT NOT NULL,
+  "phone" TEXT,
+  "contact" TEXT NOT NULL,
   CONSTRAINT "userInfos_pk" PRIMARY KEY ("userId")
 ) WITH (
   OIDS=FALSE
@@ -36,9 +28,13 @@ CREATE TABLE "userInfos" (
 
 CREATE TABLE "friendPreferences" (
   "userId" integer NOT NULL,
-  "locationRange" integer NOT NULL,
-  "friendGenderPreference" TEXT NOT NULL,
-  "friendAgePreference" TEXT NOT NULL,
+  "city" TEXT NOT NULL,
+  "zipCode" integer NOT NULL,
+  "lat" decimal NOT NULL,
+  "lng" decimal NOT NULL,
+  "mileRadius" integer NOT NULL,
+  "friendGender" TEXT NOT NULL,
+  "friendAge" TEXT NOT NULL,
   CONSTRAINT "friendPreferences_pk" PRIMARY KEY ("userId")
 ) WITH (
   OIDS=FALSE

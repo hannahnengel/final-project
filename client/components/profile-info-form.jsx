@@ -50,6 +50,7 @@ export default class ProfileInfoForm extends React.Component {
     event.preventDefault();
     const { action } = this.props;
     if (event.type === 'submit') {
+      const xaccesstoken = window.localStorage.getItem('react-context-jwt');
       if (action === 'friend-preferences') {
         if (this.state.friendGender.selections.length === 0) {
           alert('Must select at least one gender.');
@@ -59,6 +60,7 @@ export default class ProfileInfoForm extends React.Component {
           alert('Must select at least one friend age range selection.');
           return;
         }
+
       }
       if (action === 'profile-info') {
         if (this.state.phone === null && this.state.contact.checked.phone === true) {
@@ -69,11 +71,55 @@ export default class ProfileInfoForm extends React.Component {
           alert('Must select at least one preferred method of contact.');
           return;
         }
+        // const today = new Date();
+        // const birthDate = new Date(birthday);
+        // let age = today.getFullYear() - birthDate.getFullYear();
+        // const m = today.getMonth() - birthDate.getMonth();
+        // if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        //   age--;
+        // }
+        // console.log('age', age);
+      }
+      let body;
+      if (action === 'profile-info') {
+        const { birthday, gender, phone } = this.state;
+        const contact = this.state.contact.selections;
+        body = {
+          birthday,
+          gender,
+          contact,
+          phone
+        };
+      }
+      if (action === 'friend-preferences') {
+        const { city, zipCode, lat, lng, mileRadius, friendAge } = this.state;
+        const friendGender = this.state.friendGender.selections;
+        body = {
+          city,
+          zipCode,
+          lat,
+          lng,
+          mileRadius,
+          friendGender,
+          friendAge
+        };
       }
 
-      window.location.hash = 'friend-preferences';
-      // console.log('submitted everything!');
-      // api call to db goes here
+      const req = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-token': xaccesstoken
+        },
+        body: JSON.stringify(body)
+      };
+      fetch(`/api/auth/${action}`, req)
+        .then(res => res.json())
+        .then(result => {
+          if (action === 'profile-info') {
+            window.location.hash = 'friend-preferences';
+          }
+        });
     }
 
     if (event.target.type === 'button') {
@@ -110,14 +156,6 @@ export default class ProfileInfoForm extends React.Component {
     }
     this.setState({ [name]: value });
     if (name === 'city' || name === 'zipCode') {
-      if (this.state.zipCode !== null && this.state.zipCode.length < 5) {
-        this.setState({
-          city: '',
-          position: { lat: null, lng: null },
-          coordsCity: '',
-          coordsZipCode: null
-        });
-      }
       if (this.state.city === '') {
         this.setState({
           zipCode: null,
@@ -172,11 +210,9 @@ export default class ProfileInfoForm extends React.Component {
         lng: position.coords.longitude
       }
     });
-
   }
 
   reverseGeoLocate() {
-
     const lat = this.state.position.lat;
     const lng = this.state.position.lng;
     if (lat !== null && (lat !== this.state.lat && lng !== this.state.lng)) {
@@ -204,7 +240,6 @@ export default class ProfileInfoForm extends React.Component {
         )
         .catch(err => alert(err));
     }
-
   }
 
   handleLocationError(error) {
@@ -227,6 +262,7 @@ export default class ProfileInfoForm extends React.Component {
   }
 
   render() {
+    // console.log('STATE', this.state);
     const { action } = this.props;
 
     const maxWidth = action === 'profile-info'

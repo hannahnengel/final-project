@@ -90,6 +90,44 @@ app.post('/api/auth/register', (req, res, next) => {
 
 app.use(authorizationMiddleware);
 
+app.post('/api/auth/profile-info', (req, res, next) => {
+  const { userId } = req.user;
+  const { birthday, gender, phone, contact } = req.body;
+  if (!birthday || !gender || !contact) {
+    throw new ClientError(400, 'Birthday, gender, phone, and contact are required fields');
+  }
+  const sql = `
+  insert into "userInfos" ("userId", "birthday", "gender", "phone", "contact")
+  values($1, $2, $3, $4, $5)
+  returning *
+  `;
+  const params = [userId, birthday, gender, phone, contact];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/auth/friend-preferences', (req, res, next) => {
+  const { userId } = req.user;
+  const { city, zipCode, lat, lng, mileRadius, friendGender, friendAge } = req.body;
+  if (!city || !zipCode || !lat || !lng || !mileRadius || !friendGender || !friendAge) {
+    throw new ClientError(400, 'City, zip code, latitude, longitude, mile radius, friend gender preference, and friend age range preference are required fields');
+  }
+  const sql = `
+  insert into "friendPreferences" ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
+  values($1, $2, $3, $4, $5, $6, $7, $8)
+  returning *
+  `;
+  const params = [userId, city, zipCode, lat, lng, mileRadius, friendGender, friendAge];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
+    });
+
+});
+
 app.use(errorMiddleware);
 
 app.listen(process.env.PORT, () => {
