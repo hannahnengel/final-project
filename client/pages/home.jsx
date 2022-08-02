@@ -1,6 +1,6 @@
 import React from 'react';
 import AppContext from '../lib/app-context';
-import Redirect from '../components/redirect';
+import IncompleteProfile from '../components/incomplete-profile';
 
 export default class Home extends React.Component {
   handleSignInClick() {
@@ -15,7 +15,7 @@ export default class Home extends React.Component {
 
     const { user } = this.context;
     if (user) {
-      return <Redirect to='#profile-info'/>;
+      return <IncompleteProfile />;
     }
 
     return (

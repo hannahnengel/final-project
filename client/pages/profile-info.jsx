@@ -1,13 +1,10 @@
 import React from 'react';
 import AppContext from '../lib/app-context';
-import Redirect from '../components/redirect';
 import ProfileInfoForm from '../components/profile-info-form';
 
 export default class ProfileInfo extends React.Component {
   render() {
-    const { user, route } = this.context;
-    // console.log('user', user);
-    if (user === null) { return <Redirect to="#sign-in" />; }
+    const { route } = this.context;
     const header = route.path === 'profile-info' ? 'PROFILE INFO' : 'What type of friend are you looking for?';
     const headerStyle = route.path === 'profile-info' ? '' : 'small-header';
 

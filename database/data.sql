@@ -1,21 +1,3 @@
-insert into "users" (
-  "firstName",
-  "email",
-  "hashedPassword"
-) values (
-  'Hannah',
-  'hannah@example.com',
-  '12345Iamahashedpassword'
-), (
-  'Kilian',
-  'kilian@example.com',
-  '12345Iamahashedpassword1'
-), (
-  'Megan',
-  'megan@example.com',
-  '12345Iamahashedpassword2'
-);
-
 insert into "categories"
   ("categoryName")
   values ('Pets'),('Foods'), ('Desserts'), ('Vacation Activities'), ('TV Shows'), ('Hobbies'), ('Pet Peeves'), ('Drinks'), ('Fandoms'), ('Music Genres');

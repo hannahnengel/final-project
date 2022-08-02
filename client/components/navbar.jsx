@@ -65,12 +65,6 @@ export default class Navbar extends React.Component {
                   </a>
                 </li>
                 <li className="navitem">
-                  <a href="" className="a-nav">
-                    <i className="fa-solid fa-gear pe-2"/>
-                    Settings
-                  </a>
-                </li>
-                <li className="navitem">
                   <a href="" className="a-nav" onClick={handleSignOut}>
                     <i className="fa-solid fa-arrow-right-from-bracket pe-2"/>
                     Sign Out

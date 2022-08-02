@@ -15,7 +15,9 @@ export default class App extends React.Component {
     this.state = {
       user: null,
       isAuthorizing: true,
-      route: parseRoute(window.location.hash)
+      route: parseRoute(window.location.hash),
+      profileInfoComplete: false,
+      friendPreferencesComplete: false
     };
     this.handleSignIn = this.handleSignIn.bind(this);
     this.handleSignOut = this.handleSignOut.bind(this);
@@ -39,6 +41,29 @@ export default class App extends React.Component {
     const token = window.localStorage.getItem('react-context-jwt');
     const user = token ? jwtDecode(token) : null;
     this.setState({ user, isAuthorizing: false });
+    if (user !== null) {
+      const req = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-token': token
+        }
+      };
+      fetch('api/auth/profile-info', req)
+        .then(result => {
+          if (result.status === 200) {
+            const profileInfoComplete = true;
+            this.setState({ profileInfoComplete });
+            fetch('api/auth/friend-preferences', req)
+              .then(result => {
+                if (result.status === 200) {
+                  const friendPreferencesComplete = true;
+                  this.setState({ friendPreferencesComplete });
+                }
+              });
+          }
+        });
+    }
   }
 
   renderPage() {
@@ -56,10 +81,9 @@ export default class App extends React.Component {
   }
 
   render() {
-    // console.log('STATE', this.state);
-    const { user, route } = this.state;
-    const { handleSignIn, handleSignOut } = this;
-    const contextValue = { user, route, handleSignIn, handleSignOut };
+    const { user, route, profileInfoComplete, friendPreferencesComplete } = this.state;
+    const { handleSignIn, handleSignOut, handleFormComplete } = this;
+    const contextValue = { user, route, profileInfoComplete, friendPreferencesComplete, handleSignIn, handleSignOut, handleFormComplete };
     return (
       <AppContext.Provider value={contextValue}>
         <>

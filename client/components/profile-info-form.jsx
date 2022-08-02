@@ -71,14 +71,6 @@ export default class ProfileInfoForm extends React.Component {
           alert('Must select at least one preferred method of contact.');
           return;
         }
-        // const today = new Date();
-        // const birthDate = new Date(birthday);
-        // let age = today.getFullYear() - birthDate.getFullYear();
-        // const m = today.getMonth() - birthDate.getMonth();
-        // if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        //   age--;
-        // }
-        // console.log('age', age);
       }
       let body;
       if (action === 'profile-info') {
@@ -116,8 +108,14 @@ export default class ProfileInfoForm extends React.Component {
       fetch(`/api/auth/${action}`, req)
         .then(res => res.json())
         .then(result => {
+          if (result.error) {
+            alert(result.error);
+          }
           if (action === 'profile-info') {
             window.location.hash = 'friend-preferences';
+          }
+          if (action === 'friend-preferences') {
+            window.location.hash = '';
           }
         });
     }
@@ -262,7 +260,6 @@ export default class ProfileInfoForm extends React.Component {
   }
 
   render() {
-    // console.log('STATE', this.state);
     const { action } = this.props;
 
     const maxWidth = action === 'profile-info'
