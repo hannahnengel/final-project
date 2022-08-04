@@ -8,6 +8,7 @@ import Auth from './pages/auth';
 import Navbar from './components/navbar';
 import NotFound from './pages/not-found';
 import ProfileInfo from './pages/profile-info';
+import HateSelections from './pages/hate-selections';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -76,6 +77,9 @@ export default class App extends React.Component {
     }
     if (route.path === 'profile-info' || route.path === 'friend-preferences') {
       return <ProfileInfo />;
+    }
+    if (route.path.includes('hate-selections')) {
+      return <HateSelections />;
     }
     return <NotFound />;
   }
