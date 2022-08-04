@@ -1,10 +1,21 @@
 require('dotenv/config');
 const path = require('path');
+const pg = require('pg');
 const express = require('express');
+const argon2 = require('argon2');
+const jwt = require('jsonwebtoken');
+const ClientError = require('./client-error');
 const errorMiddleware = require('./error-middleware');
+const authorizationMiddleware = require('./authorization-middleware');
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
+const db = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 if (process.env.NODE_ENV === 'development') {
   app.use(require('./dev-middleware')(publicPath));
@@ -12,8 +23,144 @@ if (process.env.NODE_ENV === 'development') {
   app.use(express.static(publicPath));
 }
 
-app.get('/api/hello', (req, res) => {
-  res.json({ hello: 'world' });
+const jsonMiddleware = express.json();
+app.use(jsonMiddleware);
+
+app.post('/api/auth/sign-in', (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    throw new ClientError(400, 'Username and password are required fields');
+  }
+  const sql = `
+  select "userId",
+          "hashedPassword"
+        from "users"
+      where "email" = $1`;
+  const params = [email];
+  db.query(sql, params)
+    .then(result => {
+      const [user] = result.rows;
+      if (!user) {
+        throw new ClientError(404, 'Invalid login, no user with this email exists');
+      }
+      const { userId, hashedPassword } = user;
+      return argon2
+        .verify(hashedPassword, password)
+        .then(isMatching => {
+          if (!isMatching) {
+            throw new ClientError(400, 'Invalid login, email or password is incorrect');
+          }
+          const payload = { userId, email };
+          const token = jwt.sign(payload, process.env.TOKEN_SECRET);
+          res.json({ token, user: payload });
+        });
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/auth/register', (req, res, next) => {
+  const { firstName, email, password, confirmPassword } = req.body;
+  if (!firstName || !email || !password) {
+    throw new ClientError(400, 'username and password are required fields');
+  }
+  if (password !== confirmPassword) {
+    throw new ClientError(400, 'passwords do not match');
+  }
+  argon2
+    .hash(password)
+    .then(hashedPassword => {
+      const sql = `
+      insert into "users" ("firstName", "email", "hashedPassword")
+      values ($1, $2, $3)
+      returning "userId", "email", "createdAt"
+      `;
+      const params = [firstName, email, hashedPassword];
+      return db.query(sql, params);
+    })
+    .then(result => {
+      const [user] = result.rows;
+      res.status(201).json(user);
+    })
+    .catch(err => {
+      next(err);
+    }
+    );
+});
+
+app.use(authorizationMiddleware);
+
+app.post('/api/auth/profile-info', (req, res, next) => {
+  const { userId } = req.user;
+  const { birthday, gender, phone, contact } = req.body;
+  if (!birthday || !gender || !contact) {
+    throw new ClientError(400, 'Birthday, gender, and contact are required fields');
+  }
+  const sql = `
+    insert into "userInfos" ("userId", "birthday", "gender", "phone", "contact")
+    values($1, $2, $3, $4, $5)
+    on conflict on constraint "userInfos_pk"
+      do
+      update set "birthday" = $2, "gender" = $3, "phone" = $4, "contact" = $5
+    returning *
+  `;
+  const params = [userId, birthday, gender, phone, contact];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/auth/friend-preferences', (req, res, next) => {
+  const { userId } = req.user;
+  const { city, zipCode, lat, lng, mileRadius, friendGender, friendAge } = req.body;
+  if (!city || !zipCode || !lat || !lng || !mileRadius || !friendGender || !friendAge) {
+    throw new ClientError(400, 'City, zip code, latitude, longitude, mile radius, friend gender preference, and friend age range preference are required fields');
+  }
+  const sql = `
+  insert into "friendPreferences" ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
+  values($1, $2, $3, $4, $5, $6, $7, $8)
+  on conflict on constraint "friendPreferences_pk"
+    do
+    update set "city" = $2, "zipCode" = $3, "lat" = $4, "lng" = $5, "mileRadius" = $6, "friendGender" = $7, "friendAge" = $8
+  returning *
+  `;
+  const params = [userId, city, zipCode, lat, lng, mileRadius, friendGender, friendAge];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.get('/api/auth/profile-info', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "userInfos"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    });
+});
+
+app.get('/api/auth/friend-preferences', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "friendPreferences"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    });
 });
 
 app.use(errorMiddleware);
