@@ -28,20 +28,8 @@ export default class HateSelections extends React.Component {
             <p className='px-3'>Select the one you hate the most... &#128293;</p>
           </div>
         </div>
-        <div className="row">
+        <div className="row w-100">
           <HateSelectionsInputs/>
-        </div>
-        <div className="row m-5">
-          <div className="d-flex justify-content-between">
-            <button type='button' className="lt-red-btn next-back-btn px-2 mt-1 mx-4" >
-              <span><i className="fa-solid fa-arrow-left"></i></span>
-              Previous
-            </button>
-            <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 mx-4'>
-              Next
-              <span><i className="fa-solid fa-arrow-right"></i></span>
-            </button>
-          </div>
         </div>
       </div>
     );
