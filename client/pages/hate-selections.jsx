@@ -11,7 +11,9 @@ export default class HateSelections extends React.Component {
 
     const { route } = this.context;
     for (let i = 0; i < categories.length; i++) {
-      if (route.path.includes(categories[i].toLowerCase())) {
+      let categoryWords = categories[i].toLocaleLowerCase().split(' ');
+      categoryWords = categoryWords.join('-');
+      if (route.path.includes(categoryWords)) {
         header = categories[i];
       }
     }
@@ -29,7 +31,7 @@ export default class HateSelections extends React.Component {
           </div>
         </div>
         <div className="row w-100">
-          <HateSelectionsInputs/>
+          <HateSelectionsInputs route={route}/>
         </div>
       </div>
     );

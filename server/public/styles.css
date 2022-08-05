@@ -173,7 +173,7 @@ i:hover {
   width: 155px;
   height: 112px;
   color: white;
-  font-size: 25px;
+  font-size: 20px;
 }
 
 .hate-input:checked + .selections-container .middle {
