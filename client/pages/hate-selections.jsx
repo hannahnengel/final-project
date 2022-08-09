@@ -31,7 +31,7 @@ export default class HateSelections extends React.Component {
           </div>
         </div>
         <div className="row w-100">
-          <HateSelectionsInputs route={route}/>
+          <HateSelectionsInputs route={route} categories={categories}/>
         </div>
       </div>
     );

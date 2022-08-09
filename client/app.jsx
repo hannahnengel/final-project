@@ -78,7 +78,16 @@ export default class App extends React.Component {
     if (route.path === 'profile-info' || route.path === 'friend-preferences') {
       return <ProfileInfo />;
     }
-    if (route.path.includes('hate-selections')) {
+    if (route.path === 'hate-selections/pets' ||
+        route.path === 'hate-selections/foods' ||
+        route.path === 'hate-selections/desserts' ||
+        route.path === 'hate-selections/vacation-activities' ||
+        route.path === 'hate-selections/tv-shows' ||
+        route.path === 'hate-selections/hobbies' ||
+        route.path === 'hate-selections/pet-peeves' ||
+        route.path === 'hate-selections/drinks' ||
+        route.path === 'hate-selections/fandoms' ||
+        route.path === 'hate-selections/music-genres') {
       return <HateSelections />;
     }
     return <NotFound />;

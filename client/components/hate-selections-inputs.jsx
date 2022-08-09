@@ -2,8 +2,60 @@ import React from 'react';
 
 export default class HateSelectionsInputs extends React.Component {
 
-  render() {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hashroute: this.props.route.path
+    };
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handlePrevious = this.handlePrevious.bind(this);
+  }
 
+  handleChange(event) {
+    const { name, value } = event.target;
+    this.setState({ [name]: value });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    // const xaccesstoken = window.localStorage.getItem('react-context-jwt');
+    const category = this.state.hashroute.slice(16);
+    // const value = this.state[category];
+    const { categories } = this.props;
+
+    for (let i = 0; i < categories.length; i++) {
+      const currentCategoryArray = categories[i].split(' ');
+      const currentCategory = currentCategoryArray.join('-').toLowerCase();
+
+      if (category === currentCategory) {
+        if (categories[i] === categories[categories.length - 1]) {
+          return;
+        }
+        const words = categories[i + 1].split(' ');
+        const hash = words.join('-').toLowerCase();
+        this.setState({ hashroute: `hate-selections/${hash}` });
+        window.location.hash = `hate-selections/${hash}`;
+      }
+    }
+  }
+
+  handlePrevious() {
+    const { categories } = this.props;
+    const category = this.state.hashroute.slice(16);
+    for (let i = 0; i < categories.length; i++) {
+      const currentCategoryArray = categories[i].split(' ');
+      const currentCategory = currentCategoryArray.join('-').toLowerCase();
+      if (category === currentCategory) {
+        const words = categories[i - 1].split(' ');
+        const hash = words.join('-').toLowerCase();
+        window.location.hash = `hate-selections/${hash}`;
+        this.setState({ hashroute: `hate-selections/${hash}` });
+      }
+    }
+  }
+
+  render() {
     const pets = [
       { selection: 'dogs', src: '/hate-selections-imgs/dog.jpeg' },
       { selection: 'cats', src: '/hate-selections-imgs/cats.jpeg' },
@@ -119,37 +171,48 @@ export default class HateSelectionsInputs extends React.Component {
     const { route } = this.props;
     let rowNumberClass = '';
     let inputSelections = [];
+    let category = '';
     let hidePreviousBtnClass = '';
-    if (route.path.includes('pets')) {
+    if (route.path === ('hate-selections/pets')) {
       inputSelections = pets;
+      category = 'pets';
       hidePreviousBtnClass = 'invisible';
     }
-    if (route.path.includes('foods')) {
+    if (route.path === 'hate-selections/foods') {
       inputSelections = foods;
+      category = 'foods';
     }
-    if (route.path.includes('desserts')) {
+    if (route.path === 'hate-selections/desserts') {
       inputSelections = desserts;
+      category = 'desserts';
     }
-    if (route.path.includes('vacation-activities')) {
+    if (route.path === 'hate-selections/vacation-activities') {
       inputSelections = vacationActivities;
+      category = 'vacation-activities';
     }
-    if (route.path.includes('tv-shows')) {
+    if (route.path === 'hate-selections/tv-shows') {
       inputSelections = tvShows;
+      category = 'tv-shows';
     }
-    if (route.path.includes('hobbies')) {
+    if (route.path === 'hate-selections/hobbies') {
       inputSelections = hobbies;
+      category = 'hobbies';
     }
-    if (route.path.includes('pet-peeves')) {
+    if (route.path === 'hate-selections/pet-peeves') {
       inputSelections = petPeeves;
+      category = 'pet-peeves';
     }
-    if (route.path.includes('drinks')) {
+    if (route.path === 'hate-selections/drinks') {
       inputSelections = drinks;
+      category = 'drinks';
     }
-    if (route.path.includes('fandoms')) {
+    if (route.path === 'hate-selections/fandoms') {
       inputSelections = fandoms;
+      category = 'fandoms';
     }
-    if (route.path.includes('music-genres')) {
+    if (route.path === 'hate-selections/music-genres') {
       inputSelections = musicGenres;
+      category = 'music-genres';
     }
 
     if (inputSelections.length === 6) {
@@ -176,9 +239,11 @@ export default class HateSelectionsInputs extends React.Component {
             <input
             required
             type='radio'
+            id={`${selectionValue}`}
             className='hate-input'
-            name='selection'
+            name={category}
             value={`${selectionValue}`}
+            onChange={this.handleChange}
             />
             <div className="selections-container">
               <img className='hate-selection-img' src={`${selection.src}`} alt={`${selection.selection}`}></img>
@@ -193,14 +258,15 @@ export default class HateSelectionsInputs extends React.Component {
       );
     });
 
+    // console.log('STATE', this.state);
     return (
-      <form>
+      <form onSubmit={this.handleSubmit}>
         <div className={`row ${rowNumberClass} row-cols-sm-2`}>
           {inputs}
         </div>
         <div className="row mt-5">
           <div className="d-flex justify-content-center p-0">
-            <button type='button' className={`lt-red-btn next-back-btn px-2 mt-1 me-4 ${hidePreviousBtnClass}`} >
+            <button type='button' onClick={this.handlePrevious} className={`lt-red-btn next-back-btn px-2 mt-1 me-4 ${hidePreviousBtnClass}`} >
               <span><i className="fa-solid fa-arrow-left"></i></span>
               Previous
             </button>
