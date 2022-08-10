@@ -4,9 +4,33 @@ import HateSelectionsInputs from '../components/hate-selections-inputs';
 // import IncompleteProfile from '../components/incomplete-profile';
 
 export default class HateSelections extends React.Component {
-  render() {
 
-    const categories = ['PETS', 'FOODS', 'DESSERTS', 'VACATION ACTIVITIES', 'TV SHOWS', 'HOBBIES', 'PET PEEVES', 'DRINKS', 'FANDOMS', 'MUSIC GENRES'];
+  constructor(props) {
+    super(props);
+    this.state = {
+      categories: []
+    };
+  }
+
+  componentDidMount() {
+    fetch('/api/categories')
+      .then(res => res.json())
+      .then(result => {
+        const catResult = result;
+        const categories = [];
+        for (let i = 0; i < catResult.length; i++) {
+          categories.push(catResult[i].categoryName);
+        }
+        this.setState({ categories });
+        if (result.error) {
+          alert(result.error);
+        }
+      });
+
+  }
+
+  render() {
+    const categories = this.state.categories;
     let header = '';
 
     const { route } = this.context;
@@ -14,7 +38,7 @@ export default class HateSelections extends React.Component {
       let categoryWords = categories[i].toLocaleLowerCase().split(' ');
       categoryWords = categoryWords.join('-');
       if (route.path.includes(categoryWords)) {
-        header = categories[i];
+        header = categories[i].toUpperCase();
       }
     }
 

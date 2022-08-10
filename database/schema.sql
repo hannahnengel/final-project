@@ -82,6 +82,7 @@ CREATE TABLE "categories" (
 CREATE TABLE "selections" (
   "selectionId" serial NOT NULL,
   "selectionName" text NOT NULL,
+  "src" text NOT NULL,
   "categoryId" integer NOT NULL,
   CONSTRAINT "selections_pk" PRIMARY KEY ("selectionId")
 ) WITH (

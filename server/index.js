@@ -87,6 +87,46 @@ app.post('/api/auth/register', (req, res, next) => {
     );
 });
 
+app.get('/api/selections/:categoryId', (req, res, next) => {
+  const categoryId = Number(req.params.categoryId);
+  if (!Number.isInteger(categoryId) || categoryId < 1) {
+    throw new ClientError(400, 'CategoryId must be a positive integer');
+  }
+  const sql = `
+  select *
+     from "selections"
+   where "categoryId" = $1
+  `;
+
+  const params = [categoryId];
+  db.query(sql, params)
+    .then(result => {
+      const selections = result.rows;
+      if (!selections) {
+        throw new ClientError(404, `Cannot find selections with categoryId ${categoryId}`);
+      } else {
+        res.json(selections);
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
+app.get('/api/categories', (req, res, next) => {
+  const sql = `
+  select * from "categories"
+  `;
+  db.query(sql)
+    .then(result => {
+      const categories = result.rows;
+      res.json(categories);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
