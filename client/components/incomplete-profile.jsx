@@ -16,7 +16,7 @@ export default class IncompleteProfile extends React.Component {
 
     const { profileInfoComplete, friendPreferencesComplete } = this.context;
     if (profileInfoComplete && friendPreferencesComplete) {
-      return <Redirect to='' />;
+      this.setState({ redirectTo: '#hate-selections/pets' });
     } else if (!profileInfoComplete) {
       this.setState({ redirectTo: '#profile-info' });
     } else if (profileInfoComplete && !friendPreferencesComplete) {
