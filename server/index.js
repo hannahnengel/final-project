@@ -203,6 +203,29 @@ app.get('/api/auth/friend-preferences', (req, res, next) => {
     });
 });
 
+app.post('/api/auth/user-selections', (req, res, next) => {
+  const { userId } = req.user;
+  const { selectionId, categoryId } = req.body;
+  if (!selectionId || !categoryId) {
+    throw new ClientError(400, 'SelectionId and categoryId are required fields');
+  }
+
+  const sql = `
+  insert into "userSelections" ("userId", "selectionId", "categoryId")
+  values ($1, $2, $3)
+  on conflict on constraint "userSelections_pk"
+    do
+    update set "selectionId" = $2, "categoryId" = $3
+  returning *
+  `;
+  const params = [userId, selectionId, categoryId];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
 app.use(errorMiddleware);
 
 app.listen(process.env.PORT, () => {

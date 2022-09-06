@@ -21,14 +21,14 @@ export default class HateSelectionsInputs extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    // const xaccesstoken = window.localStorage.getItem('react-context-jwt');
+
     const category = this.state.hashroute.slice(16);
     const preValue = this.state[category];
     const value = preValue.replaceAll('-', ' ');
     let selection = {};
 
     for (let i = 0; i < this.state.inputSelections.length; i++) {
-      if (this.state.inputSelections[i].selectionName === value) {
+      if (this.state.inputSelections[i].selectionName.toLowerCase() === value) {
         selection = this.state.inputSelections[i];
       }
     }
@@ -55,7 +55,38 @@ export default class HateSelectionsInputs extends React.Component {
 
       if (category === currentCategory) {
         if (categories[i] === categories[categories.length - 1]) {
-          return;
+          const xaccesstoken = window.localStorage.getItem('react-context-jwt');
+          const data = localStorage.getItem('selections');
+          const dataParsed = JSON.parse(data);
+          let body = {};
+          for (let j = 0; j < dataParsed.length; j++) {
+            const { categoryId, selectionId } = dataParsed[j];
+            body = {
+              categoryId,
+              selectionId
+            };
+            const req = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': xaccesstoken
+              },
+              body: JSON.stringify(body)
+            };
+            fetch('/api/auth/user-selections', req)
+              .then(res => res.json())
+              .then(result => {
+                if (result.error) {
+                  alert(result.error);
+                } else {
+                  body = {};
+                }
+              });
+            if (j === dataParsed.length - 1) {
+              return;
+            }
+          }
+
         }
         const words = categories[i + 1].split(' ');
         const hash = words.join('-').toLowerCase();
@@ -64,7 +95,9 @@ export default class HateSelectionsInputs extends React.Component {
           this.getSelections();
         });
       }
+
     }
+
   }
 
   handlePrevious() {
