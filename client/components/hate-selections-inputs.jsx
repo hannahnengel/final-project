@@ -23,7 +23,30 @@ export default class HateSelectionsInputs extends React.Component {
     event.preventDefault();
     // const xaccesstoken = window.localStorage.getItem('react-context-jwt');
     const category = this.state.hashroute.slice(16);
-    // const value = this.state[category];
+    const preValue = this.state[category];
+    const value = preValue.replaceAll('-', ' ');
+    let selection = {};
+
+    for (let i = 0; i < this.state.inputSelections.length; i++) {
+      if (this.state.inputSelections[i].selectionName === value) {
+        selection = this.state.inputSelections[i];
+      }
+    }
+
+    const allUserSelections = localStorage.getItem('selections');
+    if (allUserSelections !== null) {
+      const parsedAllSelections = JSON.parse(allUserSelections);
+      for (let i = 0; i < parsedAllSelections.length; i++) {
+        if (parsedAllSelections[i].categoryId === selection.categoryId) {
+          parsedAllSelections.splice(i, 1);
+        }
+      }
+      parsedAllSelections.push(selection);
+      localStorage.setItem('selections', JSON.stringify(parsedAllSelections));
+    } else {
+      localStorage.setItem('selections', JSON.stringify([selection]));
+    }
+
     const { categories } = this.props;
 
     for (let i = 0; i < categories.length; i++) {
@@ -96,6 +119,9 @@ export default class HateSelectionsInputs extends React.Component {
     // console.log('STATE', this.state);
     const { inputSelections } = this.state;
     const { categories } = this.props;
+    if (inputSelections.length === 0) {
+      this.getSelections();
+    }
 
     const { route } = this.props;
     let rowNumberClass = '';
@@ -128,7 +154,7 @@ export default class HateSelectionsInputs extends React.Component {
         const description = words.join(' ');
 
         return (
-          <div className="col pt-3 px-0 selection" key={selection.selectionId}>
+          <div className="col pt-2 px-0 selection" key={selection.selectionId}>
             <label htmlFor={`${selectionValue}`}>
               <input
                 required
@@ -167,7 +193,7 @@ export default class HateSelectionsInputs extends React.Component {
                 { inputs }
               </div>
         }
-        <div className="row mt-5">
+        <div className="row mt-3">
           <div className="d-flex justify-content-center p-0">
             <button type='button' onClick={this.handlePrevious} className={`lt-red-btn next-back-btn px-2 mt-1 me-4 ${hidePreviousBtnClass}`} >
               <span><i className="fa-solid fa-arrow-left"></i></span>

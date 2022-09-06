@@ -43,10 +43,10 @@ export default class HateSelections extends React.Component {
     }
 
     return (
-      <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
+      <div className='vhminus text-center d-flex flex-column align-items-center justify-content-center'>
         <div className='row'>
           <div className='col'>
-            <h1>{header}</h1>
+            <h1 className='pt-2'>{header}</h1>
           </div>
         </div>
         <div className="row">

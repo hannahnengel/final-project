@@ -100,7 +100,7 @@ export default class App extends React.Component {
     return (
       <AppContext.Provider value={contextValue}>
         <>
-        <Navbar />
+      <Navbar />
        <PageContainer>
           { this.renderPage() }
         </PageContainer>
