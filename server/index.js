@@ -127,6 +127,32 @@ app.get('/api/categories', (req, res, next) => {
     });
 });
 
+app.get('/api/selections/selection/:selectionId', (req, res, next) => {
+  const selectionId = Number(req.params.selectionId);
+  if (!Number.isInteger(selectionId) || selectionId < 1) {
+    throw new ClientError(400, 'SelectionId must be a positive integer');
+  }
+  const sql = `
+  select *
+     from "selections"
+   where "selectionId" = $1
+  `;
+
+  const params = [selectionId];
+  db.query(sql, params)
+    .then(result => {
+      const selections = result.rows;
+      if (!selections) {
+        throw new ClientError(404, `Cannot find selections with selectionId ${selectionId}`);
+      } else {
+        res.json(selections);
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
@@ -209,6 +235,12 @@ app.post('/api/auth/user-selections', (req, res, next) => {
   if (!selectionId || !categoryId) {
     throw new ClientError(400, 'SelectionId and categoryId are required fields');
   }
+  if (!Number.isInteger(categoryId) || categoryId < 1) {
+    throw new ClientError(400, 'CategoryId must be a positive integer');
+  }
+  if (!Number.isInteger(selectionId) || selectionId < 1) {
+    throw new ClientError(400, 'SelectionId must be a positive integer');
+  }
 
   const sql = `
   insert into "userSelections" ("userId", "selectionId", "categoryId")
@@ -224,6 +256,21 @@ app.post('/api/auth/user-selections', (req, res, next) => {
       res.status(201).json(result.rows);
     })
     .catch(err => next(err));
+});
+
+app.get('/api/auth/user-selections', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "userSelections"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    });
 });
 
 app.use(errorMiddleware);

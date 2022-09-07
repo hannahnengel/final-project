@@ -9,6 +9,7 @@ import Navbar from './components/navbar';
 import NotFound from './pages/not-found';
 import ProfileInfo from './pages/profile-info';
 import HateSelections from './pages/hate-selections';
+import Profile from './pages/profile';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -90,6 +91,9 @@ export default class App extends React.Component {
         route.path === 'hate-selections/music-genres') {
       return <HateSelections />;
     }
+    if (route.path === 'profile') {
+      return <Profile />;
+    }
     return <NotFound />;
   }
 
@@ -100,7 +104,7 @@ export default class App extends React.Component {
     return (
       <AppContext.Provider value={contextValue}>
         <>
-      <Navbar />
+        <Navbar />
        <PageContainer>
           { this.renderPage() }
         </PageContainer>
