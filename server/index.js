@@ -214,6 +214,21 @@ app.get('/api/auth/profile-info', (req, res, next) => {
     });
 });
 
+app.get('/api/auth/user-info', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "users"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    });
+});
+
 app.get('/api/auth/friend-preferences', (req, res, next) => {
   const { userId } = req.user;
   const sql = `

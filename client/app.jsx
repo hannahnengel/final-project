@@ -91,7 +91,7 @@ export default class App extends React.Component {
         route.path === 'hate-selections/music-genres') {
       return <HateSelections />;
     }
-    if (route.path === 'profile') {
+    if (route.path === 'my-profile') {
       return <Profile />;
     }
     return <NotFound />;
