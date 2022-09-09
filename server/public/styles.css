@@ -193,3 +193,7 @@ i:hover {
   opacity: 1;
   background-size: 155px 112px;
 }
+
+.retake-quiz-btn {
+  width: 200px;
+}

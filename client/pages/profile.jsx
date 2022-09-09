@@ -134,25 +134,32 @@ export default class Profile extends React.Component {
     } else {
       return (
         <>
-          <div className="text-center position-absolute shadow start-0" style={{ width: '100%', height: '400px', backgroundColor: '#F0F0F0' }}>
+          <div className="position-absolute behind dynamic-height shadow start-0" style={{ width: '100%', backgroundColor: '#F0F0F0' }}>
+          </div>
+          <div className="on-top position-relative">
             <div className="row pt-2 w-100 row-cols-md-1 d-flex justify-content-center align-items-center">
               <div className="col d-flex justify-content-center px-0">
                 <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
                   <i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }}></i>
                 </div>
               </div>
-              <div className="col danger text-align-end px-0">
-                <h1 className='font-40'>{`${firstName}`}</h1>
-                <p className="form-font px-0" style={{ color: '#6D6969' }}>{`${gender[0].toUpperCase() + gender.substring(1)}`}, {`${age}`} years old
-                  <br /> {`${city}`}, {`${zipCode}`}
-                </p>
+              <div className="col  px-0">
+                <div className="row">
+                  <h1 className='font-40 danger d-flex justify-dynamic m-0 px-0'>{`${firstName}`}</h1>
+                </div>
+                <div className="row">
+                  <p className="form-font  d-flex justify-dynamic m-0 px-0" style={{ color: '#6D6969' }}>{`${gender[0].toUpperCase() + gender.substring(1)}`}, {`${age}`} years old </p>
+                </div>
+                <div className="row">
+                  <p className='form-font d-flex justify-dynamic m-0 mb-1 px-0' style={{ color: '#6D6969' }}> {`${city}`}, {`${zipCode}`}</p>
+                </div>
               </div>
             </div>
-            <div className="row w-100 danger d-flex justify-content-center align-items-center">
-              <div className="col col-md-1 px-0 d-flex justify-content-end">
+            <div className="row danger d-flex justify-content-around align-items-center margin-100 mt-3">
+              <div className="col-3 px-1 d-flex justify-content-end">
                 <i className="fa-solid fa-user fa-xl"></i>
               </div>
-              <div className="col col-md-4 px-1 form-font text-align-start">
+              <div className="col-6 px-0 form-font text-align-start d-flex justify-content-start">
                 {
                   (contactPreference.length > 0)
                     ? contactPreference.map((item, index) => {
@@ -161,44 +168,45 @@ export default class Profile extends React.Component {
                     : <></>
                 }
               </div>
-              <div className="col col-md-1 d-flex px-0 d-flex justify-content-end">
+              <div className="col-3 d-flex justify-content-end px-0">
                 <i className="fa-solid fa-pen-to-square" style={{ color: '#B0B0B0' }}></i>
               </div>
             </div>
-            <div className="row text-align-start p-2 m-0 w-100 row-cols-md-3 row-cols-1 d-flex align-items-center justify-content-center" style={{ color: '#6D6969' }}>
-              <div className="col col-lg-3 px-0 d-flex justify-content-end">
+            <div className="row mt-3 row-cols-md-3 row-cols-1 d-flex align-items-center justify-content-around margin-100" style={{ color: '#6D6969' }}>
+              <div className="col col-md-6 d-flex justify-content-end px-0">
                 <p className='form-font my-0'>
                   <span className='form-font pe-1' style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 'bold' }}>
                     Seeking:</span>
-                  { (friendGenderPreference.length > 0)
+                  {(friendGenderPreference.length > 0)
                     ? friendGenderPreference.map((item, index) => {
                       return (<span className='form-font' key={index}>{item}</span>);
                     })
                     : <></>
                   }</p>
               </div>
-              <div className="col col-lg-1 px-0 d-flex justify-content-end">
+              <div className="col col-md-2 d-flex justify-content-end px-0">
                 <p className='form-font my-0'>
                   Ages {`${friendAge}`}
                 </p>
               </div>
-              <div className="col col-lg-2 px-0 d-flex justify-content-end">
+              <div className="col col-md-4 px-0 d-flex justify-content-end">
                 <p className='form-font my-0'>{`${mileRadius}`} Mile Radius<span><i className="fa-solid fa-pen-to-square px-1" style={{ color: '#B0B0B0' }}></i></span></p>
               </div>
             </div>
           </div>
-          <div className='vh-profile profile-selection-layout row mx-2 d-flex justify-content-center align-items-center row-cols-lg-5 row-cols-md-2 row-cols-sm-2' style={{ minWidth: '350px' }}>
+
+          <div className='position-relative row mt-4 d-flex justify-content-center align-items-center row-cols-lg-5 row-cols-md-2 row-cols-sm-2' >
             {(inputs.length === 10)
               ? inputs
               : <></>
             }
-            {(inputs.length === 10)
-              ? <div className='row pt-4 justify-content-center'>
-                <button className='lt-red-btn' style={{ width: '187px' }}>Retake Quiz</button>
-              </div>
-              : <></>
-            }
           </div>
+          {(inputs.length === 10)
+            ? <div className='row justify-content-center mt-5'>
+              <button className='lt-red-btn retake-quiz-btn'>Retake Quiz</button>
+            </div>
+            : <></>
+          }
         </>
       );
     }
