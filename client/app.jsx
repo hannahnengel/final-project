@@ -33,6 +33,7 @@ export default class App extends React.Component {
 
   handleSignOut() {
     window.localStorage.removeItem('react-context-jwt');
+    window.localStorage.removeItem('selections');
     this.setState({ user: null });
   }
 

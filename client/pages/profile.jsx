@@ -62,6 +62,10 @@ export default class Profile extends React.Component {
     }
   }
 
+  handleClick() {
+    window.location.hash = 'hate-selections/pets';
+  }
+
   render() {
     const { gender, birthday, phone, contact, firstName, email, city, zipCode, friendAge, friendGender, mileRadius, selections } = this.state;
 
@@ -159,11 +163,13 @@ export default class Profile extends React.Component {
               <div className="col-3 px-1 d-flex justify-content-end">
                 <i className="fa-solid fa-user fa-xl"></i>
               </div>
-              <div className="col-6 px-0 form-font text-align-start d-flex justify-content-start">
+              <div className="col-6 px-0 form-font text-align-start">
                 {
                   (contactPreference.length > 0)
                     ? contactPreference.map((item, index) => {
-                      return (<p className='form-font m-0' key={index}> {item} </p>);
+                      return (
+                      <p className='form-font m-0' key={index}> {item} </p>
+                      );
                     })
                     : <></>
                 }
@@ -203,7 +209,7 @@ export default class Profile extends React.Component {
           </div>
           {(inputs.length === 10)
             ? <div className='row justify-content-center mt-5'>
-              <button className='lt-red-btn retake-quiz-btn'>Retake Quiz</button>
+              <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn'>Retake Quiz</button>
             </div>
             : <></>
           }

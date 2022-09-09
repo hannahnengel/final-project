@@ -83,10 +83,10 @@ export default class HateSelectionsInputs extends React.Component {
                 }
               });
             if (j === dataParsed.length - 1) {
+              window.location.hash = 'my-profile';
               return;
             }
           }
-
         }
         const words = categories[i + 1].split(' ');
         const hash = words.join('-').toLowerCase();
