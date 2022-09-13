@@ -34,7 +34,8 @@ export default class ProfileInfoForm extends React.Component {
           nonBinary: false
         }
       },
-      friendAge: ''
+      friendAge: '',
+      editing: false
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -44,6 +45,30 @@ export default class ProfileInfoForm extends React.Component {
     this.geoGetCoords = this.geoGetCoords.bind(this);
     this.handleLocationError = this.handleLocationError.bind(this);
     this.reverseGeoLocate = this.reverseGeoLocate.bind(this);
+  }
+
+  // getUserInfo() {
+  //   const req = {
+  //     method: 'GET',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'x-access-token': xaccesstoken
+  //     }
+  //   };
+  //   fetch('api/auth/profile-info', req)
+  //     .then(res => res.json())
+  //     .then(result => {
+  //       console.log('result', result);
+
+  //     }).then(fetch('/api/auth/friend-preferences', req)
+  //       .then(res => res.json())
+  //       .then(result => {
+  //         console.log('result', result);
+  //       }));
+  // }
+
+  handleCancel(event) {
+    window.location.hash = 'my-profile';
   }
 
   handleSubmit(event) {
@@ -112,10 +137,20 @@ export default class ProfileInfoForm extends React.Component {
             alert(result.error);
           }
           if (action === 'profile-info') {
-            window.location.hash = 'friend-preferences';
+            if (this.state.editing === false) {
+              window.location.hash = 'friend-preferences';
+            }
+            if (this.state.editing === true) {
+              window.location.hash = 'my-profile';
+            }
           }
           if (action === 'friend-preferences') {
-            window.location.hash = 'hate-selections/pets';
+            if (this.state.editing === false) {
+              window.location.hash = 'hate-selections/pets';
+            }
+            if (this.state.editing === true) {
+              window.location.hash = 'my-profile';
+            }
           }
         });
     }
@@ -257,6 +292,31 @@ export default class ProfileInfoForm extends React.Component {
       default:
         alert('An unknown error occurred');
     }
+  }
+
+  componentDidMount() {
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-token': xaccesstoken
+      }
+    };
+    fetch('api/auth/profile-info', req)
+      .then(res => res.json())
+      .then(result => {
+        if (result.length >= 1) {
+          this.setState({ editing: true });
+        }
+
+      }).then(fetch('/api/auth/friend-preferences', req)
+        .then(res => res.json())
+        .then(result => {
+          if (result.length >= 1) {
+            this.setState({ editing: true });
+          }
+        }));
   }
 
   render() {
@@ -577,6 +637,32 @@ export default class ProfileInfoForm extends React.Component {
       ? 'hidden'
       : '';
 
+    let buttons;
+    if (this.state.editing === true) {
+      buttons = (
+      <>
+        <button type='button' className="lt-red-btn px-2 mt-1 mx-0" action='cancel' onClick={this.handleCancel}>
+          Cancel
+        </button>
+        <button type='submit' className='confirm-btn lt-red-btn px-2 mt-1 mx-0' action='confirm'>
+          Confirm
+        </button>
+        </>);
+    } else {
+      buttons = (
+        <>
+          <button type='button' className={`lt-red-btn next-back-btn px-2 mt-1 mx-0 ${previousBtnClass}`} onClick={handleSubmit} >
+            <span><i className="fa-solid fa-arrow-left"></i></span>
+            Previous
+          </button>
+          <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 mx-0'>
+            Next
+            <span><i className="fa-solid fa-arrow-right"></i></span>
+          </button>
+        </>
+      );
+    }
+
     return (
 
       <form style={formStyle} onSubmit={handleSubmit}>
@@ -584,14 +670,7 @@ export default class ProfileInfoForm extends React.Component {
             {inputs}
           </div>
           <div className="d-flex justify-content-between">
-          <button type='button' className={`lt-red-btn next-back-btn px-2 mt-1 mx-0 ${previousBtnClass}`} onClick={handleSubmit} >
-            <span><i className="fa-solid fa-arrow-left"></i></span>
-            Previous
-          </button>
-          <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 mx-0'>
-              Next
-              <span><i className="fa-solid fa-arrow-right"></i></span>
-          </button>
+          { buttons }
           </div>
         </form>
 

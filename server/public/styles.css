@@ -76,6 +76,10 @@ a:hover {
   justify-content: space-between;
 }
 
+.confirm-btn {
+  background-color: #4ad969;
+}
+
 .a-nav {
   color: white;
   text-decoration: none;

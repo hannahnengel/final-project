@@ -184,7 +184,7 @@ export default class Profile extends React.Component {
               </div>
             </div>
             <div className="row mt-3 row-cols-md-3 row-cols-1 d-flex align-items-center justify-content-around margin-100" style={{ color: '#6D6969' }}>
-              <div className="col col-md-6 d-flex justify-content-end px-0">
+              <div className="col col-md-6 d-flex justify-content-center px-0">
                 <p className='form-font my-0'>
                   <span className='form-font pe-1' style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 'bold' }}>
                     Seeking:</span>
@@ -195,7 +195,7 @@ export default class Profile extends React.Component {
                     : <></>
                   }</p>
               </div>
-              <div className="col col-md-2 d-flex justify-content-end px-0">
+              <div className="col col-md-2 d-flex justify-content-center px-0">
                 <p className='form-font my-0'>
                   Ages {`${friendAge}`}
                 </p>
