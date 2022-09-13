@@ -80,6 +80,10 @@ a:hover {
   background-color: #4ad969;
 }
 
+.confirm-cancel-btn {
+  width: 155px;
+}
+
 .a-nav {
   color: white;
   text-decoration: none;

@@ -641,10 +641,10 @@ export default class ProfileInfoForm extends React.Component {
     if (this.state.editing === true) {
       buttons = (
       <>
-        <button type='button' className="lt-red-btn px-2 mt-1 mx-0" action='cancel' onClick={this.handleCancel}>
+          <button type='button' className="lt-red-btn px-2 mt-1 mx-0 confirm-cancel-btn" action='cancel' onClick={this.handleCancel}>
           Cancel
         </button>
-        <button type='submit' className='confirm-btn lt-red-btn px-2 mt-1 mx-0' action='confirm'>
+          <button type='submit' className='confirm-btn lt-red-btn px-2 mt-1 mx-0 confirm-cancel-btn' action='confirm'>
           Confirm
         </button>
         </>);
