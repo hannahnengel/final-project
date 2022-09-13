@@ -10,6 +10,11 @@ export default class Profile extends React.Component {
     this.getUserInfo = this.getUserInfo.bind(this);
   }
 
+  editInfo(event) {
+    const action = event.target.getAttribute('action');
+    window.location.hash = action;
+  }
+
   getUserInfo() {
     const xaccesstoken = window.localStorage.getItem('react-context-jwt');
     const req = {
@@ -175,7 +180,7 @@ export default class Profile extends React.Component {
                 }
               </div>
               <div className="col-3 d-flex justify-content-end px-0">
-                <i className="fa-solid fa-pen-to-square" style={{ color: '#B0B0B0' }}></i>
+                <i className="fa-solid fa-pen-to-square" action='profile-info' style={{ color: '#B0B0B0' }} onClick={this.editInfo}></i>
               </div>
             </div>
             <div className="row mt-3 row-cols-md-3 row-cols-1 d-flex align-items-center justify-content-around margin-100" style={{ color: '#6D6969' }}>
@@ -196,7 +201,7 @@ export default class Profile extends React.Component {
                 </p>
               </div>
               <div className="col col-md-4 px-0 d-flex justify-content-end">
-                <p className='form-font my-0'>{`${mileRadius}`} Mile Radius<span><i className="fa-solid fa-pen-to-square px-1" style={{ color: '#B0B0B0' }}></i></span></p>
+                <p className='form-font my-0'>{`${mileRadius}`} Mile Radius<span><i className="fa-solid fa-pen-to-square px-1" action='friend-preferences' style={{ color: '#B0B0B0' }} onClick={this.editInfo}></i></span></p>
               </div>
             </div>
           </div>
