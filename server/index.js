@@ -87,6 +87,72 @@ app.post('/api/auth/register', (req, res, next) => {
     );
 });
 
+app.get('/api/selections/:categoryId', (req, res, next) => {
+  const categoryId = Number(req.params.categoryId);
+  if (!Number.isInteger(categoryId) || categoryId < 1) {
+    throw new ClientError(400, 'CategoryId must be a positive integer');
+  }
+  const sql = `
+  select *
+     from "selections"
+   where "categoryId" = $1
+  `;
+
+  const params = [categoryId];
+  db.query(sql, params)
+    .then(result => {
+      const selections = result.rows;
+      if (!selections) {
+        throw new ClientError(404, `Cannot find selections with categoryId ${categoryId}`);
+      } else {
+        res.json(selections);
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
+app.get('/api/categories', (req, res, next) => {
+  const sql = `
+  select * from "categories"
+  `;
+  db.query(sql)
+    .then(result => {
+      const categories = result.rows;
+      res.json(categories);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
+app.get('/api/selections/selection/:selectionId', (req, res, next) => {
+  const selectionId = Number(req.params.selectionId);
+  if (!Number.isInteger(selectionId) || selectionId < 1) {
+    throw new ClientError(400, 'SelectionId must be a positive integer');
+  }
+  const sql = `
+  select *
+     from "selections"
+   where "selectionId" = $1
+  `;
+
+  const params = [selectionId];
+  db.query(sql, params)
+    .then(result => {
+      const selections = result.rows;
+      if (!selections) {
+        throw new ClientError(404, `Cannot find selections with selectionId ${selectionId}`);
+      } else {
+        res.json(selections);
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
@@ -148,10 +214,69 @@ app.get('/api/auth/profile-info', (req, res, next) => {
     });
 });
 
+app.get('/api/auth/user-info', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "users"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    });
+});
+
 app.get('/api/auth/friend-preferences', (req, res, next) => {
   const { userId } = req.user;
   const sql = `
   select * from "friendPreferences"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    });
+});
+
+app.post('/api/auth/user-selections', (req, res, next) => {
+  const { userId } = req.user;
+  const { selectionId, categoryId } = req.body;
+  if (!selectionId || !categoryId) {
+    throw new ClientError(400, 'SelectionId and categoryId are required fields');
+  }
+  if (!Number.isInteger(categoryId) || categoryId < 1) {
+    throw new ClientError(400, 'CategoryId must be a positive integer');
+  }
+  if (!Number.isInteger(selectionId) || selectionId < 1) {
+    throw new ClientError(400, 'SelectionId must be a positive integer');
+  }
+
+  const sql = `
+  insert into "userSelections" ("userId", "selectionId", "categoryId")
+  values ($1, $2, $3)
+  on conflict on constraint "userSelections_pk"
+    do
+    update set "selectionId" = $2, "categoryId" = $3
+  returning *
+  `;
+  const params = [userId, selectionId, categoryId];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.get('/api/auth/user-selections', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "userSelections"
   where "userId" = $1
   `;
   const params = [userId];

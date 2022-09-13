@@ -1,0 +1,55 @@
+.vhminus {
+  min-height: calc(100vh - 100px);
+}
+
+.profile-selection-layout {
+  position: absolute;
+  top: 500px;
+  left: 0;
+}
+
+.behind {
+  z-index: 0;
+}
+
+.on-top {
+  z-index: 1;
+}
+
+.justify-dynamic {
+  justify-content: center;
+}
+
+.margin-100 {
+  margin: 0 100px;
+}
+
+.dynamic-height {
+  height: 400px;
+}
+
+@media only screen and (max-width: 600px) {
+  .text-align-end {
+    text-align: end;
+  }
+
+  .text-align-start {
+    text-align: start;
+  }
+
+  .justify-dynamic {
+    justify-content: end;
+  }
+}
+
+@media only screen and (max-width: 990px) {
+  .margin-100 {
+    margin: 0;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .dynamic-height {
+    height: 350px;
+  }
+}

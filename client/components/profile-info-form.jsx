@@ -115,7 +115,7 @@ export default class ProfileInfoForm extends React.Component {
             window.location.hash = 'friend-preferences';
           }
           if (action === 'friend-preferences') {
-            window.location.hash = '';
+            window.location.hash = 'hate-selections/pets';
           }
         });
     }
@@ -591,7 +591,7 @@ export default class ProfileInfoForm extends React.Component {
           <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 mx-0'>
               Next
               <span><i className="fa-solid fa-arrow-right"></i></span>
-            </button>
+          </button>
           </div>
         </form>
 

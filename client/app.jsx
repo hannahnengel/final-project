@@ -8,6 +8,8 @@ import Auth from './pages/auth';
 import Navbar from './components/navbar';
 import NotFound from './pages/not-found';
 import ProfileInfo from './pages/profile-info';
+import HateSelections from './pages/hate-selections';
+import Profile from './pages/profile';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -31,6 +33,7 @@ export default class App extends React.Component {
 
   handleSignOut() {
     window.localStorage.removeItem('react-context-jwt');
+    window.localStorage.removeItem('selections');
     this.setState({ user: null });
   }
 
@@ -76,6 +79,21 @@ export default class App extends React.Component {
     }
     if (route.path === 'profile-info' || route.path === 'friend-preferences') {
       return <ProfileInfo />;
+    }
+    if (route.path === 'hate-selections/pets' ||
+        route.path === 'hate-selections/foods' ||
+        route.path === 'hate-selections/desserts' ||
+        route.path === 'hate-selections/vacation-activities' ||
+        route.path === 'hate-selections/tv-shows' ||
+        route.path === 'hate-selections/hobbies' ||
+        route.path === 'hate-selections/pet-peeves' ||
+        route.path === 'hate-selections/drinks' ||
+        route.path === 'hate-selections/fandoms' ||
+        route.path === 'hate-selections/music-genres') {
+      return <HateSelections />;
+    }
+    if (route.path === 'my-profile') {
+      return <Profile />;
     }
     return <NotFound />;
   }
