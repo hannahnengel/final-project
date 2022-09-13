@@ -197,6 +197,14 @@ i:hover {
   font-size: 20px;
 }
 
+.white-overlay {
+  background-color: rgb(240, 240, 240, 0.6);
+  width: 155px;
+  height: 112px;
+  color: #292929;
+  font-size: 20px;
+}
+
 .hate-input:checked + .selections-container .middle {
   opacity: 1;
   background-size: 155px 112px;

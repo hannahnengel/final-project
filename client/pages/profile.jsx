@@ -8,6 +8,7 @@ export default class Profile extends React.Component {
     this.state = {
     };
     this.getUserInfo = this.getUserInfo.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   editInfo(event) {
@@ -67,14 +68,37 @@ export default class Profile extends React.Component {
     }
   }
 
-  handleClick() {
-    window.location.hash = 'hate-selections/pets';
+  handleClick(event) {
+    const categoryId = event.target.getAttribute('category');
+    let action;
+    if (event.target.className.includes('edit-icon')) {
+      action = 'edit';
+    } else { action = 'retake'; }
+
+    const req = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    fetch(`/api/categories/${categoryId}`, req)
+      .then(res => res.json())
+      .then(result => {
+        const words = result[0].categoryName.toLowerCase().split(' ');
+        const category = words.join('-');
+        this.setState({ Redirect: category, action });
+      });
+
   }
 
   render() {
     const { gender, birthday, phone, contact, firstName, email, city, zipCode, friendAge, friendGender, mileRadius, selections } = this.state;
-
     let inputs;
+    if (this.state.Redirect && this.state.action) {
+      const category = this.state.Redirect;
+      const action = this.state.action;
+      return <Redirect to={`hate-selections/${category}`} action={action} />;
+    }
     if (selections !== undefined) {
       selections.sort((a, b) => {
         return (a.categoryId - b.categoryId);
@@ -86,12 +110,37 @@ export default class Profile extends React.Component {
           words[i] = words[i][0].toUpperCase() + words[i].substr(1);
         }
         const description = words.join(' ');
+        let colorClass = 'selected';
+        const handleClick = this.handleClick;
+
         return (
-        <div className="col pt-2 px-0 d-flex justify-content-center" key={selection.selectionId}>
+          <div className="col pt-2 px-0 d-flex justify-content-center"
+
+          key={selection.selectionId}>
             <div className="selections-container">
               <img className='hate-selection-img' src={`${selection.src}`} alt={`${selection.selectionName}`}></img>
               <div className="selected-positioning">
-                <div className="selected text-center d-flex justify-content-center align-items-center">
+                <div
+                onMouseEnter={event => {
+                  event.target.classList.remove(colorClass);
+                  colorClass = 'white-overlay';
+                  event.target.classList.add(colorClass);
+                  event.target.innerHTML = '';
+                  const editIcon = document.createElement('i');
+                  editIcon.setAttribute('class', 'edit-icon fa-solid fa-pen-to-square');
+                  editIcon.setAttribute('category', selection.categoryId);
+                  editIcon.addEventListener('click', handleClick);
+                  event.target.appendChild(editIcon);
+                }}
+                onMouseLeave={event => {
+                  const editIcon = event.target.querySelector('i');
+                  event.target.removeChild(editIcon);
+                  event.target.innerHTML = description;
+                  event.target.classList.remove(colorClass);
+                  colorClass = 'selected';
+                  event.target.classList.add(colorClass);
+                }}
+                  className={`${colorClass} text-center d-flex justify-content-center align-items-center`}>
                   {`${description}`}
                 </div>
               </div>
@@ -214,7 +263,7 @@ export default class Profile extends React.Component {
           </div>
           {(inputs.length === 10)
             ? <div className='row justify-content-center mt-5'>
-              <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn'>Retake Quiz</button>
+              <button onClick={this.handleClick} category='1' className='lt-red-btn retake-quiz-btn'>Retake Quiz</button>
             </div>
             : <></>
           }

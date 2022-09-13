@@ -127,6 +127,32 @@ app.get('/api/categories', (req, res, next) => {
     });
 });
 
+app.get('/api/categories/:categoryId', (req, res, next) => {
+  const categoryId = Number(req.params.categoryId);
+  if (!Number.isInteger(categoryId) || categoryId < 1) {
+    throw new ClientError(400, 'CategoryId must be a positive integer');
+  }
+  const sql = `
+  select *
+     from "categories"
+   where "categoryId" = $1
+  `;
+
+  const params = [categoryId];
+  db.query(sql, params)
+    .then(result => {
+      const categories = result.rows;
+      if (!categories) {
+        throw new ClientError(404, `Cannot find categories with categoryId ${categoryId}`);
+      } else {
+        res.json(categories);
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 app.get('/api/selections/selection/:selectionId', (req, res, next) => {
   const selectionId = Number(req.params.selectionId);
   if (!Number.isInteger(selectionId) || selectionId < 1) {
