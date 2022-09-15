@@ -97,7 +97,8 @@ export default class Profile extends React.Component {
     if (this.state.Redirect && this.state.action) {
       const category = this.state.Redirect;
       const action = this.state.action;
-      return <Redirect to={`hate-selections/${category}`} action={action} />;
+      localStorage.setItem('action', action);
+      window.location.hash = `hate-selections/${category}`;
     }
     if (selections !== undefined) {
       selections.sort((a, b) => {

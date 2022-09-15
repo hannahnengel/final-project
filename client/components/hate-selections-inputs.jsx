@@ -217,6 +217,30 @@ export default class HateSelectionsInputs extends React.Component {
       hidePreviousBtnClass = 'invisible';
     }
 
+    let buttons;
+    const action = localStorage.getItem('action');
+    if (action === 'edit') {
+      buttons = (
+        <>
+          <button type='button' className='confirm-cancel-btn lt-red-btn px-2 mt-1 me-4'>Cancel</button>
+          <button type='submit' className='confirm-cancel-btn lt-red-btn px-2 mt-1 me-4 confirm-btn'>Confirm</button>
+        </>
+      );
+    } else {
+      buttons = (
+         <>
+          <button type='button' onClick={this.handlePrevious} className={`lt-red-btn next-back-btn px-2 mt-1 me-4 ${hidePreviousBtnClass}`} >
+              <span><i className="fa-solid fa-arrow-left"></i></span>
+              Previous
+          </button>
+          <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 ms-4'>
+              Next
+              <span><i className="fa-solid fa-arrow-right"></i></span>
+          </button>
+        </>
+      );
+    }
+
     return (
       <form onSubmit={this.handleSubmit}>
         {
@@ -228,14 +252,7 @@ export default class HateSelectionsInputs extends React.Component {
         }
         <div className="row mt-3">
           <div className="d-flex justify-content-center p-0">
-            <button type='button' onClick={this.handlePrevious} className={`lt-red-btn next-back-btn px-2 mt-1 me-4 ${hidePreviousBtnClass}`} >
-              <span><i className="fa-solid fa-arrow-left"></i></span>
-              Previous
-            </button>
-            <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 ms-4'>
-              Next
-              <span><i className="fa-solid fa-arrow-right"></i></span>
-            </button>
+            {buttons}
           </div>
         </div>
       </form>
