@@ -12,6 +12,7 @@ export default class HateSelectionsInputs extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handlePrevious = this.handlePrevious.bind(this);
     this.getSelections = this.getSelections.bind(this);
+    this.handleEdit = this.handleEdit.bind(this);
   }
 
   handleChange(event) {
@@ -26,11 +27,56 @@ export default class HateSelectionsInputs extends React.Component {
     const preValue = this.state[category];
     const value = preValue.replaceAll('-', ' ');
     let selection = {};
+    const xaccesstoken = window.localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-token': xaccesstoken
+      }
+    };
 
     for (let i = 0; i < this.state.inputSelections.length; i++) {
       if (this.state.inputSelections[i].selectionName.toLowerCase() === value) {
         selection = this.state.inputSelections[i];
       }
+    }
+
+    const edit = event.target.querySelector('button[action=edit]');
+    if (edit !== null) {
+      const selectionEdits = [];
+      req.method = 'GET';
+      fetch('/api/auth/user-selections', req)
+        .then(res => res.json())
+        .then(result => {
+          for (let i = 0; i < result.length; i++) {
+            if (selection.categoryId !== result[i].categoryId) {
+              selectionEdits.push(result[i]);
+            }
+          }
+          selectionEdits.push(selection);
+          for (let j = 0; j < selectionEdits.length; j++) {
+            const selectionId = selectionEdits[j].selectionId;
+            const categoryId = selectionEdits[j].categoryId;
+            let body = {
+              categoryId,
+              selectionId
+            };
+            req.method = 'POST';
+            req.body = JSON.stringify(body);
+            fetch('/api/auth/user-selections', req)
+              .then(res => res.json())
+              .then(result => {
+                if (result.error) {
+                  alert(result.error);
+                } else {
+                  body = {};
+                }
+              });
+            window.location.hash = 'my-profile';
+          }
+        });
+      return;
     }
 
     const allUserSelections = localStorage.getItem('selections');
@@ -55,7 +101,6 @@ export default class HateSelectionsInputs extends React.Component {
 
       if (category === currentCategory) {
         if (categories[i] === categories[categories.length - 1]) {
-          const xaccesstoken = window.localStorage.getItem('react-context-jwt');
           const data = localStorage.getItem('selections');
           const dataParsed = JSON.parse(data);
           let body = {};
@@ -65,14 +110,7 @@ export default class HateSelectionsInputs extends React.Component {
               categoryId,
               selectionId
             };
-            const req = {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': xaccesstoken
-              },
-              body: JSON.stringify(body)
-            };
+            req.body = JSON.stringify(body);
             fetch('/api/auth/user-selections', req)
               .then(res => res.json())
               .then(result => {
@@ -115,6 +153,11 @@ export default class HateSelectionsInputs extends React.Component {
         });
       }
     }
+  }
+
+  handleCancel() {
+    localStorage.removeItem('action');
+    window.location.hash = 'my-profile';
   }
 
   getSelections() {
@@ -222,8 +265,8 @@ export default class HateSelectionsInputs extends React.Component {
     if (action === 'edit') {
       buttons = (
         <>
-          <button type='button' className='confirm-cancel-btn lt-red-btn px-2 mt-1 me-4'>Cancel</button>
-          <button type='submit' className='confirm-cancel-btn lt-red-btn px-2 mt-1 me-4 confirm-btn'>Confirm</button>
+          <button type='button' className='confirm-cancel-btn lt-red-btn px-2 mt-1 me-4' onClick={this.handleCancel}>Cancel</button>
+          <button type='submit' className='confirm-cancel-btn lt-red-btn px-2 mt-1 me-4 confirm-btn' action='edit' >Confirm</button>
         </>
       );
     } else {
@@ -233,7 +276,7 @@ export default class HateSelectionsInputs extends React.Component {
               <span><i className="fa-solid fa-arrow-left"></i></span>
               Previous
           </button>
-          <button type='submit' className='lt-red-btn next-back-btn px-2 mt-1 ms-4'>
+          <button type='submit' action='submit' className='lt-red-btn next-back-btn px-2 mt-1 ms-4'>
               Next
               <span><i className="fa-solid fa-arrow-right"></i></span>
           </button>
