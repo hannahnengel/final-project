@@ -12,7 +12,6 @@ export default class HateSelectionsInputs extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handlePrevious = this.handlePrevious.bind(this);
     this.getSelections = this.getSelections.bind(this);
-    this.handleEdit = this.handleEdit.bind(this);
   }
 
   handleChange(event) {
@@ -121,6 +120,8 @@ export default class HateSelectionsInputs extends React.Component {
                 }
               });
             if (j === dataParsed.length - 1) {
+              localStorage.removeItem('selections');
+              localStorage.removeItem('action');
               window.location.hash = 'my-profile';
               return;
             }
