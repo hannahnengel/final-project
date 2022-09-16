@@ -1,6 +1,7 @@
 import React from 'react';
 import AppContext from '../lib/app-context';
 import Redirect from '../components/redirect';
+import PhotoModal from '../components/photo-modal';
 
 export default class Profile extends React.Component {
   constructor(props) {
@@ -193,13 +194,14 @@ export default class Profile extends React.Component {
     } else {
       return (
         <>
+        <PhotoModal action='photo-modal'/>
           <div className="position-absolute behind dynamic-height shadow start-0" style={{ width: '100%', backgroundColor: '#F0F0F0' }}>
           </div>
           <div className="on-top position-relative">
             <div className="row pt-2 w-100 row-cols-md-1 d-flex justify-content-center align-items-center">
               <div className="col d-flex justify-content-center px-0">
                 <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
-                  <i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }}></i>
+                  <a><i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }} onClick={this.fileUpload} data-bs-toggle="modal" data-bs-target="#photo-modal"></i></a>
                 </div>
               </div>
               <div className="col  px-0">
