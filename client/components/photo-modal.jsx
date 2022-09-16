@@ -5,11 +5,38 @@ export default class PhotoModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-
+      selectedFile: null
     };
+    this.fileChange = this.fileChange.bind(this);
+  }
+
+  fileChange(event) {
+    let url;
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      url = reader.result;
+      const imgName = event.target.files[0].name;
+      this.setState({ selectedFile: { url, imgName } });
+    });
+    reader.readAsDataURL(event.target.files[0]);
   }
 
   render() {
+    let profilePicture =
+    (<div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px', backgroundColor: '#D9D9D9' }}>
+      <i className="fa-solid fa-camera fa-2xl" style={{ color: '#6D6969' }}></i>
+    </div>);
+
+    if (this.state.selectedFile !== null) {
+      const url = this.state.selectedFile.url;
+      const imgName = this.state.selectedFile.imgName;
+      profilePicture = (
+        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px' }}>
+          <img className='profile-picture' src={url} alt={imgName} />
+        </div>
+      );
+    }
+
     const modalCardStyle = {
       backgroundColor: '#292929'
 
@@ -38,9 +65,7 @@ export default class PhotoModal extends React.Component {
                 </div>
                 <div className="row">
                   <div className="col d-flex justify-content-center">
-                    <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px', backgroundColor: '#D9D9D9' }}>
-                      <i className="fa-solid fa-camera fa-2xl" style={{ color: '#6D6969' }}></i>
-                    </div>
+                    {profilePicture}
                   </div>
                 </div>
                 <div className="row my-2 d-flex justify-content-center">
@@ -54,7 +79,8 @@ export default class PhotoModal extends React.Component {
                   </div>
                   <div className="col-3 col-md-2 px-4">
                     <div className="col d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-                      <i className="fa-solid fa-arrow-up-from-bracket fa-xl" style={{ color: 'white' }}></i>
+                      <label htmlFor="upload-photo"><i className="fa-solid fa-arrow-up-from-bracket fa-xl" style={{ color: 'white' }}></i></label>
+                      <input className='invisible' type="file" accept="image/jpeg, image/png, image/jpg" name="photo" id="upload-photo" onChange={this.fileChange}/>
                     </div>
                     <div className="col d-flex justify-content-center">
                       <p className='form-text' style={{ color: 'white' }}>Upload</p>
