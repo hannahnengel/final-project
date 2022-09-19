@@ -5,34 +5,48 @@ export default class PhotoModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedFile: null
+      url: null,
+      fileName: null
     };
-    this.fileChange = this.fileChange.bind(this);
+    this.fileInputRef = React.createRef();
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  fileChange(event) {
-    let url;
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      url = reader.result;
-      const imgName = event.target.files[0].name;
-      this.setState({ selectedFile: { url, imgName } });
-    });
-    reader.readAsDataURL(event.target.files[0]);
+  handleSubmit(event) {
+    event.preventDefault();
+    const file = this.fileInputRef.current.files[0];
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const formData = new FormData();
+    formData.append('fileName', file.name);
+    formData.append('image', file);
+
+    const req = {
+      method: 'POST',
+      headers: {
+        'x-access-token': xaccesstoken
+      },
+      body: formData
+    };
+    fetch('/api/auth/profile-picture/', req)
+      .then(res => res.json())
+      .then(result => {
+        const { fileName, url } = result;
+        this.setState({ url, fileName });
+      });
   }
 
   render() {
+    // console.log('STATE', this.state);
     let profilePicture =
     (<div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px', backgroundColor: '#D9D9D9' }}>
       <i className="fa-solid fa-camera fa-2xl" style={{ color: '#6D6969' }}></i>
     </div>);
 
-    if (this.state.selectedFile !== null) {
-      const url = this.state.selectedFile.url;
-      const imgName = this.state.selectedFile.imgName;
+    if (this.state.url !== null && this.state.fileName !== null) {
+      const { fileName, url } = this.state;
       profilePicture = (
         <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px' }}>
-          <img className='profile-picture' src={url} alt={imgName} />
+          <img className='profile-picture' src={url} alt={fileName} />
         </div>
       );
     }
@@ -79,8 +93,10 @@ export default class PhotoModal extends React.Component {
                   </div>
                   <div className="col-3 col-md-2 px-4">
                     <div className="col d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-                      <label htmlFor="upload-photo"><i className="fa-solid fa-arrow-up-from-bracket fa-xl" style={{ color: 'white' }}></i></label>
-                      <input className='invisible' type="file" accept="image/jpeg, image/png, image/jpg" name="photo" id="upload-photo" onChange={this.fileChange}/>
+                      <form>
+                        <label htmlFor="upload-photo"><i className="fa-solid fa-arrow-up-from-bracket fa-xl" style={{ color: 'white' }}></i></label>
+                        <input ref={this.fileInputRef} className='invisible' type="file" accept="image/jpeg, image/png, image/jpg" name="image" id="upload-photo" onChange={this.handleSubmit} />
+                      </form>
                     </div>
                     <div className="col d-flex justify-content-center">
                       <p className='form-text' style={{ color: 'white' }}>Upload</p>

@@ -69,7 +69,7 @@ CREATE TABLE "profilePics" (
   "userId" integer NOT NULL,
   "url" TEXT NOT NULL,
   "fileName" TEXT NOT NULL,
-  CONSTRAINT "profilePics_pk" PRIMARY KEY ("profilePicId")
+  CONSTRAINT "profilePics_pk" PRIMARY KEY ("userId")
 ) WITH (
   OIDS=FALSE
 );
