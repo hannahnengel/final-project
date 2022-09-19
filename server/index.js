@@ -314,6 +314,44 @@ app.get('/api/auth/user-selections', (req, res, next) => {
     });
 });
 
+app.get('/api/auth/profile-picture', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "profilePics"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows[0]);
+    });
+});
+
+app.post('/api/auth/profile-picture', (req, res, next) => {
+  const { userId } = req.user;
+  const { url, fileName } = req.body;
+  if (!url || !fileName) {
+    throw new ClientError(400, 'url and fileName are required fields');
+  }
+  const sql = `
+  insert into "profilePics" ("userId" "url", "fileName")
+  values ($1, $2, $3)
+  on conflict on constraint "profilePics_pk"
+    do
+    update set "url" = $2, "fileName" = $3
+  returning *
+  `;
+  const params = [userId, url, fileName];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows[0]);
+    });
+});
+
 app.use(errorMiddleware);
 
 app.listen(process.env.PORT, () => {

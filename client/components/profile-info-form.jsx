@@ -47,26 +47,6 @@ export default class ProfileInfoForm extends React.Component {
     this.reverseGeoLocate = this.reverseGeoLocate.bind(this);
   }
 
-  // getUserInfo() {
-  //   const req = {
-  //     method: 'GET',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'x-access-token': xaccesstoken
-  //     }
-  //   };
-  //   fetch('api/auth/profile-info', req)
-  //     .then(res => res.json())
-  //     .then(result => {
-  //       console.log('result', result);
-
-  //     }).then(fetch('/api/auth/friend-preferences', req)
-  //       .then(res => res.json())
-  //       .then(result => {
-  //         console.log('result', result);
-  //       }));
-  // }
-
   handleCancel(event) {
     window.location.hash = 'my-profile';
   }
@@ -138,6 +118,7 @@ export default class ProfileInfoForm extends React.Component {
           }
           if (action === 'profile-info') {
             if (this.state.editing === false) {
+              this.setState({ editing: false });
               window.location.hash = 'friend-preferences';
             }
             if (this.state.editing === true) {
@@ -303,20 +284,15 @@ export default class ProfileInfoForm extends React.Component {
         'x-access-token': xaccesstoken
       }
     };
-    fetch('api/auth/profile-info', req)
+    fetch('/api/auth/user-selections', req)
       .then(res => res.json())
       .then(result => {
-        if (result.length >= 1) {
+        if (result === 'no info exists') {
+          return null;
+        } else {
           this.setState({ editing: true });
         }
-
-      }).then(fetch('/api/auth/friend-preferences', req)
-        .then(res => res.json())
-        .then(result => {
-          if (result.length >= 1) {
-            this.setState({ editing: true });
-          }
-        }));
+      });
   }
 
   render() {
