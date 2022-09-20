@@ -35,8 +35,23 @@ export default class PhotoModal extends React.Component {
       });
   }
 
+  componentDidMount() {
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'GET',
+      headers: {
+        'x-access-token': xaccesstoken
+      }
+    };
+    fetch('/api/auth/profile-picture/', req)
+      .then(res => res.json())
+      .then(result => {
+        const { fileName, url } = result;
+        this.setState({ url, fileName });
+      });
+  }
+
   render() {
-    // console.log('STATE', this.state);
     let profilePicture =
     (<div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px', backgroundColor: '#D9D9D9' }}>
       <i className="fa-solid fa-camera fa-2xl" style={{ color: '#6D6969' }}></i>

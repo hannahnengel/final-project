@@ -7,9 +7,12 @@ export default class Profile extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      url: null,
+      fileName: null
     };
     this.getUserInfo = this.getUserInfo.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.handleMouseHover = this.handleMouseHover.bind(this);
   }
 
   editInfo(event) {
@@ -58,6 +61,8 @@ export default class Profile extends React.Component {
             fetch(`/api/selections/selection/${selectionId}`, req)
               .then(res => res.json())
               .then(result => {
+                result[0].colorClass = 'selected';
+                result[0].descriptionType = 'text';
                 selections.push(result[0]);
                 this.setState({ selections });
               });
@@ -92,7 +97,45 @@ export default class Profile extends React.Component {
 
   }
 
+  handleMouseHover(event) {
+    const action = event._reactName;
+    const selectionId = parseInt(event.target.getAttribute('selection-id'), 10);
+    const selections = this.state.selections;
+    const selectionsCopy = [...selections];
+    for (let i = 0; i < selectionsCopy.length; i++) {
+      if (selectionId === selectionsCopy[i].selectionId) {
+        if (action === 'onMouseEnter') {
+          selectionsCopy[i].colorClass = 'white-overlay';
+          selectionsCopy[i].descriptionType = 'icon';
+        }
+        if (action === 'onMouseLeave') {
+          selectionsCopy[i].colorClass = 'selected';
+          selectionsCopy[i].descriptionType = 'text';
+        }
+
+      }
+    }
+    this.setState({ selections: selectionsCopy });
+  }
+
+  componentDidUpdate() {
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'GET',
+      headers: {
+        'x-access-token': xaccesstoken
+      }
+    };
+    fetch('/api/auth/profile-picture/', req)
+      .then(res => res.json())
+      .then(result => {
+        const { fileName, url } = result;
+        this.setState({ url, fileName });
+      });
+  }
+
   render() {
+    // console.log('STATE', this.state);
     const { gender, birthday, phone, contact, firstName, email, city, zipCode, friendAge, friendGender, mileRadius, selections } = this.state;
     let inputs;
     if (this.state.Redirect && this.state.action) {
@@ -107,43 +150,36 @@ export default class Profile extends React.Component {
       });
 
       inputs = selections.map(selection => {
-        const words = selection.selectionName.split(' ');
-        for (let i = 0; i < words.length; i++) {
-          words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+        let description;
+        const descriptionType = selection.descriptionType;
+        if (descriptionType === 'icon') {
+          description = <i className='fa-solid fa-pen-to-square fa-xl edit-icon' category={selection.categoryId} onClick={this.handleClick}></i>;
+        } else {
+          const words = selection.selectionName.split(' ');
+          for (let i = 0; i < words.length; i++) {
+            words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+          }
+          const descriptionWords = words.join(' ');
+          description = `${descriptionWords}`;
         }
-        const description = words.join(' ');
-        let colorClass = 'selected';
-        const handleClick = this.handleClick;
+
+        const colorClass = selection.colorClass;
 
         return (
           <div className="col pt-2 px-0 d-flex justify-content-center"
-
-          key={selection.selectionId}>
-            <div className="selections-container">
+          key={selection.selectionId}
+          selection-id={selection.selectionId}>
+            <div className="selections-container"
+              onMouseEnter={this.handleMouseHover}
+              onMouseLeave={this.handleMouseHover}
+              selection-id={selection.selectionId}
+             >
               <img className='hate-selection-img' src={`${selection.src}`} alt={`${selection.selectionName}`}></img>
               <div className="selected-positioning">
                 <div
-                onMouseEnter={event => {
-                  event.target.classList.remove(colorClass);
-                  colorClass = 'white-overlay';
-                  event.target.classList.add(colorClass);
-                  event.target.innerHTML = '';
-                  const editIcon = document.createElement('i');
-                  editIcon.setAttribute('class', 'edit-icon fa-solid fa-pen-to-square');
-                  editIcon.setAttribute('category', selection.categoryId);
-                  editIcon.addEventListener('click', handleClick);
-                  event.target.appendChild(editIcon);
-                }}
-                onMouseLeave={event => {
-                  const editIcon = event.target.querySelector('i');
-                  event.target.removeChild(editIcon);
-                  event.target.innerHTML = description;
-                  event.target.classList.remove(colorClass);
-                  colorClass = 'selected';
-                  event.target.classList.add(colorClass);
-                }}
+                  selection-id={selection.selectionId}
                   className={`${colorClass} text-center d-flex justify-content-center align-items-center`}>
-                  {`${description}`}
+                  {description}
                 </div>
               </div>
             </div>
@@ -184,6 +220,20 @@ export default class Profile extends React.Component {
       age--;
     }
 
+    let profilePicture = (
+      <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
+        <a><i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }} onClick={this.fileUpload} data-bs-toggle="modal" data-bs-target="#photo-modal"></i></a>
+      </div>);
+
+    if (this.state.url !== null && this.state.fileName !== null) {
+      const { fileName, url } = this.state;
+      profilePicture = (
+        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
+          <a onClick={this.fileUpload}><img data-bs-toggle="modal" data-bs-target="#photo-modal" className='profile-picture' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
+        </div>
+      );
+    }
+
     if (selections === undefined) {
       this.getUserInfo();
       return (
@@ -200,9 +250,7 @@ export default class Profile extends React.Component {
           <div className="on-top position-relative">
             <div className="row pt-2 w-100 row-cols-md-1 d-flex justify-content-center align-items-center">
               <div className="col d-flex justify-content-center px-0">
-                <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
-                  <a><i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }} onClick={this.fileUpload} data-bs-toggle="modal" data-bs-target="#photo-modal"></i></a>
-                </div>
+               { profilePicture }
               </div>
               <div className="col  px-0">
                 <div className="row">
