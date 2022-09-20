@@ -14,25 +14,37 @@ export default class PhotoModal extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    const file = this.fileInputRef.current.files[0];
+    const action = event.target.getAttribute('id');
     const xaccesstoken = localStorage.getItem('react-context-jwt');
-    const formData = new FormData();
-    formData.append('fileName', file.name);
-    formData.append('image', file);
-
     const req = {
-      method: 'POST',
       headers: {
         'x-access-token': xaccesstoken
-      },
-      body: formData
+      }
     };
-    fetch('/api/auth/profile-picture/', req)
-      .then(res => res.json())
-      .then(result => {
-        const { fileName, url } = result;
-        this.setState({ url, fileName });
-      });
+
+    if (action === 'upload-photo') {
+      const file = this.fileInputRef.current.files[0];
+      const formData = new FormData();
+      formData.append('fileName', file.name);
+      formData.append('image', file);
+      req.method = 'POST';
+      req.body = formData;
+
+      fetch('/api/auth/profile-picture/', req)
+        .then(res => res.json())
+        .then(result => {
+          const { fileName, url } = result;
+          this.setState({ url, fileName });
+        });
+    } else if (action === 'delete-photo') {
+      req.method = 'DELETE';
+
+      fetch('/api/auth/profile-picture/', req)
+        .then(result => {
+          this.setState({ url: null, fileName: null });
+        });
+    }
+
   }
 
   componentDidMount() {
@@ -46,12 +58,19 @@ export default class PhotoModal extends React.Component {
     fetch('/api/auth/profile-picture/', req)
       .then(res => res.json())
       .then(result => {
-        const { fileName, url } = result;
-        this.setState({ url, fileName });
+        if (result === 'no info exists') {
+          this.setState({ url: null, fileName: null });
+        } else {
+          const { fileName, url } = result;
+          this.setState({ url, fileName });
+        }
+
       });
   }
 
   render() {
+    const { getDBInfo } = this.props;
+
     let profilePicture =
     (<div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px', backgroundColor: '#D9D9D9' }}>
       <i className="fa-solid fa-camera fa-2xl" style={{ color: '#6D6969' }}></i>
@@ -67,8 +86,8 @@ export default class PhotoModal extends React.Component {
     }
 
     const modalCardStyle = {
-      backgroundColor: '#292929'
-
+      backgroundColor: '#292929',
+      minWidth: '400px'
     };
 
     const modalStyle = {
@@ -89,7 +108,7 @@ export default class PhotoModal extends React.Component {
               <div className={`container-fluid ${photoModalClass}`}>
                 <div className="row">
                   <div className='col d-flex justify-content-end'>
-                    <i className="fa-solid fa-x" data-bs-dismiss="modal" style={{ color: 'white' }}></i>
+                    <i className="fa-solid fa-x" data-bs-dismiss="modal" onClick={getDBInfo} style={{ color: 'white' }}></i>
                   </div>
                 </div>
                 <div className="row">
@@ -98,15 +117,7 @@ export default class PhotoModal extends React.Component {
                   </div>
                 </div>
                 <div className="row my-2 d-flex justify-content-center">
-                  <div className="col-3 col-md-2 px-4">
-                    <div className="col d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-                      <i className="fa-solid fa-pen-to-square fa-xl" style={{ color: 'white' }}></i>
-                    </div>
-                    <div className="col d-flex justify-content-center">
-                      <p className='form-text' style={{ color: 'white' }}>Edit</p>
-                    </div>
-                  </div>
-                  <div className="col-3 col-md-2 px-4">
+                  <div className="col col-md-1 px-4">
                     <div className="col d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
                       <form>
                         <label htmlFor="upload-photo"><i className="fa-solid fa-arrow-up-from-bracket fa-xl" style={{ color: 'white' }}></i></label>
@@ -114,15 +125,15 @@ export default class PhotoModal extends React.Component {
                       </form>
                     </div>
                     <div className="col d-flex justify-content-center">
-                      <p className='form-text' style={{ color: 'white' }}>Upload</p>
+                      <p className='form-text me-2 my-0' style={{ color: 'white' }}>Upload</p>
                     </div>
                   </div>
-                  <div className="col-3 col-md-2 px-4">
+                  <div className="col col-md-1 px-4">
                     <div className="col d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-                      <i className="fa-solid fa-trash-can fa-xl" style={{ color: 'white' }}></i>
+                      <i onClick={this.handleSubmit} id="delete-photo" className="fa-solid fa-trash-can fa-xl" style={{ color: 'white' }}></i>
                     </div>
                     <div className="col d-flex justify-content-center">
-                      <p className='form-text' style={{ color: 'white' }}>Delete</p>
+                      <p className='form-text ms-2 my-0' style={{ color: 'white' }}>Delete</p>
                     </div>
                   </div>
                 </div>

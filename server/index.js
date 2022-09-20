@@ -8,6 +8,7 @@ const ClientError = require('./client-error');
 const errorMiddleware = require('./error-middleware');
 const authorizationMiddleware = require('./authorization-middleware');
 const uploadsMiddleware = require('./uploads-middleware');
+const fs = require('fs');
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
@@ -353,6 +354,26 @@ app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
       } else res.status(200).json(result.rows[0]);
     })
     .catch(err => next(err));
+});
+
+app.delete('/api/auth/profile-picture', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  delete from "profilePics"
+    where "userId" = $1
+  returning *`;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      res.status(204).json(result.rows);
+      const url = result.rows[0].url;
+      const pathToFile = path.join('./server/public', url);
+      fs.unlink(pathToFile, function (err) {
+        if (err) {
+          throw err;
+        }
+      });
+    });
 });
 
 app.use(errorMiddleware);

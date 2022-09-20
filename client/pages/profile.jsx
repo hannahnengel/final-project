@@ -13,6 +13,7 @@ export default class Profile extends React.Component {
     this.getUserInfo = this.getUserInfo.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleMouseHover = this.handleMouseHover.bind(this);
+    this.getDBInfo = this.getDBInfo.bind(this);
   }
 
   editInfo(event) {
@@ -118,7 +119,7 @@ export default class Profile extends React.Component {
     this.setState({ selections: selectionsCopy });
   }
 
-  componentDidUpdate() {
+  getDBInfo() {
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
       method: 'GET',
@@ -129,13 +130,38 @@ export default class Profile extends React.Component {
     fetch('/api/auth/profile-picture/', req)
       .then(res => res.json())
       .then(result => {
-        const { fileName, url } = result;
-        this.setState({ url, fileName });
+        if (result === 'no info exists') {
+          this.setState({ url: null, fileName: null });
+        } else {
+          const { fileName, url } = result;
+          this.setState({ url, fileName });
+        }
+
+      });
+  }
+
+  componentDidMount() {
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'GET',
+      headers: {
+        'x-access-token': xaccesstoken
+      }
+    };
+    fetch('/api/auth/profile-picture/', req)
+      .then(res => res.json())
+      .then(result => {
+        if (result === 'no info exists') {
+          this.setState({ url: null, fileName: null });
+        } else {
+          const { fileName, url } = result;
+          this.setState({ url, fileName });
+        }
+
       });
   }
 
   render() {
-    // console.log('STATE', this.state);
     const { gender, birthday, phone, contact, firstName, email, city, zipCode, friendAge, friendGender, mileRadius, selections } = this.state;
     let inputs;
     if (this.state.Redirect && this.state.action) {
@@ -222,14 +248,14 @@ export default class Profile extends React.Component {
 
     let profilePicture = (
       <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
-        <a><i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }} onClick={this.fileUpload} data-bs-toggle="modal" data-bs-target="#photo-modal"></i></a>
+        <a><i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }} data-bs-toggle="modal" data-bs-target="#photo-modal" id='modal'></i></a>
       </div>);
 
     if (this.state.url !== null && this.state.fileName !== null) {
       const { fileName, url } = this.state;
       profilePicture = (
         <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
-          <a onClick={this.fileUpload}><img data-bs-toggle="modal" data-bs-target="#photo-modal" className='profile-picture' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
+          <a><img data-bs-toggle="modal" data-bs-target="#photo-modal" className='profile-picture' id='modal' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
         </div>
       );
     }
@@ -244,7 +270,7 @@ export default class Profile extends React.Component {
     } else {
       return (
         <>
-        <PhotoModal action='photo-modal'/>
+        <PhotoModal action='photo-modal' getDBInfo={this.getDBInfo}/>
           <div className="position-absolute behind dynamic-height shadow start-0" style={{ width: '100%', backgroundColor: '#F0F0F0' }}>
           </div>
           <div className="on-top position-relative">
