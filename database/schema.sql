@@ -67,8 +67,9 @@ CREATE TABLE "userMatches" (
 CREATE TABLE "profilePics" (
   "profilePicId" serial NOT NULL,
   "userId" integer NOT NULL,
-  "profilePicHref" TEXT NOT NULL,
-  CONSTRAINT "profilePics_pk" PRIMARY KEY ("profilePicId")
+  "url" TEXT NOT NULL,
+  "fileName" TEXT NOT NULL,
+  CONSTRAINT "profilePics_pk" PRIMARY KEY ("userId")
 ) WITH (
   OIDS=FALSE
 );

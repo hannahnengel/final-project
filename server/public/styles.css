@@ -76,6 +76,14 @@ a:hover {
   justify-content: space-between;
 }
 
+.confirm-btn {
+  background-color: #4ad969;
+}
+
+.confirm-cancel-btn {
+  width: 155px;
+}
+
 .a-nav {
   color: white;
   text-decoration: none;
@@ -189,6 +197,14 @@ i:hover {
   font-size: 20px;
 }
 
+.white-overlay {
+  background-color: rgb(240, 240, 240, 0.6);
+  width: 155px;
+  height: 112px;
+  color: #292929;
+  font-size: 20px;
+}
+
 .hate-input:checked + .selections-container .middle {
   opacity: 1;
   background-size: 155px 112px;
@@ -196,4 +212,19 @@ i:hover {
 
 .retake-quiz-btn {
   width: 200px;
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  object-fit: cover;
+}
+
+.profile-picture:hover {
+  cursor: pointer;
+}
+
+.edit-icon {
+  color: #292929;
 }

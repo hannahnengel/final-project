@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const ClientError = require('./client-error');
 const errorMiddleware = require('./error-middleware');
 const authorizationMiddleware = require('./authorization-middleware');
+const uploadsMiddleware = require('./uploads-middleware');
+const fs = require('fs');
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
@@ -121,6 +123,32 @@ app.get('/api/categories', (req, res, next) => {
     .then(result => {
       const categories = result.rows;
       res.json(categories);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
+app.get('/api/categories/:categoryId', (req, res, next) => {
+  const categoryId = Number(req.params.categoryId);
+  if (!Number.isInteger(categoryId) || categoryId < 1) {
+    throw new ClientError(400, 'CategoryId must be a positive integer');
+  }
+  const sql = `
+  select *
+     from "categories"
+   where "categoryId" = $1
+  `;
+
+  const params = [categoryId];
+  db.query(sql, params)
+    .then(result => {
+      const categories = result.rows;
+      if (!categories) {
+        throw new ClientError(404, `Cannot find categories with categoryId ${categoryId}`);
+      } else {
+        res.json(categories);
+      }
     })
     .catch(err => {
       next(err);
@@ -285,6 +313,66 @@ app.get('/api/auth/user-selections', (req, res, next) => {
       if (result.rows.length === 0) {
         res.status(202).json('no info exists');
       } else res.status(200).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.get('/api/auth/profile-picture', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select * from "profilePics"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows[0]);
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
+  const { userId } = req.user;
+  const fileName = req.file.filename;
+  const url = '/images/' + fileName;
+
+  const sql = `
+  insert into "profilePics" ("userId", "url", "fileName")
+  values ($1, $2, $3)
+  on conflict on constraint "profilePics_pk"
+    do
+    update set "url" = $2, "fileName" = $3
+  returning *
+  `;
+  const params = [userId, url, fileName];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows[0]);
+    })
+    .catch(err => next(err));
+});
+
+app.delete('/api/auth/profile-picture', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  delete from "profilePics"
+    where "userId" = $1
+  returning *`;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      res.status(204).json(result.rows);
+      const url = result.rows[0].url;
+      const pathToFile = path.join('./server/public', url);
+      fs.unlink(pathToFile, function (err) {
+        if (err) {
+          throw err;
+        }
+      });
     });
 });
 
