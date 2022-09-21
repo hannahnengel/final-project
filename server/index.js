@@ -181,6 +181,20 @@ app.get('/api/selections/selection/:selectionId', (req, res, next) => {
     });
 });
 
+app.get('/api/user-selections', (req, res, next) => {
+  const sql = `
+  select * from "userSelections"
+  `;
+  db.query(sql)
+    .then(result => {
+      const allSelections = result.rows;
+      res.status(201).json(allSelections);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
