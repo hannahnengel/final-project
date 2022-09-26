@@ -1,6 +1,13 @@
 import React from 'react';
 
 export default class Matches extends React.Component {
+
+  handleClick() {
+    const action = 'retake';
+    localStorage.setItem('action', action);
+    window.location.hash = 'hate-selections/pets';
+  }
+
   render() {
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
@@ -16,7 +23,7 @@ export default class Matches extends React.Component {
         </div>
         <div className="row w-100 m-5">
           <div className="col d-flex justify-content-center">
-            <button className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
+            <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
               Retake Quiz
             </button>
           </div>
