@@ -260,7 +260,7 @@ export default class Profile extends React.Component {
       );
     }
 
-    if (selections === undefined) {
+    if (selections === undefined || gender === undefined) {
       this.getUserInfo();
       return (
         <div className='vhminus text-center d-flex flex-column align-items-center justify-content-center'>

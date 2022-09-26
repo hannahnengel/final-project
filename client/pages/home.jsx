@@ -1,8 +1,17 @@
 import React from 'react';
 import AppContext from '../lib/app-context';
 import IncompleteProfile from '../components/incomplete-profile';
+import Matches from '../components/matches';
 
 export default class Home extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      profileComplete: false
+    };
+  }
+
   handleSignInClick() {
     window.location.href = '#sign-in';
   }
@@ -11,10 +20,33 @@ export default class Home extends React.Component {
     window.location.href = '#register';
   }
 
-  render() {
-
+  componentDidMount() {
     const { user } = this.context;
     if (user) {
+      const xaccesstoken = localStorage.getItem('react-context-jwt');
+      const req = {
+        method: 'GET',
+        headers: {
+          'x-access-token': xaccesstoken
+        }
+      };
+      fetch('/api/auth/user-selections', req)
+        .then(res => res.json())
+        .then(result => {
+          if (result.length === 10) {
+            this.setState({ profileComplete: true });
+          }
+        });
+    }
+  }
+
+  render() {
+    const { user } = this.context;
+    const profileComplete = this.state.profileComplete;
+    if (user) {
+      if (profileComplete) {
+        return (<Matches />);
+      }
       return <IncompleteProfile />;
     }
 
