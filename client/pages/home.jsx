@@ -20,6 +20,26 @@ export default class Home extends React.Component {
     window.location.href = '#register';
   }
 
+  componentDidUpdate() {
+    const { user } = this.context;
+    if (user) {
+      const xaccesstoken = localStorage.getItem('react-context-jwt');
+      const req = {
+        method: 'GET',
+        headers: {
+          'x-access-token': xaccesstoken
+        }
+      };
+      fetch('/api/auth/user-selections', req)
+        .then(res => res.json())
+        .then(result => {
+          if (result.length === 10) {
+            this.setState({ profileComplete: true });
+          }
+        });
+    }
+  }
+
   componentDidMount() {
     const { user } = this.context;
     if (user) {
