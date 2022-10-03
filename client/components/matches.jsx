@@ -10,7 +10,9 @@ export default class Matches extends React.Component {
   }
 
   componentDidMount() {
-    // const { user } = this.context;
+    const { user } = this.context;
+    // console.log('user', user);
+    const potentialMatches = [];
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
       method: 'GET',
@@ -23,11 +25,39 @@ export default class Matches extends React.Component {
     fetch('/api/auth/friend-preferences', req)
       .then(res => res.json())
       .then(result => {
-        // const { friendAge, friendGender, lat, lng, mileRadius } = result[0];
-
+        const { friendAge, friendGender } = result[0];
         if (result.error) {
           alert(result.error);
         }
+        const body = {
+          friendGender
+        };
+        req.body = JSON.stringify(body);
+        req.method = 'POST';
+        fetch('/api/user-info', req)
+          .then(res => res.json())
+          .then(result => {
+            // console.log(result);
+            result.forEach(result => {
+              const today = new Date();
+              const birthDate = new Date(result.birthday);
+              let age = today.getFullYear() - birthDate.getFullYear();
+              const m = today.getMonth() - birthDate.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+              const friendAgeArray = friendAge.split('-');
+              const youngestFriend = parseInt(friendAgeArray[0]);
+              const oldestFriend = parseInt(friendAgeArray[1]);
+
+              if (age >= youngestFriend && age <= oldestFriend && result.userId !== user.userId) {
+                potentialMatches.push(result);
+              }
+            });
+            // if (potentialMatches.length === 0) {
+            //   console.log('No matches :(');
+            // }
+          });
       });
   }
 

@@ -195,6 +195,37 @@ app.get('/api/user-selections', (req, res, next) => {
     });
 });
 
+app.post('/api/user-info', (req, res, next) => {
+  const { friendGender } = req.body;
+  const friendGenderArray = friendGender.replace(/{|}|"|"/g, '').split(',');
+  if (friendGenderArray.length <= 0) {
+    throw new ClientError(400, 'Friend gender is a required field');
+  }
+  const resultArray = [];
+  friendGenderArray.forEach((friendGender, i) => {
+    if (friendGender === 'nonBinary') {
+      friendGender = 'non-binary';
+    }
+    const sql = `
+    select * from "userInfos"
+    where "gender" = $1
+    `;
+    const params = [friendGender];
+    db.query(sql, params)
+      .then(result => {
+        if (result.rows.length !== 0) {
+          result.rows.forEach(result => {
+            resultArray.push(result);
+          });
+        }
+        if (i === friendGenderArray.length - 1) {
+          res.status(201).json(resultArray);
+        }
+      })
+      .catch(err => next(err));
+  });
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
