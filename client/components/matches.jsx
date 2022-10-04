@@ -12,7 +12,9 @@ export default class Matches extends React.Component {
   componentDidMount() {
     const { user } = this.context;
     // console.log('user', user);
-    const potentialMatches = [];
+    const potentialDemoMatches = [];
+    const potentialLocationMatches = [];
+    // const potentialMatches = [];
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
       method: 'GET',
@@ -25,10 +27,13 @@ export default class Matches extends React.Component {
     fetch('/api/auth/friend-preferences', req)
       .then(res => res.json())
       .then(result => {
-        const { friendAge, friendGender } = result[0];
+        const { friendAge, friendGender, mileRadius } = result[0];
+        const centerLat = result[0].lat;
+        const centerLng = result[0].lng;
         if (result.error) {
           alert(result.error);
         }
+
         const body = {
           friendGender
         };
@@ -37,7 +42,6 @@ export default class Matches extends React.Component {
         fetch('/api/user-info', req)
           .then(res => res.json())
           .then(result => {
-            // console.log(result);
             result.forEach(result => {
               const today = new Date();
               const birthDate = new Date(result.birthday);
@@ -51,20 +55,39 @@ export default class Matches extends React.Component {
               const oldestFriend = parseInt(friendAgeArray[1]);
 
               if (age >= youngestFriend && age <= oldestFriend && result.userId !== user.userId) {
-                potentialMatches.push(result);
+                potentialDemoMatches.push(result);
               }
             });
-            if (potentialMatches.length !== 0) {
+            if (potentialDemoMatches.length !== 0) {
               req.method = 'GET';
               req.body = null;
-              potentialMatches.forEach(match => {
+              potentialDemoMatches.forEach((match, index) => {
                 const { userId } = match;
                 fetch(`/api/friend-preferences/${userId}`, req)
                   .then(res => res.json())
                   .then(result => {
-                    // console.log('result', result);
+                    const kmCenterRadius = mileRadius * 1.60934;
+                    const checkLat = result[0].lat;
+                    const checkLng = result[0].lng;
+                    const kmCheckRadius = result[0].mileRadius * 1.60934;
+
+                    const arePointsNear = (centerLat, centerLng, checkLat, checkLng, kmRadius) => {
+                      const ky = 40000 / 360;
+                      const kx = Math.cos(Math.PI * centerLat / 180.0) * ky;
+                      const dx = Math.abs(centerLng - checkLng) * kx;
+                      const dy = Math.abs(centerLat - checkLat) * ky;
+                      return Math.sqrt(dx * dx + dy * dy) <= kmRadius;
+                    };
+                    if (arePointsNear(centerLat, centerLng, checkLat, checkLng, kmCenterRadius) &&
+                    arePointsNear(checkLat, checkLng, centerLat, centerLng, kmCheckRadius)) {
+                      potentialLocationMatches.push(result[0]);
+                    }
+                    if (index === potentialDemoMatches.length - 1) {
+                      // console.log('potentialLocationMatches', potentialLocationMatches);
+                    }
                   });
               });
+
             }
           });
       });
