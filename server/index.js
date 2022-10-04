@@ -129,6 +129,33 @@ app.get('/api/categories', (req, res, next) => {
     });
 });
 
+app.get('/api/friend-preferences/:userId', (req, res, next) => {
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId) || userId < 1) {
+    throw new ClientError(400, 'User Id must be a positive integer');
+  }
+
+  const sql = `
+  select *
+     from "friendPreferences"
+   where "userId" = $1
+  `;
+
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      const users = result.rows;
+      if (!users) {
+        throw new ClientError(404, `Cannot find user with userId ${userId}`);
+      } else {
+        res.json(users);
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 app.get('/api/categories/:categoryId', (req, res, next) => {
   const categoryId = Number(req.params.categoryId);
   if (!Number.isInteger(categoryId) || categoryId < 1) {

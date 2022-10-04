@@ -54,9 +54,18 @@ export default class Matches extends React.Component {
                 potentialMatches.push(result);
               }
             });
-            // if (potentialMatches.length === 0) {
-            //   console.log('No matches :(');
-            // }
+            if (potentialMatches.length !== 0) {
+              req.method = 'GET';
+              req.body = null;
+              potentialMatches.forEach(match => {
+                const { userId } = match;
+                fetch(`/api/friend-preferences/${userId}`, req)
+                  .then(res => res.json())
+                  .then(result => {
+                    // console.log('result', result);
+                  });
+              });
+            }
           });
       });
   }
