@@ -242,6 +242,25 @@ app.post('/api/user-info', (req, res, next) => {
 
 });
 
+app.get('/api/user-selections/:userId', (req, res, next) => {
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId) || userId < 0) {
+    throw new ClientError(400, 'User Id must be a positive integer');
+  }
+  const sql = `
+  select * from "userSelections"
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {

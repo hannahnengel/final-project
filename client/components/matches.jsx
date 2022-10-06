@@ -14,7 +14,6 @@ export default class Matches extends React.Component {
     // console.log('user', user);
     const potentialGenderMatches = [];
     const potentialDemoMatches = [];
-    const potentialLocationMatches = [];
     // const potentialMatches = [];
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
@@ -134,13 +133,29 @@ export default class Matches extends React.Component {
               });
           });
           Promise.all(allDemoPromises).then(result => {
+            const userIds = [user.userId];
             result.forEach(item => {
               if (item !== null) {
-                potentialLocationMatches.push(item);
+                userIds.push(item.userId);
               }
             });
-            // console.log('potentialLocationMatches', potentialLocationMatches, 'potentialLocationMatches.length', potentialLocationMatches.length);
-            // fetch the selections and compare the selections //
+            if (userIds.length > 1) {
+              const selectionsPromises = userIds.map(id => {
+                const userId = id;
+                return fetch(`/api/user-selections/${userId}`, req)
+                  .then(res => res.json())
+                  .then(result => {
+                    return result;
+                  });
+              });
+
+              Promise.all(selectionsPromises).then(result => {
+                // console.log(result);
+              });
+            }
+            // fetch the user selections and ALL potential match selections and compare the selections //
+            // add the userId from the current user back in
+
           });
         });
       });
