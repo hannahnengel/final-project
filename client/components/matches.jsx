@@ -42,19 +42,37 @@ export default class Matches extends React.Component {
         fetch('/api/user-info', req)
           .then(res => res.json())
           .then(result => {
-            result.forEach(result => {
+            let userGender;
+            let userAge;
+
+            const getAge = birthday => {
               const today = new Date();
-              const birthDate = new Date(result.birthday);
+              const birthDate = new Date(birthday);
               let age = today.getFullYear() - birthDate.getFullYear();
               const m = today.getMonth() - birthDate.getMonth();
               if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
                 age--;
               }
+              return age;
+            };
+
+            const isAgeMatch = (age, friendAge) => {
               const friendAgeArray = friendAge.split('-');
               const youngestFriend = parseInt(friendAgeArray[0]);
               const oldestFriend = parseInt(friendAgeArray[1]);
 
-              if (age >= youngestFriend && age <= oldestFriend && result.userId !== user.userId) {
+              if (age >= youngestFriend && age <= oldestFriend) {
+                return true;
+              } else {
+                return false;
+              }
+            };
+
+            result.forEach(result => {
+              if (result.userId === user.userId) {
+                result.gender === 'non-binary' ? userGender = 'nonBinary' : userGender = result.gender;
+                userAge = getAge(result.birthday);
+              } else if (isAgeMatch(getAge(result.birthday), friendAge)) {
                 potentialDemoMatches.push(result);
               }
             });
@@ -66,6 +84,16 @@ export default class Matches extends React.Component {
                 fetch(`/api/friend-preferences/${userId}`, req)
                   .then(res => res.json())
                   .then(result => {
+                    const checkGender = result[0].friendGender;
+                    const checkGenderArray = checkGender.replace(/{|}|"|"/g, '').split(',');
+                    let genderMatch = false;
+                    checkGenderArray.forEach(gender => {
+                      if (userGender === gender) {
+                        genderMatch = true;
+                      }
+                    });
+                    const ageMatch = isAgeMatch(userAge, result[0].friendAge);
+
                     const kmCenterRadius = mileRadius * 1.60934;
                     const checkLat = result[0].lat;
                     const checkLng = result[0].lng;
@@ -78,7 +106,7 @@ export default class Matches extends React.Component {
                       const dy = Math.abs(centerLat - checkLat) * ky;
                       return Math.sqrt(dx * dx + dy * dy) <= kmRadius;
                     };
-                    if (arePointsNear(centerLat, centerLng, checkLat, checkLng, kmCenterRadius) &&
+                    if (genderMatch && ageMatch && arePointsNear(centerLat, centerLng, checkLat, checkLng, kmCenterRadius) &&
                     arePointsNear(checkLat, checkLng, centerLat, centerLng, kmCheckRadius)) {
                       potentialLocationMatches.push(result[0]);
                     }
