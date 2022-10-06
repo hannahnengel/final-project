@@ -12,6 +12,7 @@ export default class Matches extends React.Component {
   componentDidMount() {
     const { user } = this.context;
     // console.log('user', user);
+    const potentialGenderMatches = [];
     const potentialDemoMatches = [];
     const potentialLocationMatches = [];
     // const potentialMatches = [];
@@ -34,90 +35,114 @@ export default class Matches extends React.Component {
           alert(result.error);
         }
 
-        const body = {
-          friendGender
-        };
-        req.body = JSON.stringify(body);
+        const friendGenderArray = friendGender.replace(/{|}|"|"/g, '').split(',');
+        const bodyGenderArray = [];
+        friendGenderArray.forEach((friendGender, i) => {
+          if (friendGender === 'nonBinary') {
+            friendGender = 'non-binary';
+          }
+          bodyGenderArray.push({ friendGender });
+
+        });
         req.method = 'POST';
-        fetch('/api/user-info', req)
-          .then(res => res.json())
-          .then(result => {
-            let userGender;
-            let userAge;
-
-            const getAge = birthday => {
-              const today = new Date();
-              const birthDate = new Date(birthday);
-              let age = today.getFullYear() - birthDate.getFullYear();
-              const m = today.getMonth() - birthDate.getMonth();
-              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-              }
-              return age;
-            };
-
-            const isAgeMatch = (age, friendAge) => {
-              const friendAgeArray = friendAge.split('-');
-              const youngestFriend = parseInt(friendAgeArray[0]);
-              const oldestFriend = parseInt(friendAgeArray[1]);
-
-              if (age >= youngestFriend && age <= oldestFriend) {
-                return true;
-              } else {
-                return false;
-              }
-            };
-
-            result.forEach(result => {
-              if (result.userId === user.userId) {
-                result.gender === 'non-binary' ? userGender = 'nonBinary' : userGender = result.gender;
-                userAge = getAge(result.birthday);
-              } else if (isAgeMatch(getAge(result.birthday), friendAge)) {
-                potentialDemoMatches.push(result);
-              }
+        const allGenderPromises = bodyGenderArray.map(body => {
+          req.body = JSON.stringify(body);
+          return fetch('/api/user-info', req)
+            .then(res => res.json())
+            .then(result => {
+              return result;
             });
-            if (potentialDemoMatches.length !== 0) {
-              req.method = 'GET';
-              req.body = null;
-              potentialDemoMatches.forEach((match, index) => {
-                const { userId } = match;
-                fetch(`/api/friend-preferences/${userId}`, req)
-                  .then(res => res.json())
-                  .then(result => {
-                    const checkGender = result[0].friendGender;
-                    const checkGenderArray = checkGender.replace(/{|}|"|"/g, '').split(',');
-                    let genderMatch = false;
-                    checkGenderArray.forEach(gender => {
-                      if (userGender === gender) {
-                        genderMatch = true;
-                      }
-                    });
-                    const ageMatch = isAgeMatch(userAge, result[0].friendAge);
+        });
+        Promise.all(allGenderPromises).then(result => {
+          result.forEach(array => {
+            array.forEach(item => {
+              potentialGenderMatches.push(item);
+            });
+          });
 
-                    const kmCenterRadius = mileRadius * 1.60934;
-                    const checkLat = result[0].lat;
-                    const checkLng = result[0].lng;
-                    const kmCheckRadius = result[0].mileRadius * 1.60934;
+          let userGender;
+          let userAge;
 
-                    const arePointsNear = (centerLat, centerLng, checkLat, checkLng, kmRadius) => {
-                      const ky = 40000 / 360;
-                      const kx = Math.cos(Math.PI * centerLat / 180.0) * ky;
-                      const dx = Math.abs(centerLng - checkLng) * kx;
-                      const dy = Math.abs(centerLat - checkLat) * ky;
-                      return Math.sqrt(dx * dx + dy * dy) <= kmRadius;
-                    };
-                    if (genderMatch && ageMatch && arePointsNear(centerLat, centerLng, checkLat, checkLng, kmCenterRadius) &&
-                    arePointsNear(checkLat, checkLng, centerLat, centerLng, kmCheckRadius)) {
-                      potentialLocationMatches.push(result[0]);
-                    }
-                    if (index === potentialDemoMatches.length - 1) {
-                      // console.log('potentialLocationMatches', potentialLocationMatches);
-                    }
-                  });
-              });
+          const getAge = birthday => {
+            const today = new Date();
+            const birthDate = new Date(birthday);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            return age;
+          };
 
+          const isAgeMatch = (age, friendAge) => {
+            const friendAgeArray = friendAge.split('-');
+            const youngestFriend = parseInt(friendAgeArray[0]);
+            const oldestFriend = parseInt(friendAgeArray[1]);
+
+            if (age >= youngestFriend && age <= oldestFriend) {
+              return true;
+            } else {
+              return false;
+            }
+          };
+
+          potentialGenderMatches.forEach(potentialAgeMatch => {
+            if (potentialAgeMatch.userId === user.userId) {
+              userAge = getAge(potentialAgeMatch.birthday);
+              potentialAgeMatch.gender === 'non-binary' ? userGender = 'nonBinary' : userGender = potentialAgeMatch.gender;
+            }
+
+            if (isAgeMatch(getAge(potentialAgeMatch.birthday), friendAge)) {
+              potentialDemoMatches.push(potentialAgeMatch);
             }
           });
+          req.method = 'GET';
+          req.body = null;
+          const allDemoPromises = potentialDemoMatches.map(potentialDemoMatch => {
+            const { userId } = potentialDemoMatch;
+            return fetch(`/api/friend-preferences/${userId}`, req)
+              .then(res => res.json())
+              .then(result => {
+                const checkGender = result[0].friendGender;
+                const checkGenderArray = checkGender.replace(/{|}|"|"/g, '').split(',');
+                let genderMatch = false;
+                checkGenderArray.forEach(gender => {
+                  if (userGender === gender) {
+                    genderMatch = true;
+                  }
+                });
+                const ageMatch = isAgeMatch(userAge, result[0].friendAge);
+
+                const kmCenterRadius = mileRadius * 1.60934;
+                const checkLat = result[0].lat;
+                const checkLng = result[0].lng;
+                const kmCheckRadius = result[0].mileRadius * 1.60934;
+
+                const arePointsNear = (centerLat, centerLng, checkLat, checkLng, kmRadius) => {
+                  const ky = 40000 / 360;
+                  const kx = Math.cos(Math.PI * centerLat / 180.0) * ky;
+                  const dx = Math.abs(centerLng - checkLng) * kx;
+                  const dy = Math.abs(centerLat - checkLat) * ky;
+                  return Math.sqrt(dx * dx + dy * dy) <= kmRadius;
+                };
+
+                const locationMatch = !!((arePointsNear(centerLat, centerLng, checkLat, checkLng, kmCenterRadius) && arePointsNear(checkLat, checkLng, centerLat, centerLng, kmCheckRadius)));
+
+                if (genderMatch && ageMatch && locationMatch && result[0].userId !== user.userId) {
+                  return result[0];
+                } else return null;
+              });
+          });
+          Promise.all(allDemoPromises).then(result => {
+            result.forEach(item => {
+              if (item !== null) {
+                potentialLocationMatches.push(item);
+              }
+            });
+            // console.log('potentialLocationMatches', potentialLocationMatches, 'potentialLocationMatches.length', potentialLocationMatches.length);
+            // fetch the selections and compare the selections //
+          });
+        });
       });
   }
 
