@@ -150,12 +150,34 @@ export default class Matches extends React.Component {
               });
 
               Promise.all(selectionsPromises).then(result => {
-                // console.log(result);
+                const currentUserSelections = [];
+                const otherUserSelections = [];
+                result.forEach(array => {
+                  if (array[0].userId === user.userId) {
+                    array.forEach(selection => currentUserSelections.push(selection));
+                  } else array.forEach(selection => otherUserSelections.push(selection));
+                });
+
+                const matchSelections = [];
+
+                otherUserSelections.forEach(otherUserSelection => {
+                  currentUserSelections.forEach(currentUserSelection => {
+                    if (otherUserSelection.categoryId === currentUserSelection.categoryId) {
+                      if (otherUserSelection.selectionId === currentUserSelection.selectionId) {
+                        const match = {
+                          userId1: currentUserSelection.userId,
+                          userId2: otherUserSelection.userId,
+                          categoryId: currentUserSelection.categoryId,
+                          selectionId: currentUserSelection.selectionId
+                        };
+                        matchSelections.push(match);
+                      }
+                    }
+                  });
+                });
+                // console.log('matchSelections', matchSelections);
               });
             }
-            // fetch the user selections and ALL potential match selections and compare the selections //
-            // add the userId from the current user back in
-
           });
         });
       });
