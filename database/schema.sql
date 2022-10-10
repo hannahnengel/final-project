@@ -66,12 +66,11 @@ CREATE TABLE "userMatches" (
 );
 
 CREATE TABLE "matchSelections" (
-	"matchSelectionId" serial NOT NULL,
   "userId1" integer NOT NULL,
 	"userId2" integer NOT NULL,
 	"selectionId" integer NOT NULL,
 	"categoryId" integer NOT NULL,
-	CONSTRAINT "matchSelections_pk" PRIMARY KEY ("matchSelectionId","userId1","userId2","categoryId")
+	CONSTRAINT "matchSelections_pk" PRIMARY KEY ("userId1","userId2","categoryId")
 ) WITH (
   OIDS=FALSE
 );

@@ -165,8 +165,6 @@ export default class Matches extends React.Component {
                   currentUserSelections.forEach(currentUserSelection => {
                     if (otherUserSelection.categoryId === currentUserSelection.categoryId) {
                       if (otherUserSelection.selectionId === currentUserSelection.selectionId) {
-                        // console.log('currentUserSelection', currentUserSelection.userId);
-                        // console.log('otherUserSelection', otherUserSelection.userId);
                         let userId1;
                         let userId2;
                         if (currentUserSelection.userId < otherUserSelection.userId) {
@@ -176,8 +174,6 @@ export default class Matches extends React.Component {
                           userId1 = otherUserSelection.userId;
                           userId2 = currentUserSelection.userId;
                         }
-
-                        // console.log('userId1', userId1, 'userId2', userId2);
                         const match = {
                           userId1,
                           userId2,
@@ -189,9 +185,22 @@ export default class Matches extends React.Component {
                     }
                   });
                 });
+                req.method = 'POST';
+                const allMatchSelections = matchSelections.map(matchSelection => {
+                  req.body = JSON.stringify(matchSelection);
+                  return fetch('/api/match-selections', req)
+                    .then(res => res.json())
+                    .then(result => {
+                      return result;
+                    });
+                });
 
-                // console.log('matchSelections', matchSelections);
+                Promise.all(allMatchSelections).then(result => {
+                  // console.log(result);
+                });
+
               });
+
             }
           });
         });
