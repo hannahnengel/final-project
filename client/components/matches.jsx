@@ -41,7 +41,6 @@ export default class Matches extends React.Component {
             friendGender = 'non-binary';
           }
           bodyGenderArray.push({ friendGender });
-
         });
         req.method = 'POST';
         const allGenderPromises = bodyGenderArray.map(body => {
@@ -54,9 +53,11 @@ export default class Matches extends React.Component {
         });
         Promise.all(allGenderPromises).then(result => {
           result.forEach(array => {
-            array.forEach(item => {
-              potentialGenderMatches.push(item);
-            });
+            if (array !== 'no users with that gender') {
+              array.forEach(item => {
+                potentialGenderMatches.push(item);
+              });
+            }
           });
 
           let userGender;
@@ -164,9 +165,22 @@ export default class Matches extends React.Component {
                   currentUserSelections.forEach(currentUserSelection => {
                     if (otherUserSelection.categoryId === currentUserSelection.categoryId) {
                       if (otherUserSelection.selectionId === currentUserSelection.selectionId) {
+                        // console.log('currentUserSelection', currentUserSelection.userId);
+                        // console.log('otherUserSelection', otherUserSelection.userId);
+                        let userId1;
+                        let userId2;
+                        if (currentUserSelection.userId < otherUserSelection.userId) {
+                          userId1 = currentUserSelection.userId;
+                          userId2 = otherUserSelection.userId;
+                        } else {
+                          userId1 = otherUserSelection.userId;
+                          userId2 = currentUserSelection.userId;
+                        }
+
+                        // console.log('userId1', userId1, 'userId2', userId2);
                         const match = {
-                          userId1: currentUserSelection.userId,
-                          userId2: otherUserSelection.userId,
+                          userId1,
+                          userId2,
                           categoryId: currentUserSelection.categoryId,
                           selectionId: currentUserSelection.selectionId
                         };
@@ -175,6 +189,7 @@ export default class Matches extends React.Component {
                     }
                   });
                 });
+
                 // console.log('matchSelections', matchSelections);
               });
             }

@@ -237,6 +237,9 @@ app.post('/api/user-info', (req, res, next) => {
       if (result.rows.length !== 0) {
         res.status(201).json(result.rows);
       }
+      if (result.rows.length === 0) {
+        res.status(202).json('no users with that gender');
+      }
     })
     .catch(err => next(err));
 
@@ -260,6 +263,40 @@ app.get('/api/user-selections/:userId', (req, res, next) => {
     })
     .catch(err => next(err));
 });
+
+// app.post('/api/match-selections', (req, res, next) => {
+//   const { userId1, userId2, selectionId, categoryId } = req.body;
+//   if (!selectionId || !categoryId) {
+//     throw new ClientError(400, 'SelectionId and categoryId are required fields');
+//   }
+//   if (!Number.isInteger(categoryId) || categoryId < 1) {
+//     throw new ClientError(400, 'CategoryId must be a positive integer');
+//   }
+//   if (!Number.isInteger(selectionId) || selectionId < 1) {
+//     throw new ClientError(400, 'SelectionId must be a positive integer');
+//   }
+//   if (!Number.isInteger(userId1) || userId1 < 1) {
+//     throw new ClientError(400, 'UserId1 must be a positive integer');
+//   }
+//   if (!Number.isInteger(userId2) || userId2 < 1) {
+//     throw new ClientError(400, 'UserId2 must be a positive integer');
+//   }
+
+//   const sql = `
+//   insert into "matchSelections" ("userId1", "userId2", "selectionId", "categoryId")
+//   values ($1, $2, $3, $4)
+//   on conflict on constraint "userSelections_pk"
+//     do
+//     update set "selectionId" = $2, "categoryId" = $3
+//   returning *
+//   `;
+//   const params = [userId1, userId2, selectionId, categoryId];
+//   db.query(sql, params)
+//     .then(result => {
+//       res.status(201).json(result.rows);
+//     })
+//     .catch(err => next(err));
+// });
 
 app.use(authorizationMiddleware);
 
