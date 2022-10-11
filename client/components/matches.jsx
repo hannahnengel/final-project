@@ -196,7 +196,59 @@ export default class Matches extends React.Component {
                 });
 
                 Promise.all(allMatchSelections).then(result => {
-                  // console.log(result);
+                  const allMatches = [];
+                  result.forEach(matchSelection => {
+                    allMatches.push(matchSelection[0]);
+                  });
+                  const otherUsers = [];
+                  allMatches.forEach(match => {
+                    let otherUser;
+                    if (match.userId1 === user.userId) {
+                      otherUser = match.userId2;
+                    } else {
+                      otherUser = match.userId1;
+                    }
+                    otherUsers.push(otherUser);
+                  });
+                  const uniqueOtherUsers = otherUsers.filter((user, index) => {
+                    return otherUsers.indexOf(user) === index;
+                  });
+
+                  const allMatchTypes = [];
+                  uniqueOtherUsers.forEach(otherUser => {
+                    let count = 0;
+                    let matchType = '';
+                    otherUsers.forEach(occurance => {
+                      if (otherUser === occurance) {
+                        count++;
+                      }
+                    });
+                    if (count <= 4) {
+                      matchType = 'good';
+                    } else if (count <= 9) {
+                      matchType = 'great';
+                    } else if (count === 10) {
+                      matchType = 'perfect';
+                    }
+                    let userId1;
+                    let userId2;
+                    if (user.userId < otherUser) {
+                      userId1 = user.userId;
+                      userId2 = otherUser;
+                    } else {
+                      userId1 = otherUser;
+                      userId2 = user.userId;
+                    }
+                    allMatchTypes.push({
+                      userId1,
+                      user1Status: 'pending',
+                      userId2,
+                      user2Status: 'pending',
+                      matchStatus: 'pending',
+                      matchType
+                    });
+                  });
+                  // console.log('allMatchTypes', allMatchTypes);
                 });
 
               });
