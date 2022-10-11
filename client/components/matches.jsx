@@ -244,15 +244,22 @@ export default class Matches extends React.Component {
                       user1Status: 'pending',
                       userId2,
                       user2Status: 'pending',
-                      matchStatus: 'pending',
                       matchType
                     });
                   });
-                  // console.log('allMatchTypes', allMatchTypes);
+                  const userMatches = allMatchTypes.map(match => {
+                    req.body = JSON.stringify(match);
+                    return fetch('/api/new-user-matches', req)
+                      .then(res => res.json())
+                      .then(result => {
+                        return result;
+                      });
+                  });
+                  Promise.all(userMatches).then(result => {
+                    // console.log(result);
+                  });
                 });
-
               });
-
             }
           });
         });
