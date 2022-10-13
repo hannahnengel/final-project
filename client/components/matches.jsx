@@ -281,15 +281,14 @@ export default class Matches extends React.Component {
                     }
                     allMatchTypes.push({
                       userId1,
-                      user1Status: 'pending',
                       userId2,
-                      user2Status: 'pending',
+                      user1Status: 'accepted',
                       matchType
                     });
                   });
                   const userMatches = allMatchTypes.map(match => {
                     req.body = JSON.stringify(match);
-                    return fetch('/api/new-user-matches', req)
+                    return fetch('/api/matches', req)
                       .then(res => res.json())
                       .then(result => {
                         return result;

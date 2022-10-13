@@ -298,10 +298,17 @@ app.post('/api/match-selections', (req, res, next) => {
     .catch(err => next(err));
 });
 
-app.post('/api/match-types', (req, res, next) => {
+app.post('/api/matches', (req, res, next) => {
   const { userId1, userId2, matchType } = req.body;
+  let { user1Status, user2Status } = req.body;
   if (!matchType || !userId1 || !userId2) {
     throw new ClientError(400, 'Match Type, user1Id, and user2Id are required fields');
+  }
+  if (!user1Status) {
+    user1Status = 'pending';
+  }
+  if (!user2Status) {
+    user2Status = 'pending';
   }
   if (!Number.isInteger(userId1) || userId1 < 1) {
     throw new ClientError(400, 'userId1 must be a positive integer');
@@ -310,15 +317,24 @@ app.post('/api/match-types', (req, res, next) => {
     throw new ClientError(400, 'userId2 must be a positive integer');
   }
 
+  let matchStatus = '';
+  if (user1Status === 'accepted' && user2Status === 'accepted') {
+    matchStatus = 'accepted';
+  } else if (user1Status === 'rejected' || user2Status === 'rejected') {
+    matchStatus = 'rejected';
+  } else {
+    matchStatus = 'pending';
+  }
+
   const sql = `
-  insert into "userMatches" ("userId1", "userId2", "matchType")
-  values ($1, $2, $3)
-  on conflict on constraint "userMatches_pk"
+  insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
+  values ($1, $2, $3, $4, $5, $6)
+  on conflict on constraint "matches_pk"
     do
     update set "matchType" = $3
   returning *
   `;
-  const params = [userId1, userId2, matchType];
+  const params = [userId1, userId2, matchType, user1Status, user2Status, matchStatus];
   db.query(sql, params)
     .then(result => {
       res.status(201).json(result.rows);

@@ -52,14 +52,15 @@ CREATE TABLE "forgottenPasswords" (
   OIDS=FALSE
 );
 
-CREATE TABLE "userMatches" (
-  "userId1" integer NOT NULL,
-  "user1Status" TEXT NOT NULL,
-  "userId2" integer NOT NULL,
-  "user2Status" TEXT NOT NULL,
-  "matchStatus" TEXT NOT NULL,
-  "matchType" TEXT NOT NULL,
-  CONSTRAINT "userMatches_pk" PRIMARY KEY ("userId1", "userId2")
+
+CREATE TABLE "matches" (
+    "userId1" integer NOT NULL,
+    "userId2" integer NOT NULL,
+    "matchType" TEXT NOT NULL,
+    "user1Status" TEXT,
+    "user2Status" TEXT,
+    "matchStatus" TEXT,
+    CONSTRAINT "matches_pk" PRIMARY KEY ("userId1", "userId2")
 ) WITH (
   OIDS=FALSE
 );
@@ -108,8 +109,8 @@ CREATE TABLE "userSelections" (
   OIDS=FALSE
 );
 ALTER TABLE "forgottenPasswords" ADD CONSTRAINT "forgottenPasswords_fk0" FOREIGN KEY ("userId") REFERENCES "users"("userId");
-ALTER TABLE "userMatches" ADD CONSTRAINT "userMatches_fk0" FOREIGN KEY ("userId1") REFERENCES "users"("userId");
-ALTER TABLE "userMatches" ADD CONSTRAINT "userMatches_fk1" FOREIGN KEY ("userId2") REFERENCES "users"("userId");
+ALTER TABLE "matches" ADD CONSTRAINT "matches_fk0" FOREIGN KEY ("userId1") REFERENCES "users"("userId");
+ALTER TABLE "matches" ADD CONSTRAINT "matches_fk1" FOREIGN KEY ("userId2") REFERENCES "users"("userId");
 ALTER TABLE "profilePics" ADD CONSTRAINT "profilePics_fk0" FOREIGN KEY ("userId") REFERENCES "users"("userId");
 ALTER TABLE "selections" ADD CONSTRAINT "selections_fk0" FOREIGN KEY ("categoryId") REFERENCES "categories"("categoryId");
 ALTER TABLE "userSelections" ADD CONSTRAINT "userSelections_fk0" FOREIGN KEY ("userId") REFERENCES "users"("userId");
