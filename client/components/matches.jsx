@@ -15,6 +15,10 @@ export default class Matches extends React.Component {
     };
   }
 
+  handleSubmit(event) {
+    event.preventDefault();
+  }
+
   handleClick() {
     const action = 'retake';
     localStorage.setItem('action', action);
@@ -312,6 +316,8 @@ export default class Matches extends React.Component {
 
   render() {
 
+    const { matchTypes } = this.state;
+    // console.log(matchTypes);
     // const { matchTypes, potentialMatchInfo, potentialMatchMileage, matchSelections } = this.state;
     // console.log('STATE', this.state);
     // IF has matches, return carousel
@@ -319,25 +325,130 @@ export default class Matches extends React.Component {
     // if currentUserStatus is pending, SHOW, else do NOT show.
     // ELSE return no match message
 
+    const formStyle = {
+      width: '100%',
+      maxWidth: '900px',
+      backgroundColor: 'none'
+    };
+
+    const cardStyle = {
+      width: '100%',
+      height: '100%',
+      minHeight: 'calc(100vh - 500px)',
+      backgroundColor: '#F0F0F0'
+    };
+
+    const profilePicture = (
+      <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
+        <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
+      </div>);
+
+    const name = 'Hannah';
+    const gender = 'Female';
+    const age = '28';
+    const description = `${gender}, ${age} years old`;
+    const location = '5 miles away';
+    const matchType = 'Great Match!';
+    let matchTypeClass;
+    if (matchType === 'Perfect Match!') {
+      matchTypeClass = 'yellow';
+    } else if (matchType === 'Great Match!') {
+      matchTypeClass = 'green';
+    } else if (matchType === 'Good Match!') {
+      matchTypeClass = 'danger';
+    }
+
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-        <div className='row mb-5'>
-          <div className='col'>
-            <h1>MATCHES</h1>
-          </div>
-        </div>
+        { matchTypes
+          ? (
         <div className="row">
-          <div className="col">
-            <p className='px-3'>No Matches yet! &#128557; </p>
-          </div>
+          <form style={formStyle} className='px-2' onSubmit={this.handleSubmit}>
+            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
+              <div className="row row-cols-lg-1 row-cols-sm-2 m-0 p-0">
+                <div className="col-4 d-flex justify-content-center pt-2 px-0">
+                  {profilePicture}
+                </div>
+                <div className="col-8 d-flex justify-content-center pt-2 px-0 ">
+                  <div className="row w-100 row-cols-1">
+                    <div className="col d-flex justify-content-center px-0">
+                      <h1>{name}</h1>
+                    </div>
+                    <div className="col d-flex justify-content-center px-0">
+                      <p className='m-0 form-font'>{description}</p>
+                    </div>
+                    <div className="col d-flex justify-content-center px-0">
+                      <p className='m-0 form-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{location}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="row mt-4">
+                <div className={`col d-flex justify-content-center ${matchTypeClass}`}>
+                  <h5>{matchType}</h5>
+                </div>
+              </div>
+
+              <div className="row mt-1">
+                <div className="col d-flex justify-content-center">
+                  <ol className='m-0 p-0'>
+                    <li>
+                      hates hamsters
+                    </li>
+                    <li>
+                      hates pineapple pizza
+                    </li>
+                    <li>hates sports tv</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="row mb-3">
+                <div className="col d-flex justify-content-end me-lg-4">
+                  <a href=""><u>view all</u></a>
+                </div>
+              </div>
+
+              <div className="row d-flex justify-content-between mt-0 mb-3 p-0">
+                <div className="col d-flex justify-content-center px-0">
+                  <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='cancel'>
+                    Decline
+                  </button>
+                </div>
+                <div className="col d-flex justify-content-center px-0">
+                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='confirm'>
+                    Accept
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </form>
         </div>
-        <div className="row w-100 m-5">
-          <div className="col d-flex justify-content-center">
-            <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
-              Retake Quiz
-            </button>
-          </div>
-        </div>
+            )
+          : (
+        <>
+            <div className='row mb-5'>
+                <div className='col'>
+                  <h1>PENDING MATCHES</h1>
+                </div>
+              </div>
+            <div className="row">
+              <div className="col">
+                <p className='px-3'>No Pending Matches yet! &#128557; </p>
+              </div>
+            </div>
+            <div className="row w-100 m-5">
+              <div className="col d-flex justify-content-center">
+                <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
+                  Retake Quiz
+                </button>
+              </div>
+            </div>
+        </>
+            )}
+
       </div>
     );
   }
