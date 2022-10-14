@@ -494,6 +494,29 @@ app.get('/api/auth/profile-picture', (req, res, next) => {
     .catch(err => next(err));
 });
 
+app.get('/api/auth/user-info/:userId', (req, res, next) => {
+  const userId = Number(req.params.userId);
+  const sql = `
+  select "users"."firstName",
+         "userSelections"."selectionId",
+         "selections"."selectionName",
+         "profilePics".*
+  from "users"
+  join "userSelections" using ("userId")
+  join "selections" using ("selectionId")
+  left join "profilePics" using ("userId")
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else res.status(200).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
   const fileName = req.file.filename;

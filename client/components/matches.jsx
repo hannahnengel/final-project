@@ -6,12 +6,7 @@ export default class Matches extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      hasMatches: false,
-      matchSelections: [],
-      matchSelectionDescriptions: [],
-      matchTypes: [],
-      potentialMatchInfo: [],
-      potentialMatchMileage: []
+
     };
   }
 
@@ -286,7 +281,6 @@ export default class Matches extends React.Component {
                     allMatchTypes.push({
                       userId1,
                       userId2,
-                      user1Status: 'accepted',
                       matchType
                     });
                   });
@@ -303,8 +297,72 @@ export default class Matches extends React.Component {
                     result.forEach(match => {
                       matchTypes.push(match[0]);
                     });
-                    // need to pull profile pic & matchSelection descriptions
-                    this.setState({ hasMatches: true, matchTypes, potentialMatchMileage, potentialMatchInfo, matchSelections: allMatches });
+
+                    const matchesToDisplay = [];
+
+                    matchTypes.forEach(match => {
+                      let currentUserStatus;
+                      if (match.userId1 === user.userId) {
+                        currentUserStatus = match.user1Status;
+                      } else if (match.userId2 === user.userId) {
+                        currentUserStatus = match.user2Status;
+                      }
+
+                      if (currentUserStatus === 'pending') {
+                        matchesToDisplay.push(match);
+                      }
+
+                    });
+                    if (matchesToDisplay.length > 0) {
+                      const matchToDisplay = matchesToDisplay[0];
+                      const matchToDisplayType = matchesToDisplay[0].matchType;
+                      let matchToDisplayUserId;
+                      if (matchToDisplay.userId1 === user.userId) {
+                        matchToDisplayUserId = matchToDisplay.userId2;
+                      }
+                      if (matchToDisplay.userId2 === user.userId) {
+                        matchToDisplayUserId = matchToDisplay.userId1;
+                      }
+
+                      let matchToDisplayMileage;
+                      potentialMatchMileage.forEach(potentialMatch => {
+                        if (potentialMatch.userId === matchToDisplayUserId) {
+                          matchToDisplayMileage = potentialMatch.distance;
+                        }
+                      });
+
+                      let matchToDisplayGender;
+                      let matchToDisplayAge;
+                      potentialMatchInfo.forEach(potentialMatch => {
+                        if (potentialMatch.userId === matchToDisplayUserId) {
+                          matchToDisplayGender = potentialMatch.gender;
+                          matchToDisplayAge = potentialMatch.age;
+                        }
+                      });
+
+                      req.method = 'GET';
+                      req.body = null;
+                      fetch(`/api/auth/user-info/${matchToDisplayUserId}`, req)
+                        .then(res => res.json())
+                        .then(result => {
+                          const matchToDisplayFirstName = result[0].firstName;
+                          const matchToDisplaySelections = [];
+                          result.forEach(item => {
+                            matchToDisplaySelections.push(item.selectionName);
+                          });
+                          let matchToDisplayUrl;
+                          let matchToDisplayFileName;
+                          if (result[0].url === 'no info exists') {
+                            matchToDisplayUrl = 'none';
+                            matchToDisplayFileName = 'none';
+                          } else {
+                            matchToDisplayUrl = result[0].url;
+                            matchToDisplayFileName = result[0].fileName;
+                          }
+                          this.setState({ matchToDisplayUserId, matchToDisplayFirstName, matchToDisplaySelections, matchToDisplayMileage, matchToDisplayGender, matchToDisplayAge, matchToDisplayType, matchToDisplayUrl, matchToDisplayFileName });
+                        });
+                    }
+
                   });
                 });
               });
@@ -316,14 +374,9 @@ export default class Matches extends React.Component {
 
   render() {
 
-    const { matchTypes } = this.state;
-    // console.log(matchTypes);
-    // const { matchTypes, potentialMatchInfo, potentialMatchMileage, matchSelections } = this.state;
-    // console.log('STATE', this.state);
-    // IF has matches, return carousel
-    // map through matchTypes, pull the gender, age, location and match type to display in the box and display in the box
-    // if currentUserStatus is pending, SHOW, else do NOT show.
-    // ELSE return no match message
+    const { matchToDisplayUserId } = this.state;
+    // const { matchToDisplayUserId, matchToDisplayMileage, matchToDisplayGender, matchToDisplayAge, matchToDisplayType, matchToDisplayUrl, matchToDisplayFileName } = this.state;
+    // // console.log('STATE', this.state);
 
     const formStyle = {
       width: '100%',
@@ -360,7 +413,7 @@ export default class Matches extends React.Component {
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-        { matchTypes
+        { matchToDisplayUserId
           ? (
         <div className="row">
           <form style={formStyle} className='px-2' onSubmit={this.handleSubmit}>
@@ -412,12 +465,12 @@ export default class Matches extends React.Component {
 
               <div className="row d-flex justify-content-between mt-0 mb-3 p-0">
                 <div className="col d-flex justify-content-center px-0">
-                  <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='cancel'>
+                  <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='decline'>
                     Decline
                   </button>
                 </div>
                 <div className="col d-flex justify-content-center px-0">
-                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='confirm'>
+                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='accept'>
                     Accept
                   </button>
                 </div>
