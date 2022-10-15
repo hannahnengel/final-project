@@ -51,9 +51,7 @@ export default class Matches extends React.Component {
   }
 
   handleClick() {
-    const action = 'retake';
-    localStorage.setItem('action', action);
-    window.location.hash = 'hate-selections/pets';
+    window.location.hash = 'match-list';
   }
 
   componentDidMount() {

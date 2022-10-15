@@ -56,7 +56,7 @@ export default class Navbar extends React.Component {
                   <a href="#my-profile" className="a-nav">My Profile</a>
                 </li>
                 <li className="navitem">
-                  <a href="" className="a-nav">Matches</a>
+                  <a href="#match-list" className="a-nav">Matches</a>
                 </li>
                 <li className="navitem">
                   <a href="" className="a-nav">

@@ -10,6 +10,7 @@ import NotFound from './pages/not-found';
 import ProfileInfo from './pages/profile-info';
 import HateSelections from './pages/hate-selections';
 import Profile from './pages/profile';
+import MatchList from './pages/match-list';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -95,6 +96,9 @@ export default class App extends React.Component {
     }
     if (route.path === 'my-profile') {
       return <Profile />;
+    }
+    if (route.path === 'match-list') {
+      return <MatchList />;
     }
     return <NotFound />;
   }
