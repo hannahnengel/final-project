@@ -300,31 +300,20 @@ app.post('/api/match-selections', (req, res, next) => {
 
 app.post('/api/matches', (req, res, next) => {
   const { userId1, userId2, matchType } = req.body;
-  let { user1Status, user2Status } = req.body;
+
   if (!matchType || !userId1 || !userId2) {
     throw new ClientError(400, 'Match Type, user1Id, and user2Id are required fields');
   }
-  if (!user1Status) {
-    user1Status = 'pending';
-  }
-  if (!user2Status) {
-    user2Status = 'pending';
-  }
+
   if (!Number.isInteger(userId1) || userId1 < 1) {
     throw new ClientError(400, 'userId1 must be a positive integer');
   }
   if (!Number.isInteger(userId2) || userId2 < 1) {
     throw new ClientError(400, 'userId2 must be a positive integer');
   }
-
-  let matchStatus = '';
-  if (user1Status === 'accepted' && user2Status === 'accepted') {
-    matchStatus = 'accepted';
-  } else if (user1Status === 'rejected' || user2Status === 'rejected') {
-    matchStatus = 'rejected';
-  } else {
-    matchStatus = 'pending';
-  }
+  const user1Status = 'pending';
+  const user2Status = 'pending';
+  const matchStatus = 'pending';
 
   const sql = `
   insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
@@ -338,6 +327,73 @@ app.post('/api/matches', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       res.status(201).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/match-status-update', (req, res, next) => {
+  const { userId1, userId2, statusToUpdate, status } = req.body;
+  if (!userId1 || !userId2 || !statusToUpdate || !status) {
+    throw new ClientError(400, 'user1Id, user2Id, status to update, and status are required fields');
+  }
+  if (!Number.isInteger(userId1) || userId1 < 1) {
+    throw new ClientError(400, 'userId1 must be a positive integer');
+  }
+  if (!Number.isInteger(userId2) || userId2 < 1) {
+    throw new ClientError(400, 'userId2 must be a positive integer');
+  }
+
+  let sql;
+  if (statusToUpdate === 'user1Status') {
+    sql = `
+    update "matches"
+      set "user1Status" = $3
+    where "userId1" = $1
+      and "userId2" = $2
+    returning *
+    `;
+  } else {
+    sql = `
+    update "matches"
+      set "user2Status" = $3
+     where "userId1" = $1
+      and "userId2" = $2
+    returning *
+    `;
+  }
+  const params = [userId1, userId2, status];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length > 0) {
+        const statuses = {
+          userId1: result.rows[0].userId1,
+          userId2: result.rows[0].userId2,
+          user1Status: result.rows[0].user1Status,
+          user2Status: result.rows[0].user2Status
+        };
+        const { user1Status, user2Status } = statuses;
+        let matchStatus = '';
+        if (user1Status === 'accepted' && user2Status === 'accepted') {
+          matchStatus = 'accepted';
+        } else if (user1Status === 'rejected' || user2Status === 'rejected') {
+          matchStatus = 'rejected';
+        } else {
+          matchStatus = 'pending';
+        }
+
+        const sql = `
+        update "matches"
+          set "matchStatus" = $3
+         where "userId1" = $1
+            and "userId2" = $2
+        returning *
+        `;
+        const params = [userId1, userId2, matchStatus];
+        db.query(sql, params)
+          .then(nextRes => {
+            res.status(201).json(nextRes.rows);
+          }).catch(err => next(err));
+      }
     })
     .catch(err => next(err));
 });

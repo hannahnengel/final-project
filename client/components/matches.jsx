@@ -8,10 +8,46 @@ export default class Matches extends React.Component {
     this.state = {
 
     };
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleSubmit(event) {
     event.preventDefault();
+    const { user } = this.context;
+    const status = event.target.getAttribute('action');
+    const currentUserId = user.userId;
+    const otherUserId = this.state.matchToDisplayUserId;
+    let userId1;
+    let userId2;
+    let statusToUpdate;
+
+    if (currentUserId < otherUserId) {
+      userId1 = currentUserId;
+      userId2 = otherUserId;
+      statusToUpdate = 'user1Status';
+    } else {
+      userId1 = otherUserId;
+      userId2 = currentUserId;
+      statusToUpdate = 'user2Status';
+    }
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-token': xaccesstoken
+      }
+    };
+    req.body = JSON.stringify({
+      userId1, userId2, statusToUpdate, status
+    });
+
+    fetch('/api/match-status-update', req)
+      .then(res => res.json())
+      .then(result => {
+        // console.log('result', result);
+      });
+
   }
 
   handleClick() {
@@ -359,7 +395,17 @@ export default class Matches extends React.Component {
                             matchToDisplayUrl = result[0].url;
                             matchToDisplayFileName = result[0].fileName;
                           }
-                          this.setState({ matchToDisplayUserId, matchToDisplayFirstName, matchToDisplaySelections, matchToDisplayMileage, matchToDisplayGender, matchToDisplayAge, matchToDisplayType, matchToDisplayUrl, matchToDisplayFileName });
+                          this.setState({
+                            matchToDisplayUserId,
+                            matchToDisplayFirstName,
+                            matchToDisplaySelections,
+                            matchToDisplayMileage,
+                            matchToDisplayGender,
+                            matchToDisplayAge,
+                            matchToDisplayType,
+                            matchToDisplayUrl,
+                            matchToDisplayFileName
+                          });
                         });
                     }
 
@@ -406,7 +452,7 @@ export default class Matches extends React.Component {
         <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
       </div>);
 
-    if (matchToDisplayUrl !== undefined) {
+    if (matchToDisplayUrl !== null) {
       profilePicture = (
       <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
         <a><img className='profile-picture' style={{ width: '120px', height: '120px' }} src={matchToDisplayUrl} alt={matchToDisplayFileName} /></a>
@@ -444,7 +490,7 @@ export default class Matches extends React.Component {
         { matchToDisplayUserId
           ? (
         <div className="row">
-          <form style={formStyle} className='px-2' onSubmit={this.handleSubmit}>
+          <form style={formStyle} className='px-2'>
             <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
               <div className="row row-cols-lg-1 row-cols-sm-2 m-0 p-0">
                 <div className="col-4 d-flex justify-content-center pt-2 px-0">
@@ -497,12 +543,12 @@ export default class Matches extends React.Component {
 
               <div className="row d-flex justify-content-between mt-0 mb-3 p-0">
                 <div className="col d-flex justify-content-center px-0">
-                  <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='decline'>
+                    <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='rejected' onClick={this.handleSubmit}>
                     Decline
                   </button>
                 </div>
                 <div className="col d-flex justify-content-center px-0">
-                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='accept'>
+                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='accepted' onClick={this.handleSubmit}>
                     Accept
                   </button>
                 </div>
@@ -518,16 +564,16 @@ export default class Matches extends React.Component {
                 <div className='col'>
                   <h1>PENDING MATCHES</h1>
                 </div>
-              </div>
+            </div>
             <div className="row">
               <div className="col">
-                <p className='px-3'>No Pending Matches yet! &#128557; </p>
+                <p className='px-3'>No Pending Matches! &#128557; </p>
               </div>
             </div>
             <div className="row w-100 m-5">
               <div className="col d-flex justify-content-center">
                 <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
-                  Retake Quiz
+                  View Matches
                 </button>
               </div>
             </div>
