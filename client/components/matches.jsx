@@ -374,9 +374,19 @@ export default class Matches extends React.Component {
 
   render() {
 
-    const { matchToDisplayUserId } = this.state;
+    const {
+      matchToDisplayUserId,
+      matchToDisplayFirstName,
+      matchToDisplayGender,
+      matchToDisplayAge,
+      matchToDisplayMileage,
+      matchToDisplayFileName,
+      matchToDisplayUrl,
+      matchToDisplayType,
+      matchToDisplaySelections
+    } = this.state;
     // const { matchToDisplayUserId, matchToDisplayMileage, matchToDisplayGender, matchToDisplayAge, matchToDisplayType, matchToDisplayUrl, matchToDisplayFileName } = this.state;
-    // // console.log('STATE', this.state);
+    // console.log('STATE', this.state);
 
     const formStyle = {
       width: '100%',
@@ -391,17 +401,24 @@ export default class Matches extends React.Component {
       backgroundColor: '#F0F0F0'
     };
 
-    const profilePicture = (
+    let profilePicture = (
       <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
         <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
       </div>);
 
-    const name = 'Hannah';
-    const gender = 'Female';
-    const age = '28';
-    const description = `${gender}, ${age} years old`;
-    const location = '5 miles away';
-    const matchType = 'Great Match!';
+    if (matchToDisplayUrl !== undefined) {
+      profilePicture = (
+      <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
+        <a><img className='profile-picture' style={{ width: '120px', height: '120px' }} src={matchToDisplayUrl} alt={matchToDisplayFileName} /></a>
+      </div>
+      );
+    }
+
+    let matchType;
+    if (matchToDisplayType !== undefined) {
+      matchType = `${matchToDisplayType[0].toUpperCase() + matchToDisplayType.substring(1)} Match!`;
+    }
+
     let matchTypeClass;
     if (matchType === 'Perfect Match!') {
       matchTypeClass = 'yellow';
@@ -409,6 +426,17 @@ export default class Matches extends React.Component {
       matchTypeClass = 'green';
     } else if (matchType === 'Good Match!') {
       matchTypeClass = 'danger';
+    }
+
+    let linkText;
+
+    const $selection3 = document.getElementById('selection3');
+    if ($selection3 !== null) {
+      if ($selection3.classList.contains('show')) {
+        linkText = 'show less';
+      } else {
+        linkText = 'view all';
+      }
     }
 
     return (
@@ -425,13 +453,13 @@ export default class Matches extends React.Component {
                 <div className="col-8 d-flex justify-content-center pt-2 px-0 ">
                   <div className="row w-100 row-cols-1">
                     <div className="col d-flex justify-content-center px-0">
-                      <h1>{name}</h1>
+                      <h1>{matchToDisplayFirstName}</h1>
                     </div>
                     <div className="col d-flex justify-content-center px-0">
-                      <p className='m-0 form-font'>{description}</p>
+                          <p className='m-0 form-font'>{`${matchToDisplayGender[0].toUpperCase() + matchToDisplayGender.substring(1)}, ${matchToDisplayAge} years old`}</p>
                     </div>
                     <div className="col d-flex justify-content-center px-0">
-                      <p className='m-0 form-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{location}</p>
+                      <p className='m-0 form-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{`${matchToDisplayMileage} miles away`}</p>
                     </div>
                   </div>
                 </div>
@@ -439,27 +467,31 @@ export default class Matches extends React.Component {
 
               <div className="row mt-4">
                 <div className={`col d-flex justify-content-center ${matchTypeClass}`}>
-                  <h5>{matchType}</h5>
+                      <h5>{matchType}</h5>
                 </div>
               </div>
 
               <div className="row mt-1">
                 <div className="col d-flex justify-content-center">
                   <ol className='m-0 p-0'>
-                    <li>
-                      hates hamsters
-                    </li>
-                    <li>
-                      hates pineapple pizza
-                    </li>
-                    <li>hates sports tv</li>
+                    {matchToDisplaySelections.map((selection, index) => {
+                      let li;
+                      if (index < 3) {
+                        li = <li key={index}>{`hates ${selection}`}</li>;
+                      } else if (index >= 3) {
+                        li = (
+                          <li className='collapse collapse-li' id={`selection${index}`} key={index}>{`hates ${selection}`}</li>
+                        );
+                      }
+                      return li;
+                    })}
                   </ol>
                 </div>
               </div>
 
               <div className="row mb-3">
                 <div className="col d-flex justify-content-end me-lg-4">
-                  <a href=""><u>view all</u></a>
+                      <button className="btn-link red-link p-0 m-0 justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9"><u>{linkText}</u></button>
                 </div>
               </div>
 

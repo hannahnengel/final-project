@@ -65,6 +65,14 @@ a:hover {
   color: #d68785;
 }
 
+.red-link {
+  color: #ab1716;
+}
+
+.red-link:hover {
+  color: #d68785;
+}
+
 .lt-red-btn {
   background-color: #d68785;
   color: white;
