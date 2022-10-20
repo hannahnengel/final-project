@@ -567,10 +567,223 @@ app.get('/api/auth/user-info/:userId', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       if (result.rows.length === 0) {
-        res.status(202).json('no info exists');
+        res.status(202).json('no user info exists');
       } else res.status(200).json(result.rows);
     })
     .catch(err => next(err));
+});
+
+app.get('/api/auth/find-matches/', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+  select "friendPreferences".*,
+         "userInfos".*,
+         "userSelections".*
+  from "friendPreferences"
+  join "userInfos" using ("userId")
+  join "userSelections" using ("userId")
+  where "userId" = $1
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no user exists');
+      } else {
+        const currentUserInfo = result.rows[0];
+        const currentUserSelects = result.rows.map(selection => {
+          return {
+            userId: selection.userId,
+            categoryId: selection.categoryId,
+            selectionId: selection.selectionId
+          };
+        });
+        const { friendGender } = currentUserInfo;
+        const friendGenderArray = friendGender.replace(/{|}|"|"/g, '').split(',');
+        const bodyGenderArray = [];
+        friendGenderArray.forEach((friendGender, i) => {
+          if (friendGender === 'nonBinary') {
+            friendGender = 'non-binary';
+          }
+          bodyGenderArray.push({ friendGender });
+        });
+        let where;
+        if (bodyGenderArray.length === 1) {
+          where = 'where "gender" = $1';
+        } else if (bodyGenderArray.length === 2) {
+          where = 'where "gender" = $1 OR "gender" = $2';
+        } else if (bodyGenderArray.length === 3) {
+          where = 'where "gender" = $1 OR "gender" = $2 OR "gender" = $3';
+        }
+        const sql = `
+        select "friendPreferences".*,
+                "userInfos".*,
+                "users"."firstName",
+                "profilePics"."url",
+                "profilePics"."fileName"
+          from "friendPreferences"
+          join "userInfos" using ("userId")
+          join "users" using ("userId")
+          left join "profilePics" using ("userId")
+          ${where}
+        `;
+        const params = bodyGenderArray.map(gender => {
+          return gender.friendGender;
+        });
+        db.query(sql, params)
+          .then(result => {
+            if (result.rows.length === 0) {
+              res.status(202).json('no potential matches exist');
+            } else {
+              const potentialGenderMatches = result.rows;
+              const potentialMatches = [];
+              //         const potentialMatchMileage = [];
+
+              const getAge = birthday => {
+                const today = new Date();
+                const birthDate = new Date(birthday);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                  age--;
+                }
+                return age;
+              };
+
+              const isAgeMatch = (age, friendAge) => {
+                const friendAgeArray = friendAge.split('-');
+                const youngestFriend = parseInt(friendAgeArray[0]);
+                const oldestFriend = parseInt(friendAgeArray[1]);
+                if (age >= youngestFriend && age <= oldestFriend) {
+                  return true;
+                } else {
+                  return false;
+                }
+              };
+
+              const isGenderMatch = (gender, friendGender) => {
+                let genderMatch = false;
+                const checkGenderArray = friendGender.replace(/{|}|"|"/g, '').split(',');
+                checkGenderArray.forEach(genderCheck => {
+                  let genderCompare;
+                  if (genderCheck === 'nonBinary') {
+                    genderCompare = 'non-binary';
+                  } else {
+                    genderCompare = genderCheck;
+                  }
+                  if (gender === genderCompare) {
+                    genderMatch = true;
+                  }
+                });
+                return genderMatch;
+              };
+
+              const pointDistance = (centerLatDeg, centerLngDeg, checkLatDeg, checkLngDeg) => {
+                const radiusEarth = 6378.1;
+                const centerLat = centerLatDeg * Math.PI / 180;
+                const centerLng = centerLngDeg * Math.PI / 180;
+                const checkLat = checkLatDeg * Math.PI / 180;
+                const checkLng = checkLngDeg * Math.PI / 180;
+
+                const deltaLng = Math.abs(centerLng - checkLng);
+                const distance = radiusEarth * Math.acos((Math.sin(centerLat) * Math.sin(checkLat)) + (Math.cos(centerLat) * Math.cos(checkLat) * Math.cos(deltaLng)));
+                const distanceMiles = Math.round(((distance / 1.609344) * 10), 1) / 10;
+                return distanceMiles;
+              };
+
+              potentialGenderMatches.forEach(potentialMatch => {
+                if (potentialMatch.userId !== currentUserInfo.userId) {
+                  const kmCenterRadius = currentUserInfo.mileRadius * 1.60934;
+                  const kmCheckRadius = potentialMatch.mileRadius * 1.609344;
+                  const centerLat = currentUserInfo.lat;
+                  const centerLng = currentUserInfo.lng;
+                  const checkLat = potentialMatch.lat;
+                  const checkLng = potentialMatch.lng;
+
+                  const distance = pointDistance(centerLat, centerLng, checkLat, checkLng);
+                  const potentialMatchNear = distance <= kmCenterRadius;
+                  const userNearPotentialMatch = distance <= kmCheckRadius;
+
+                  const locationMatch = !!(potentialMatchNear && userNearPotentialMatch);
+
+                  if (isAgeMatch(getAge(potentialMatch.birthday), currentUserInfo.friendAge) &&
+                    isAgeMatch(getAge(currentUserInfo.birthday), potentialMatch.friendAge) &&
+                    isGenderMatch(potentialMatch.gender, currentUserInfo.friendGender) &&
+                    isGenderMatch(currentUserInfo.gender, potentialMatch.friendGender) &&
+                    locationMatch) {
+                    potentialMatch.age = getAge(potentialMatch.birthday);
+                    potentialMatch.mileage = distance;
+                    potentialMatches.push(potentialMatch);
+                  }
+                }
+
+              });
+              if (potentialMatches.length === 0) {
+                res.status(202).json('no potential matches exist');
+              } else {
+                const params = potentialMatches.map(potentialMatch => {
+                  return potentialMatch.userId;
+                });
+
+                let where = 'where ';
+                params.forEach((param, index) => {
+                  if (index === params.length - 1) {
+                    where += `"userId"=$${index + 1}`;
+                  } else where += `"userId"=$${index + 1} OR `;
+                });
+
+                const sql = ` select * from "userSelections"
+              ${where}`;
+
+                db.query(sql, params)
+                  .then(result => {
+                    if (result.rows.length === 0) {
+                      res.status(202).json('no potential matches exist');
+                    } else {
+                      const potentialMatchSelects = result.rows;
+                      const matchSelections = [];
+                      potentialMatchSelects.forEach(potentialMatchSelect => {
+                        currentUserSelects.forEach(currentUserSelect => {
+                          if (potentialMatchSelect.categoryId === currentUserSelect.categoryId) {
+                            if (potentialMatchSelect.selectionId === currentUserSelect.selectionId) {
+                              let userId1;
+                              let userId2;
+
+                              if (currentUserSelect.userId < potentialMatchSelect.userId) {
+                                userId1 = currentUserSelect.userId;
+                                userId2 = potentialMatchSelect.userId;
+                              } else {
+                                userId1 = potentialMatchSelect.userId;
+                                userId2 = currentUserSelect.userId;
+                              }
+                              const match = {
+                                userId1,
+                                userId2,
+                                categoryId: currentUserSelect.categoryId,
+                                selectionId: currentUserSelect.selectionId
+                              };
+                              matchSelections.push(match);
+                            }
+                          }
+                        });
+                      });
+                      const potentialMatchData = {
+                        potentialMatches,
+                        matchSelections
+                      };
+                      res.status(200).json(potentialMatchData);
+                    }
+                  });
+              }
+            }
+          });
+      }
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/auth/update-matches/', (req, res, next) => {
+  // console.log('hello world!');
 });
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
