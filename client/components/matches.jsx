@@ -55,6 +55,7 @@ export default class Matches extends React.Component {
   }
 
   componentDidMount() {
+    const { user } = this.context;
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
       method: 'GET',
@@ -66,11 +67,87 @@ export default class Matches extends React.Component {
     fetch('/api/auth/find-matches/', req)
       .then(res => res.json())
       .then(result => {
-        // console.log('result', result);
         if (result === 'no potential matches exist') {
           // console.log('SUCKAAAA');
+        } else {
+          const { potentialMatches, matchSelections } = result;
+
+          const otherUsers = [];
+          matchSelections.forEach(matchSelection => {
+            let otherUser;
+            if (matchSelection.userId1 === user.userId) {
+              otherUser = matchSelection.userId2;
+            } else {
+              otherUser = matchSelection.userId1;
+            }
+            otherUsers.push(otherUser);
+          });
+
+          const uniqueOtherUsers = otherUsers.filter((user, index) => {
+            return otherUsers.indexOf(user) === index;
+          });
+
+          const allMatchTypes = [];
+          uniqueOtherUsers.forEach(otherUser => {
+            let count = 0;
+            let matchType = '';
+            otherUsers.forEach(occurance => {
+              if (otherUser === occurance) {
+                count++;
+              }
+            });
+            if (count <= 4) {
+              matchType = 'good';
+            } else if (count <= 9) {
+              matchType = 'great';
+            } else if (count === 10) {
+              matchType = 'perfect';
+            }
+            let userId1;
+            let userId2;
+            if (user.userId < otherUser) {
+              userId1 = user.userId;
+              userId2 = otherUser;
+            } else {
+              userId1 = otherUser;
+              userId2 = user.userId;
+            }
+            allMatchTypes.push({
+              userId1,
+              userId2,
+              matchType
+            });
+
+          });
+          // console.log('allMatchTypes', allMatchTypes);
+
+          allMatchTypes.forEach(matchType => {
+            potentialMatches.forEach((potentialMatch, i) => {
+              if (potentialMatch.userId === matchType.userId1 || potentialMatch.userId === matchType.userId2) {
+                potentialMatches[i].matchType = matchType.matchType;
+              }
+            });
+          });
+          // console.log('potentialMatches', potentialMatches);
+          this.setState({ potentialMatches, matchSelections });
+          const currentUser = user.userId;
+          const body = {
+            matchSelections, allMatchTypes, currentUser
+          };
+          req.method = 'POST';
+          req.body = JSON.stringify(body);
+
+          fetch('/api/auth/post-matches/', req)
+            .then(res => res.json())
+            .then(result => {
+              // const matchStatuses = result;
+              // console.log('matchStatuses', matchStatuses);
+            });
+
         }
-        // else put the user matches in the db
+
+        // POST match Selections and match types in body
+
       });
 
     //   fetch('/api/auth/friend-preferences', req)

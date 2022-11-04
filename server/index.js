@@ -782,8 +782,152 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
     .catch(err => next(err));
 });
 
-app.post('/api/auth/update-matches/', (req, res, next) => {
-  // console.log('hello world!');
+app.post('/api/auth/post-matches/', (req, res, next) => {
+  const { allMatchTypes, matchSelections, currentUser } = req.body;
+  if (!matchSelections || !allMatchTypes || !currentUser) {
+    throw new ClientError(400, 'matchSelections, allMatchTypes and currentUser are required');
+  }
+
+  const sql = `
+  delete from "matchSelections"
+  where "userId1" = $1 OR "userId2" = $1
+  returning *
+  `;
+  const params = [currentUser];
+  db.query(sql, params)
+    .then(result => {
+
+      const params = [];
+      let values = 'values ';
+      matchSelections.forEach((matchSelection, i) => {
+        params.push(matchSelection.userId1);
+        params.push(matchSelection.userId2);
+        params.push(matchSelection.categoryId);
+        params.push(matchSelection.selectionId);
+      });
+      params.forEach((param, i) => {
+        if (i === params.length - 1) {
+          values += `($${i - 2}, $${i - 1}, $${i}, $${i + 1})`;
+        } else if (i !== 0 && i % 4 === 0) {
+          values += `($${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
+        }
+      });
+      const sql = `
+        insert into "matchSelections" ("userId1", "userId2", "categoryId", "selectionId")
+        ${values}
+        returning *
+        `;
+      db.query(sql, params)
+        .then(result => {
+          const sql = `
+          select * from "matchSelections"
+          join "selections" using ("selectionId")
+          `;
+          db.query(sql)
+            .then(result => {
+              const sql = `
+              select * from "matches"
+              where "userId1" = $1 OR "userId2" = $1
+              `;
+              const params = [currentUser];
+
+              db.query(sql, params)
+                .then(result => {
+                  const existingMatches = result.rows;
+                  const matchesToUpdate = [];
+                  const matchesToUpload = [];
+                  const matchesToReject = [];
+
+                  for (let i = 0; i < allMatchTypes.length; i++) {
+                    let found = false;
+                    for (let j = 0; j < existingMatches.length; j++) {
+                      if (allMatchTypes[i].userId1 === existingMatches[j].userId1 && allMatchTypes[i].userId2 === existingMatches[j].userId2) {
+                        found = true;
+                        existingMatches[j].matchType = allMatchTypes[i].matchType;
+                        matchesToUpdate.push(existingMatches[j]);
+                        break;
+                      }
+                    }
+                    if (!found) {
+                      matchesToUpload.push(allMatchTypes[i]);
+                    }
+                  }
+
+                  for (let i = 0; i < existingMatches.length; i++) {
+                    let found = false;
+                    for (let j = 0; j < allMatchTypes.length; j++) {
+                      if (existingMatches[i].userId1 === allMatchTypes[j].userId1 && existingMatches[i].userId2 === allMatchTypes[j].userId2) {
+                        found = true;
+                        break;
+                      }
+                    }
+                    if (!found) {
+                      matchesToReject.push(existingMatches[i]);
+                    }
+                  }
+
+                  const postMatches = [];
+
+                  if (matchesToUpdate.length > 0) {
+                    matchesToUpdate.forEach(match => {
+                      postMatches.push(match);
+                    });
+                  }
+
+                  if (matchesToUpload.length > 0) {
+                    matchesToUpload.forEach(match => {
+                      match.user1Status = 'pending';
+                      match.user2Status = 'pending';
+                      match.matchStatus = 'pending';
+                      postMatches.push(match);
+                    });
+                  }
+                  if (matchesToReject.length > 0) {
+                    matchesToReject.forEach(match => {
+                      match.matchStatus = 'rejected';
+                      match.matchType = 'no longer a match';
+                      postMatches.push(match);
+                    });
+                  }
+                  const params = [];
+                  let values = 'values ';
+                  postMatches.forEach((match, i) => {
+                    params.push(match.userId1);
+                    params.push(match.userId2);
+                    params.push(match.matchType);
+                    params.push(match.user1Status);
+                    params.push(match.user2Status);
+                    params.push(match.matchStatus);
+                  });
+                  params.forEach((param, i) => {
+                    if (i === params.length - 1) {
+                      values += `($${i - 4}, $${i - 3}, $${i - 2}, $${i - 1},  $${i} , $${i + 1})`;
+                    } else if (i !== 0 && i % 6 === 0) {
+                      values += `($${i - 5}, $${i - 4}, $${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
+                    }
+                  });
+
+                  const sql = `
+                  insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
+                  ${values}
+                  on conflict on constraint "matches_pk"
+                    do
+                    update set
+                    "matchType"= EXCLUDED."matchType",
+                    "matchStatus" = EXCLUDED."matchStatus"
+                  returning *
+                  `;
+                  db.query(sql, params)
+                    .then(result => {
+                      res.status(201).json(result.rows);
+                    });
+                });
+
+            });
+        });
+
+    });
+
 });
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
