@@ -2,6 +2,11 @@ import React from 'react';
 
 export default class MatchList extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {};
+  }
+
   handleClick(event) {
     const action = event.target.getAttribute('action');
 
@@ -16,7 +21,25 @@ export default class MatchList extends React.Component {
 
   }
 
+  componentDidMount() {
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-token': xaccesstoken
+      }
+    };
+    fetch('/api/auth/get-matches', req)
+      .then(res => res.json())
+      .then(result => {
+        const matches = result;
+        this.setState({ matches });
+      });
+  }
+
   render() {
+    // console.log('STATE', this.state);
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
         <div className='row mb-5'>

@@ -941,6 +941,112 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
 
 });
 
+app.get('/api/auth/get-matches', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+ select * from matches
+  where ("userId1" = $1 OR "userId2" = $1)
+  AND ("matchStatus" = 'accepted' OR "matchType" = 'no longer a match')
+  `;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      const matches = result.rows;
+      if (matches.length > 0) {
+        const matchIds = [];
+        matches.forEach(match => {
+          if (userId === match.userId1) {
+            matchIds.push(match.userId2);
+          } else {
+            matchIds.push(match.userId1);
+          }
+
+        });
+
+        let where = 'where ';
+        matchIds.forEach((id, index) => {
+          if (index === matchIds.length - 1) {
+            where += `"userId"=$${(index + 1)}`;
+          } else {
+            where += `"userId"=$${(index + 1)} OR `;
+          }
+        });
+
+        const params = matchIds.map(id => { return id; });
+        const sql = `
+        select
+          "users"."userId" as "id",
+          "users"."firstName",
+          "userInfos"."birthday",
+          "userInfos"."gender",
+          "friendPreferences"."lat",
+          "friendPreferences"."lng",
+          "profilePics".*
+        from "users"
+            join "userInfos" using ("userId")
+            join "friendPreferences" using ("userId")
+            left join "profilePics" using ("userId")
+            ${where}
+        `;
+        db.query(sql, params)
+          .then(result => {
+            const matchInfos = result.rows;
+
+            const getAge = birthday => {
+              const today = new Date();
+              const birthDate = new Date(birthday);
+              let age = today.getFullYear() - birthDate.getFullYear();
+              const m = today.getMonth() - birthDate.getMonth();
+              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+              return age;
+            };
+
+            const pointDistance = (centerLatDeg, centerLngDeg, checkLatDeg, checkLngDeg) => {
+              const radiusEarth = 6378.1;
+              const centerLat = centerLatDeg * Math.PI / 180;
+              const centerLng = centerLngDeg * Math.PI / 180;
+              const checkLat = checkLatDeg * Math.PI / 180;
+              const checkLng = checkLngDeg * Math.PI / 180;
+
+              const deltaLng = Math.abs(centerLng - checkLng);
+              const distance = radiusEarth * Math.acos((Math.sin(centerLat) * Math.sin(checkLat)) + (Math.cos(centerLat) * Math.cos(checkLat) * Math.cos(deltaLng)));
+              const distanceMiles = Math.round(((distance / 1.609344) * 10), 1) / 10;
+              return distanceMiles;
+            };
+
+            const sql = `
+            select "userId", "lat", "lng"
+              from "friendPreferences"
+            where "userId" = $1
+            `;
+            const params = [userId];
+
+            db.query(sql, params)
+              .then(result => {
+                const centerLatDeg = result.rows[0].lat;
+                const centerLngDeg = result.rows[0].lng;
+
+                matchInfos.forEach(matchInfo => {
+                  matchInfo.age = getAge(matchInfo.birthday);
+                  matchInfo.mileage = pointDistance(centerLatDeg, centerLngDeg, matchInfo.lat, matchInfo.lng);
+                  matches.forEach(match => {
+                    if (match.userId1 === matchInfo.id || match.userId2 === matchInfo.id) {
+                      matchInfo.matchType = match.matchType;
+                    }
+                  });
+                });
+                res.status(201).json(matchInfos);
+              });
+
+          });
+
+      } else res.status(200).json('no matches yet');
+    });
+
+});
+
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
   const fileName = req.file.filename;
