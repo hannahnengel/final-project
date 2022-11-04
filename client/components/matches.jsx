@@ -16,7 +16,7 @@ export default class Matches extends React.Component {
     const { user } = this.context;
     const status = event.target.getAttribute('action');
     const currentUserId = user.userId;
-    const otherUserId = this.state.matchToDisplayUserId;
+    const otherUserId = parseInt(event.target.getAttribute('userid'));
     let userId1;
     let userId2;
     let statusToUpdate;
@@ -45,7 +45,15 @@ export default class Matches extends React.Component {
     fetch('/api/match-status-update', req)
       .then(res => res.json())
       .then(result => {
-        // console.log('result', result);
+        const { matchesToDisplay } = this.state;
+
+        const matchesToDisplayCopy = matchesToDisplay.map((match, i) => {
+          if (userId1 === match.userId1 && userId2 === match.userId2) {
+            match.newUserStatus = status;
+          }
+          return match;
+        });
+        this.setState({ matchesToDisplay: matchesToDisplayCopy });
       });
 
   }
@@ -67,9 +75,7 @@ export default class Matches extends React.Component {
     fetch('/api/auth/find-matches/', req)
       .then(res => res.json())
       .then(result => {
-        if (result === 'no potential matches exist') {
-          // console.log('SUCKAAAA');
-        } else {
+        if (result !== 'no potential matches exist') {
           const { potentialMatches, matchSelections } = result;
 
           const otherUsers = [];
@@ -140,7 +146,6 @@ export default class Matches extends React.Component {
             .then(res => res.json())
             .then(result => {
               const matchStatuses = result;
-              // console.log('matchStatuses', matchStatuses);
 
               const matchesToDisplay = [];
 
@@ -158,6 +163,8 @@ export default class Matches extends React.Component {
                     potentialMatch.user1Status = matchStatus.user1Status;
                     potentialMatch.user2Status = matchStatus.user2Status;
                     potentialMatch.matchStatus = matchStatus.matchStatus;
+                    potentialMatch.matchSelections = matchStatus.matchSelections;
+                    potentialMatch.newUserStatus = 'pending';
                   }
                 });
                 if (currentUser === 'userId1') {
@@ -171,7 +178,6 @@ export default class Matches extends React.Component {
                 }
 
               });
-              // console.log('matchesToDisplay', matchesToDisplay);
               this.setState({ matchesToDisplay });
             });
 
@@ -182,21 +188,27 @@ export default class Matches extends React.Component {
 
   render() {
 
-    // const { matchesToDisplay } = this.state;
+    let userId;
+    let age;
+    let fileName;
+    let firstName;
+    let gender;
+    let mileage;
+    let url;
+    let matchType;
+    let matchSelections;
 
-    const {
-      matchToDisplayUserId,
-      matchToDisplayFirstName,
-      matchToDisplayGender,
-      matchToDisplayAge,
-      matchToDisplayMileage,
-      matchToDisplayFileName,
-      matchToDisplayUrl,
-      matchToDisplayType,
-      matchToDisplaySelections
-    } = this.state;
-    // const { matchToDisplayUserId, matchToDisplayMileage, matchToDisplayGender, matchToDisplayAge, matchToDisplayType, matchToDisplayUrl, matchToDisplayFileName } = this.state;
-    // console.log('STATE', this.state);
+    const { matchesToDisplay } = this.state;
+    if (matchesToDisplay !== undefined) {
+      for (let i = 0; i < matchesToDisplay.length; i++) {
+        if (matchesToDisplay[i].newUserStatus === 'pending') {
+          ({ userId, age, fileName, firstName, gender, mileage, url, matchSelections, matchType } = matchesToDisplay[i]);
+          break;
+        }
+      }
+    }
+
+    // take the first one that has newstatus='pending' and display it. once the user accepts or rejects, update state to newStatus = new status
 
     const formStyle = {
       width: '100%',
@@ -216,25 +228,25 @@ export default class Matches extends React.Component {
         <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
       </div>);
 
-    if (matchToDisplayUrl !== null) {
+    if (url !== null) {
       profilePicture = (
       <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
-        <a><img className='profile-picture' style={{ width: '120px', height: '120px' }} src={matchToDisplayUrl} alt={matchToDisplayFileName} /></a>
+        <a><img className='profile-picture' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
       </div>
       );
     }
 
-    let matchType;
-    if (matchToDisplayType !== undefined) {
-      matchType = `${matchToDisplayType[0].toUpperCase() + matchToDisplayType.substring(1)} Match!`;
+    let matchTypeDescription;
+    if (matchType !== undefined) {
+      matchTypeDescription = `${matchType[0].toUpperCase() + matchType.substring(1)} Match!`;
     }
 
     let matchTypeClass;
-    if (matchType === 'Perfect Match!') {
+    if (matchTypeDescription === 'Perfect Match!') {
       matchTypeClass = 'yellow';
-    } else if (matchType === 'Great Match!') {
+    } else if (matchTypeDescription === 'Great Match!') {
       matchTypeClass = 'green';
-    } else if (matchType === 'Good Match!') {
+    } else if (matchTypeDescription === 'Good Match!') {
       matchTypeClass = 'danger';
     }
 
@@ -251,7 +263,7 @@ export default class Matches extends React.Component {
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-        { matchToDisplayUserId
+        { userId
           ? (
         <div className="row">
           <form style={formStyle} className='px-2'>
@@ -263,13 +275,13 @@ export default class Matches extends React.Component {
                 <div className="col-8 d-flex justify-content-center pt-2 px-0 ">
                   <div className="row w-100 row-cols-1">
                     <div className="col d-flex justify-content-center px-0">
-                      <h1>{matchToDisplayFirstName}</h1>
+                      <h1>{firstName}</h1>
                     </div>
                     <div className="col d-flex justify-content-center px-0">
-                          <p className='m-0 form-font'>{`${matchToDisplayGender[0].toUpperCase() + matchToDisplayGender.substring(1)}, ${matchToDisplayAge} years old`}</p>
+                          <p className='m-0 form-font'>{`${gender[0].toUpperCase() + gender.substring(1)}, ${age} years old`}</p>
                     </div>
                     <div className="col d-flex justify-content-center px-0">
-                      <p className='m-0 form-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{`${matchToDisplayMileage} miles away`}</p>
+                      <p className='m-0 form-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{`${mileage} miles away`}</p>
                     </div>
                   </div>
                 </div>
@@ -277,20 +289,20 @@ export default class Matches extends React.Component {
 
               <div className="row mt-4">
                 <div className={`col d-flex justify-content-center ${matchTypeClass}`}>
-                      <h5>{matchType}</h5>
+                      <h5>{matchTypeDescription}</h5>
                 </div>
               </div>
 
               <div className="row mt-1">
                 <div className="col d-flex justify-content-center">
                   <ol className='m-0 p-0'>
-                    {matchToDisplaySelections.map((selection, index) => {
+                    {matchSelections.map((selection, index) => {
                       let li;
                       if (index < 3) {
-                        li = <li key={index}>{`hates ${selection}`}</li>;
+                        li = <li key={index}>{`hates ${selection.selectionName}`}</li>;
                       } else if (index >= 3) {
                         li = (
-                          <li className='collapse collapse-li' id={`selection${index}`} key={index}>{`hates ${selection}`}</li>
+                          <li className='collapse collapse-li' id={`selection${index}`} key={index}>{`hates ${selection.selectionName}`}</li>
                         );
                       }
                       return li;
@@ -307,12 +319,12 @@ export default class Matches extends React.Component {
 
               <div className="row d-flex justify-content-between mt-0 mb-3 p-0">
                 <div className="col d-flex justify-content-center px-0">
-                    <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='rejected' onClick={this.handleSubmit}>
+                    <button type='submit' className="lt-red-btn px-2 m-0 confirm-cancel-btn" action='rejected' userid={userId} onClick={this.handleSubmit}>
                     Decline
                   </button>
                 </div>
                 <div className="col d-flex justify-content-center px-0">
-                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='accepted' onClick={this.handleSubmit}>
+                  <button type='submit' className='confirm-btn lt-red-btn px-2 m-0 confirm-cancel-btn' action='accepted' userid={userId} onClick={this.handleSubmit}>
                     Accept
                   </button>
                 </div>

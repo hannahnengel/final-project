@@ -825,6 +825,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
           `;
           db.query(sql)
             .then(result => {
+              const selections = result.rows;
               const sql = `
               select * from "matches"
               where "userId1" = $1 OR "userId2" = $1
@@ -919,7 +920,17 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                   `;
                   db.query(sql, params)
                     .then(result => {
-                      res.status(201).json(result.rows);
+                      const matches = result.rows;
+                      matches.forEach(match => {
+                        const matchSelections = [];
+                        selections.forEach(selection => {
+                          if (match.userId1 === selection.userId1 && match.userId2 === selection.userId2) {
+                            matchSelections.push(selection);
+                          }
+                        });
+                        match.matchSelections = matchSelections;
+                      });
+                      res.status(201).json(matches);
                     });
                 });
 
