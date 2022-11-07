@@ -289,7 +289,7 @@ export default class HateSelectionsInputs extends React.Component {
       <form onSubmit={this.handleSubmit}>
         {
           (inputSelections.length === 0)
-            ? <h1><i className="fa-solid fa-spinner fa-lg danger"></i></h1>
+            ? <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
             : <div className={`row ${rowNumberClass} row-cols-sm-2`}>
                 { inputs }
               </div>

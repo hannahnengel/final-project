@@ -1,5 +1,4 @@
 import React from 'react';
-import AppContext from '../lib/app-context';
 import IncompleteProfile from '../components/incomplete-profile';
 import Matches from '../components/matches';
 
@@ -8,7 +7,8 @@ export default class Home extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      profileComplete: false
+      profileComplete: false,
+      isLoading: true
     };
   }
 
@@ -20,85 +20,86 @@ export default class Home extends React.Component {
     window.location.href = '#register';
   }
 
-  componentDidUpdate() {
-    const { user } = this.context;
-    if (user) {
-      const xaccesstoken = localStorage.getItem('react-context-jwt');
-      const req = {
-        method: 'GET',
-        headers: {
-          'x-access-token': xaccesstoken
-        }
-      };
-      fetch('/api/auth/user-selections', req)
-        .then(res => res.json())
-        .then(result => {
-          if (result.length === 10) {
-            this.setState({ profileComplete: true });
-          }
-        });
-    }
-  }
-
   componentDidMount() {
-    const { user } = this.context;
-    if (user) {
-      const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const { profileComplete } = this.state;
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    if (xaccesstoken !== null) {
       const req = {
         method: 'GET',
         headers: {
           'x-access-token': xaccesstoken
         }
       };
-      fetch('/api/auth/user-selections', req)
-        .then(res => res.json())
-        .then(result => {
-          if (result.length === 10) {
-            this.setState({ profileComplete: true });
-          }
-        });
+      if (!profileComplete) {
+        fetch('/api/auth/user-selections', req)
+          .then(res => res.json())
+          .then(result => {
+            if (result.length === 10) {
+              this.setState({ profileComplete: true });
+            }
+            this.setState({ isLoading: false });
+          });
+      }
+    } else {
+      this.setState({ isLoading: false });
     }
+
   }
 
   render() {
-    const { user } = this.context;
-    const profileComplete = this.state.profileComplete;
-    if (user) {
-      if (profileComplete) {
-        return (<Matches />);
-      }
-      return <IncompleteProfile />;
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    let user;
+    if (xaccesstoken === null) {
+      user = null;
+    } else {
+      user = xaccesstoken;
     }
+
+    const { profileComplete, isLoading } = this.state;
 
     return (
     <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-      <div className='row mb-5'>
-          <div className='col'>
-            <h1>WELCOME</h1>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col">
-          <p className='px-3'>A different approach to making new friends...<br /> <br /> Let mutual hatred fuel the fire! &#128293;</p>
-          </div>
-        </div>
-        <div className="row m-5">
-          <div className="col-md-6 d-flex justify-content-center">
-            <button className='lt-red-btn' onClick={this.handleSignInClick}>
-            <i className="fa-solid fa-arrow-right-to-bracket py-2 pe-2" />
-            Sign In
-          </button>
-          </div>
-          <div className="col-md-6 d-flex justify-content-center">
-            <button className='lt-red-btn' onClick={this.handleRegisterClick}>
-              <i className="fa-solid fa-user py-2 pe-2"/>
-              Register
-            </button>
-        </div>
-      </div>
+      {isLoading
+        ? (<div className="row">
+            <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
+          </div>)
+        : (user !== null
+            ? (profileComplete
+                ? (<Matches />)
+                : (<IncompleteProfile />))
+            : (
+            <>
+              <div className='row mb-5'>
+                <div className='col'>
+                  <h1>WELCOME</h1>
+                </div >
+              </div >
+              <div className="row">
+                <div className="col">
+                  <p className='px-3'>A different approach to making new friends...<br /> <br /> Let mutual hatred fuel the fire! &#128293;</p>
+                </div>
+              </div>
+              <div className="row m-5">
+                <div className="col-md-6 d-flex justify-content-center">
+                  <button className='lt-red-btn' onClick={this.handleSignInClick}>
+                    <i className="fa-solid fa-arrow-right-to-bracket py-2 pe-2" />
+                    Sign In
+                  </button>
+                </div>
+                <div className="col-md-6 d-flex justify-content-center">
+                  <button className='lt-red-btn' onClick={this.handleRegisterClick}>
+                    <i className="fa-solid fa-user py-2 pe-2" />
+                    Register
+                  </button>
+                </div>
+              </div>
+            </>
+              )
+          )
+
+    }
     </div>
+
     );
   }
 }
-
-Home.contextType = AppContext;

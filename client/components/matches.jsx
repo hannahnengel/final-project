@@ -6,7 +6,7 @@ export default class Matches extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-
+      isLoading: true
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -178,7 +178,7 @@ export default class Matches extends React.Component {
                 }
 
               });
-              this.setState({ matchesToDisplay });
+              this.setState({ matchesToDisplay, isLoading: false });
             });
 
         }
@@ -198,7 +198,7 @@ export default class Matches extends React.Component {
     let matchType;
     let matchSelections;
 
-    const { matchesToDisplay } = this.state;
+    const { matchesToDisplay, isLoading } = this.state;
     if (matchesToDisplay !== undefined) {
       for (let i = 0; i < matchesToDisplay.length; i++) {
         if (matchesToDisplay[i].newUserStatus === 'pending') {
@@ -207,8 +207,6 @@ export default class Matches extends React.Component {
         }
       }
     }
-
-    // take the first one that has newstatus='pending' and display it. once the user accepts or rejects, update state to newStatus = new status
 
     const formStyle = {
       width: '100%',
@@ -263,8 +261,15 @@ export default class Matches extends React.Component {
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-        { userId
+        {isLoading
           ? (
+        <div className="row">
+          <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
+        </div>
+            )
+          : (
+              userId
+                ? (
         <div className="row">
           <form style={formStyle} className='px-2'>
             <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
@@ -333,29 +338,29 @@ export default class Matches extends React.Component {
             </div>
           </form>
         </div>
-            )
-          : (
-        <>
-            <div className='row mb-5'>
-                <div className='col'>
-                  <h1>PENDING MATCHES</h1>
-                </div>
-            </div>
-            <div className="row">
-              <div className="col">
-                <p className='px-3'>No Pending Matches! &#128557; </p>
-              </div>
-            </div>
-            <div className="row w-100 m-5">
-              <div className="col d-flex justify-content-center">
-                <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
-                  View Matches
-                </button>
-              </div>
-            </div>
-        </>
+                  )
+                : (
+      <>
+        <div className='row mb-5'>
+          <div className='col'>
+            <h1>PENDING MATCHES</h1>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <p className='px-3'>No Pending Matches! &#128557; </p>
+          </div>
+        </div>
+        <div className="row w-100 m-5">
+          <div className="col d-flex justify-content-center">
+            <button onClick={this.handleClick} className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0'>
+              View Matches
+            </button>
+          </div>
+        </div>
+      </>
+                  )
             )}
-
       </div>
     );
   }
