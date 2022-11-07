@@ -459,21 +459,6 @@ app.get('/api/auth/profile-info', (req, res, next) => {
     });
 });
 
-app.get('/api/auth/user-info', (req, res, next) => {
-  const { userId } = req.user;
-  const sql = `
-  select * from "users"
-  where "userId" = $1
-  `;
-  const params = [userId];
-  db.query(sql, params)
-    .then(result => {
-      if (result.rows.length === 0) {
-        res.status(202).json('no info exists');
-      } else res.status(200).json(result.rows);
-    });
-});
-
 app.get('/api/auth/friend-preferences', (req, res, next) => {
   const { userId } = req.user;
   const sql = `
@@ -488,6 +473,21 @@ app.get('/api/auth/friend-preferences', (req, res, next) => {
       } else res.status(200).json(result.rows);
     });
 });
+
+// app.get('/api/auth/user-info', (req, res, next) => {
+//   const { userId } = req.user;
+//   const sql = `
+//   select * from "users"
+//   where "userId" = $1
+//   `;
+//   const params = [userId];
+//   db.query(sql, params)
+//     .then(result => {
+//       if (result.rows.length === 0) {
+//         res.status(202).json('no info exists');
+//       } else res.status(200).json(result.rows);
+//     });
+// });
 
 app.post('/api/auth/user-selections', (req, res, next) => {
   const { userId } = req.user;
@@ -1045,6 +1045,57 @@ app.get('/api/auth/get-matches', (req, res, next) => {
       } else res.status(200).json('no matches yet');
     });
 
+});
+
+app.get('/api/auth/user-profile', (req, res, next) => {
+  const { userId } = req.user;
+
+  const sql = `
+  select
+    "users"."firstName",
+    "users"."email",
+    "userInfos".*,
+    "friendPreferences".*,
+    "profilePics".*
+  from "users"
+    join "userInfos" using ("userId")
+    join "friendPreferences" using ("userId")
+    left join "profilePics" using ("userId")
+    where "userId" = $1
+  `;
+
+  const params = [userId];
+
+  db.query(sql, params)
+    .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('no info exists');
+      } else {
+        const userInfo = result.rows;
+
+        const sql = `
+        select
+          "userSelections"."selectionId",
+          "selections".*
+        from "userSelections"
+          join "selections" using ("selectionId")
+        where "userId" = $1
+        `;
+
+        db.query(sql, params)
+          .then(result => {
+            let selections;
+            if (result.rows.length === 0) {
+              selections = 'no info exists';
+            } else {
+              selections = result.rows;
+            }
+            res.status(201).json({ userInfo, selections });
+          });
+
+      }
+    })
+    .catch(err => next(err));
 });
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
