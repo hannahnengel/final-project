@@ -1131,14 +1131,18 @@ app.delete('/api/auth/profile-picture', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       res.status(204).json(result.rows);
-      const url = result.rows[0].url;
-      const pathToFile = path.join('./server/public', url);
-      fs.unlink(pathToFile, function (err) {
-        if (err) {
-          throw err;
-        }
-      });
-    });
+      if (result.rows.length !== 0) {
+        const url = result.rows[0].url;
+        const pathToFile = path.join('./server/public', url);
+        fs.unlink(pathToFile, function (err) {
+          if (err) {
+            throw err;
+          }
+        });
+      }
+
+    })
+    .catch(err => next(err));
 });
 
 app.use(errorMiddleware);
