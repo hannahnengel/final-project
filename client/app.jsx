@@ -95,7 +95,7 @@ export default class App extends React.Component {
     if (route.path === 'match-list') {
       return <MatchList />;
     }
-    if (route.path === 'hate-mate-profile') {
+    if (route.path.includes('hate-mate-profile')) {
       return <HateMateProfile />;
     }
     return <NotFound />;

@@ -11,6 +11,10 @@ export default class HateMateProfile extends React.Component {
     };
   }
 
+  handleClick() {
+    window.location.hash = 'match-list';
+  }
+
   componentDidMount() {
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
@@ -20,7 +24,12 @@ export default class HateMateProfile extends React.Component {
         'x-access-token': xaccesstoken
       }
     };
-    const hateMateUserId = 2;
+    const hash = window.location.hash;
+    const hateMateUserId = Number(hash.slice(19));
+    if (!Number.isInteger(hateMateUserId) || hateMateUserId <= 0) {
+      this.setState({ redirect: 'not-found' });
+      return;
+    }
     fetch(`/api/auth/hate-mate-profile-info/${hateMateUserId}`, req)
       .then(res => {
         if (res.status === 200) {
@@ -179,8 +188,14 @@ export default class HateMateProfile extends React.Component {
                 </div>)
                 : <></>
               }
+
           </>
           )}
+        <div className="col d-flex justify-content-center">
+          <button onClick={this.handleClick} action='view-pending' className='lt-red-btn px-1 mt-5 mx-0'>
+            View Matches
+          </button>
+        </div>
       </>
 
     );
