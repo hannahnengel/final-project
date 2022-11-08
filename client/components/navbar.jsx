@@ -59,7 +59,7 @@ export default class Navbar extends React.Component {
                   <a href="#match-list" className="a-nav">Matches</a>
                 </li>
                 <li className="navitem">
-                  <a href="" className="a-nav">
+                  <a href="#match-map" className="a-nav">
                     <i className="fa-solid fa-location-dot pe-2"/>
                     Map
                   </a>
