@@ -234,7 +234,7 @@ export default class Matches extends React.Component {
     };
 
     let profilePicture = (
-      <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
+      <div className="rounded-circle text-center d-flex justify-content-center align-items-center " style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
         <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
       </div>);
 
@@ -259,6 +259,7 @@ export default class Matches extends React.Component {
     } else if (matchTypeDescription === 'Good Match!') {
       matchTypeClass = 'danger';
     }
+    let moreThan3 = false;
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
@@ -304,6 +305,9 @@ export default class Matches extends React.Component {
                   <ol className='m-0 p-0'>
                     {matchSelections.map((selection, index) => {
                       let li;
+                      if (index === 3) {
+                        moreThan3 = true;
+                      }
                       if (index < 3) {
                         li = <li id={`selection${index}`} key={index}>{`hates ${selection.selectionName}`}</li>;
                       } else if (index >= 3) {
@@ -319,7 +323,12 @@ export default class Matches extends React.Component {
 
               <div className="row mb-3">
                 <div className="col d-flex justify-content-end me-lg-4">
-                    <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end {}" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
+                    {moreThan3
+                      ? (
+                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end {}" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
+                        )
+                      : (<></>) }
+
                 </div>
               </div>
 

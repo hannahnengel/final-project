@@ -55,11 +55,24 @@ export default class MatchList extends React.Component {
       width: '400px',
       height: '100%',
       minHeight: '350px',
-      backgroundColor: '#F0F0F0'
+      backgroundColor: '#F0F0F0',
+      margin: '1rem'
     };
 
     let matchList;
+    let rowColsClass;
     if (matches !== undefined && matches !== 'no matches yet') {
+
+      if (matches.length === 1) {
+        rowColsClass = 'row-cols-md-1';
+      }
+      if (matches.length === 2) {
+        rowColsClass = 'row-cols-md-2';
+      }
+      if (matches.length >= 3) {
+        rowColsClass = 'row-cols-md-3';
+      }
+
       matchList = matches.map((match, index) => {
 
         let matchTypeDescription;
@@ -77,7 +90,7 @@ export default class MatchList extends React.Component {
         }
 
         let profilePicture = (
-        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
+        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '100px', height: '100px', backgroundColor: '#D9D9D9' }}>
           <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
         </div>);
 
@@ -90,10 +103,10 @@ export default class MatchList extends React.Component {
         }
 
         return (
-          <div className="col mb-3" key={index}>
-            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
+          <div className="col mb-3 px-1" key={index}>
+            <div className="row card border-0 shadow p-1 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
               <div className="row mt-0 mb-1">
-                <div className={`col d-flex justify-content-center ${matchTypeClass}`}>
+                <div className={`col d-flex justify-content-center text-center p-0 ${matchTypeClass}`}>
                   <h5>{matchTypeDescription}</h5>
                 </div>
               </div>
@@ -126,16 +139,16 @@ export default class MatchList extends React.Component {
     }
 
     const matchBlock = (
-      <div className="row row-cols-md-3 row-cols-sm-1">
+      <div className={`row ${rowColsClass} row-cols-1`}>
         {matchList}
       </div>
     );
 
     return (
-      <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
+      <div className='text-center d-flex flex-column align-items-center justify-content-center'>
         {isLoading
           ? (
-          <div className="row">
+          <div className="ro vh-100 d-flex justify-content-center align-items-center">
             <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
           </div>
             )
