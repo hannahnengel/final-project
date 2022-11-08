@@ -1063,6 +1063,120 @@ app.get('/api/auth/hate-mate-profile-info/:hateMateUserId', (req, res, next) => 
 
 });
 
+app.get('/api/auth/match-map-info', (req, res, next) => {
+  const { userId } = req.user;
+
+  const sql = `
+  select "lat",
+         "lng"
+    from "friendPreferences"
+    where "userId" = $1
+    `;
+  // const sql = `
+  // select
+  //   "users"."firstName",
+  //   "users"."email",
+  //   "userInfos"."userId" as "id",
+  //   "userInfos".*,
+  //   "friendPreferences"."city",
+  //   "friendPreferences"."zipCode",
+  //   "profilePics".*
+  // from "users"
+  //   join "userInfos" using ("userId")
+  //   join "friendPreferences" using ("userId")
+  //   left join "profilePics" using ("userId")
+  // where "userId" = $1
+  // `;
+
+  const params = [userId];
+
+  db.query(sql, params)
+    .then(result => {
+
+      if (result.rows.length === 0) {
+        res.status(200).json('no user');
+      } else {
+        const currentUserLocation = result.rows[0];
+
+        const sql = `
+        select "userId1",
+                "userId2",
+                "matchType"
+        from "matches"
+        where "userId1" = $1 OR "userId2" = $1
+        `;
+
+        db.query(sql, params)
+          .then(result => {
+            if (result.rows.length === 0) {
+              res.status(200).json('no matches');
+            } else {
+              const matches = result.rows;
+              let where = 'where ';
+              const params = [];
+
+              matches.forEach(match => {
+                if (match.userId1 !== userId) {
+                  params.push(match.userId1);
+                } else {
+                  params.push(match.userId2);
+                }
+              });
+              params.forEach((param, i) => {
+                if (i === params.length - 1) {
+                  where += `"userId" = $${i + 1}`;
+                } else {
+                  where += `"userId" = $${i + 1} or `;
+                }
+              });
+
+              const sql = `
+            select
+              "users"."userId" as "id",
+              "users"."firstName",
+              "userInfos"."birthday",
+              "userInfos"."gender",
+              "friendPreferences"."lat",
+              "friendPreferences"."lng"
+            from "users"
+              join "userInfos" using ("userId")
+              join "friendPreferences" using ("userId")
+            ${where}
+            `;
+
+              db.query(sql, params)
+                .then(result => {
+                  const matchList = result.rows;
+
+                  matchList.forEach(match => {
+                    matches.forEach(matchType => {
+                      if (matchType.userId1 === match.id || matchType.userId2 === match.id) {
+                        match.matchType = matchType.matchType;
+                      }
+                    });
+
+                    match.age = getAge(match.birthday);
+                    const centerLatDeg = currentUserLocation.lat;
+                    const centerLngDeg = currentUserLocation.lng;
+                    const checkLatDeg = match.lat;
+                    const checkLngDeg = match.lng;
+
+                    const distance = pointDistance(centerLatDeg, centerLngDeg, checkLatDeg, checkLngDeg);
+                    match.distance = distance;
+                  });
+
+                  res.status(201).json({ currentUserLocation, matchList });
+
+                });
+
+            }
+          });
+      }
+    })
+    .catch(err => next(err));
+
+});
+
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
   const fileName = req.file.filename;
