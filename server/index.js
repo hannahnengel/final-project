@@ -978,6 +978,91 @@ app.get('/api/auth/user-profile', (req, res, next) => {
     .catch(err => next(err));
 });
 
+app.get('/api/auth/hate-mate-profile-info/:hateMateUserId', (req, res, next) => {
+  const { userId } = req.user;
+  const hateMateUserId = Number(req.params.hateMateUserId);
+  if (!Number.isInteger(hateMateUserId) || hateMateUserId < 1) {
+    throw new ClientError(400, 'hateMateUserId must be a positive integer');
+  }
+
+  if (hateMateUserId === userId) {
+    throw new ClientError(400, 'userId and hateMateUserId cannot be the same');
+  }
+
+  const sql = `
+  select
+    "users"."firstName",
+    "users"."email",
+    "userInfos"."userId" as "id",
+    "userInfos".*,
+    "friendPreferences"."city",
+    "friendPreferences"."zipCode",
+    "profilePics".*
+  from "users"
+    join "userInfos" using ("userId")
+    join "friendPreferences" using ("userId")
+    left join "profilePics" using ("userId")
+  where "userId" = $1
+  `;
+
+  const params = [hateMateUserId];
+
+  db.query(sql, params)
+    .then(result => {
+
+      if (result.rows.length === 0) {
+        res.status(200).json(result.rows);
+      } else {
+        const userInfo = result.rows[0];
+
+        const sql = `
+        select
+          "userSelections".*,
+          "selections".*
+        from "userSelections"
+          join "selections" using ("selectionId")
+        where "userId" = $1
+        `;
+
+        db.query(sql, params)
+          .then(result => {
+            if (result.rows.length === 0) {
+              res.status(200).json(result.rows);
+            } else {
+              const userSelections = result.rows;
+
+              const sql = `
+              select * from "matchSelections"
+              where "userId1" = $1
+                and "userId2" = $2
+              `;
+
+              let userId1;
+              let userId2;
+
+              if (userId < hateMateUserId) {
+                userId1 = userId;
+                userId2 = hateMateUserId;
+              } else {
+                userId1 = hateMateUserId;
+                userId2 = userId;
+              }
+
+              const params = [userId1, userId2];
+
+              db.query(sql, params)
+                .then(result => {
+                  const matchSelections = result.rows;
+                  res.status(201).json({ userInfo, userSelections, matchSelections });
+                });
+            }
+          });
+      }
+    })
+    .catch(err => next(err));
+
+});
+
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
   const fileName = req.file.filename;
