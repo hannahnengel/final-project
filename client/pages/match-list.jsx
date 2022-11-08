@@ -1,4 +1,5 @@
 import React from 'react';
+import Redirect from '../components/redirect';
 
 export default class MatchList extends React.Component {
 
@@ -7,6 +8,7 @@ export default class MatchList extends React.Component {
     this.state = {
       isLoading: true
     };
+    this.seeProfile = this.seeProfile.bind(this);
   }
 
   handleClick(event) {
@@ -21,6 +23,11 @@ export default class MatchList extends React.Component {
       window.location.hash = '';
     }
 
+  }
+
+  seeProfile(event) {
+    const hateMateUserId = event.target.getAttribute('id');
+    this.setState({ hateMateUserId });
   }
 
   componentDidMount() {
@@ -41,7 +48,11 @@ export default class MatchList extends React.Component {
   }
 
   render() {
-    const { matches, isLoading } = this.state;
+    const { matches, isLoading, hateMateUserId } = this.state;
+
+    if (hateMateUserId !== undefined) {
+      return <Redirect to={`hate-mate-profile/${hateMateUserId}`}/>;
+    }
 
     const noMatches = (
         <div className="row">
@@ -129,7 +140,7 @@ export default class MatchList extends React.Component {
                 </div>
               </div>
               <div className="row d-flex justify-content-center align-items-center">
-                <a className='text-center mb-0 mt-4' href=""><u>view profile</u></a>
+                <button className='text-center btn-link red-link mb-0 mt-3' type='button' onClick={this.seeProfile}><u id={match.id}>view profile</u></button>
               </div>
             </div>
           </div>

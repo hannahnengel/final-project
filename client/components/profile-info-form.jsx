@@ -35,11 +35,13 @@ export default class ProfileInfoForm extends React.Component {
         }
       },
       friendAge: '',
-      editing: false
+      editing: false,
+      isLoaded: true
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleEdit = this.handleEdit.bind(this);
     this.inputGetCoords = this.inputGetCoords.bind(this);
     this.geoLocate = this.geoLocate.bind(this);
     this.geoGetCoords = this.geoGetCoords.bind(this);
@@ -62,7 +64,7 @@ export default class ProfileInfoForm extends React.Component {
           return;
         }
         if (this.state.friendAge === '') {
-          alert('Must select at least one friend age range selection.');
+          alert('Must select one friend age range selection.');
           return;
         }
 
@@ -170,9 +172,18 @@ export default class ProfileInfoForm extends React.Component {
     }
     this.setState({ [name]: value });
     if (name === 'city' || name === 'zipCode') {
+      if (this.state.zipCode !== null && this.state.zipCode.length !== 5) {
+        this.setState({
+          position: { lat: null, lng: null },
+          coordsCity: '',
+          coordsZipCode: null,
+          lat: null,
+          lng: null
+        });
+      }
+
       if (this.state.city === '') {
         this.setState({
-          zipCode: null,
           position: { lat: null, lng: null },
           coordsCity: '',
           coordsZipCode: null
@@ -190,12 +201,15 @@ export default class ProfileInfoForm extends React.Component {
         let city = '';
         let zipCode = '';
         for (let i = 0; i < data.results[0].address_components.length; i++) {
-          if (data.results[0].address_components[i].types[0] === 'locality') {
+          if (data.results[0].address_components[i].types[0].includes('locality')) {
             city = data.results[0].address_components[i].long_name;
           }
-          if (data.results[0].address_components[i].types[0] === 'postal_code') {
+          if (data.results[0].address_components[i].types[0].includes('postal_code')) {
             zipCode = data.results[0].address_components[i].long_name;
           }
+        }
+        if (zipCode === '') {
+          zipCode = this.state.zipCode;
         }
         this.setState({
           coordsCity: city,
@@ -203,7 +217,8 @@ export default class ProfileInfoForm extends React.Component {
           city,
           zipCode,
           lat: latitude,
-          lng: longitude
+          lng: longitude,
+          isLoaded: true
         });
       }
       )
@@ -212,6 +227,7 @@ export default class ProfileInfoForm extends React.Component {
 
   geoLocate() {
     if (navigator.geolocation) {
+      this.setState({ isLoaded: false });
       navigator.geolocation.getCurrentPosition(this.geoGetCoords, this.handleLocationError);
     }
   }
@@ -248,7 +264,8 @@ export default class ProfileInfoForm extends React.Component {
             lat,
             lng,
             city,
-            zipCode
+            zipCode,
+            isLoaded: true
           });
         }
         )
@@ -275,6 +292,18 @@ export default class ProfileInfoForm extends React.Component {
     }
   }
 
+  handleEdit() {
+    this.setState({
+      city: '',
+      zipCode: null,
+      position: { lat: null, lng: null },
+      coordsCity: '',
+      coordsZipCode: null,
+      lat: null,
+      lng: null
+    });
+  }
+
   componentDidMount() {
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
@@ -297,6 +326,7 @@ export default class ProfileInfoForm extends React.Component {
 
   render() {
     const { action } = this.props;
+    const { isLoaded } = this.state;
 
     const maxWidth = action === 'profile-info'
       ? '700px'
@@ -318,23 +348,45 @@ export default class ProfileInfoForm extends React.Component {
     const handleSubmit = this.handleSubmit;
 
     const radius = this.state.mileRadius;
-    const lat = this.state.lat;
-    const lng = this.state.lng;
-
-    const city = this.state.city;
+    const { lat, lng, city } = this.state;
     const zipCode = this.state.zipCode === null ? '' : this.state.zipCode;
-
     const geoLocate = this.geoLocate;
 
     if (this.state.position.lat !== null && this.state.lat !== this.state.position.lat && this.state.lng !== this.state.position.lng) {
       this.reverseGeoLocate();
     }
-    if (this.state.city !== '' && this.state.zipCode !== null && this.state.zipCode.length === 5) {
+    if (this.state.city !== '' && this.state.zipCode !== null && this.state.zipCode.length === 5 && this.state.lat === null) {
       if (this.state.city !== this.state.coordsCity || this.state.zipCode !== this.state.coordsZipCode) {
         this.inputGetCoords();
       }
-
     }
+
+    let lockedBtnClass = 'invisible';
+    let readOnly = false;
+
+    if (this.state.lat !== null) {
+      lockedBtnClass = '';
+      readOnly = true;
+    }
+
+    const eighteenYearsAgo = () => {
+      const TODAY = new Date();
+      const YEAR = ((TODAY).getFullYear() - 18).toString();
+      let MONTH = ((TODAY).getMonth() + 1).toString();
+      if (MONTH.length === 1) {
+
+        MONTH = '0' + MONTH;
+      }
+      let DATE = ((TODAY).getDate()).toString();
+      if (DATE.length === 1) {
+        DATE = '0' + DATE;
+      }
+
+      const EIGHTEEN_YEARS_BACK = YEAR + '-' + MONTH + '-' + DATE;
+      return EIGHTEEN_YEARS_BACK;
+    };
+
+    const dateControl = eighteenYearsAgo();
 
     const profileInfoInputs =
       <>
@@ -457,6 +509,8 @@ export default class ProfileInfoForm extends React.Component {
                   required
                   id='birthday'
                   type='date'
+                  min={null}
+                  max={`${dateControl}`}
                   name='birthday'
                   className='mb-2 border-0 form-font grey px-2 rounded'
                   onChange={handleChange}>
@@ -485,6 +539,7 @@ export default class ProfileInfoForm extends React.Component {
               id='city'
               type='text'
               value={city}
+              readOnly={readOnly}
               name='city'
               style={{ height: '45px', maxWidth: '10rem' }}
               className='form-control input-sm form-font border-0'
@@ -500,6 +555,7 @@ export default class ProfileInfoForm extends React.Component {
               id='zipCode'
               type='number'
               value={zipCode}
+              readOnly={readOnly}
               name='zipCode'
               min='00501'
               max='99950'
@@ -509,7 +565,9 @@ export default class ProfileInfoForm extends React.Component {
             </input>
             <label htmlFor='zipCode' className='form-label form-font mb-1 px-0'>
               Zip Code
+              <span title='Edit City and Zip' onClick={this.handleEdit}><i className={`fa-solid fa-pen-to-square danger mx-2 ${lockedBtnClass}`}></i></span>
             </label>
+
           </div>
           <div className="col">
             <input required
@@ -521,7 +579,7 @@ export default class ProfileInfoForm extends React.Component {
               min='1'
               max='3881'
               style={{ height: '45px', maxWidth: '10rem' }}
-              className='form-control input-sm form-font border-0'
+              className='form-control input-sm form-font border-0 mt-1'
               onChange={handleChange}>
             </input>
             <label htmlFor='mileRadius' className='form-label form-font mb-0'>
@@ -579,14 +637,14 @@ export default class ProfileInfoForm extends React.Component {
           </div>
 
           <div className="col-md-6">
-            <div className="row d-flex justify-content-end text-md-center mt-2">
+            <div className="row d-flex justify-content-end text-md-center mt-1">
               <p className='mb-1'>Age</p>
               <select
                 required
                 className='form-select-lg border-0'
                 name='friendAge'
                 id='friendAge'
-                style={{ height: '45px', width: '10rem' }}
+                style={{ height: '125px', width: '10rem' }}
                 onChange={handleChange}
                 size={2}
                 >
@@ -602,7 +660,6 @@ export default class ProfileInfoForm extends React.Component {
 
           </div>
         </div>
-
       </>;
 
     const inputs = action === 'profile-info'
@@ -641,14 +698,24 @@ export default class ProfileInfoForm extends React.Component {
 
     return (
 
-      <form style={formStyle} onSubmit={handleSubmit}>
-          <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
-            {inputs}
-          </div>
-          <div className="d-flex justify-content-between">
-          { buttons }
-          </div>
-        </form>
+      <>
+      {isLoaded
+        ? (
+          <form style={formStyle} onSubmit={handleSubmit}>
+            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
+              {inputs}
+            </div>
+            <div className="d-flex justify-content-between">
+              {buttons}
+            </div>
+          </form>
+          )
+        : (
+            <div className="row d-flex justify-content-center align-items-center" style={{ height: '700px' }}>
+              <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
+            </div>
+          )}
+      </>
 
     );
   }

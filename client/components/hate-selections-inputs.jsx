@@ -6,7 +6,8 @@ export default class HateSelectionsInputs extends React.Component {
     super(props);
     this.state = {
       hashroute: this.props.route.path,
-      inputSelections: []
+      inputSelections: [],
+      isLoading: true
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -130,7 +131,7 @@ export default class HateSelectionsInputs extends React.Component {
         const words = categories[i + 1].split(' ');
         const hash = words.join('-').toLowerCase();
         window.location.hash = `hate-selections/${hash}`;
-        this.setState({ hashroute: `hate-selections/${hash}` }, () => {
+        this.setState({ hashroute: `hate-selections/${hash}`, isLoading: true }, () => {
           this.getSelections();
         });
       }
@@ -149,7 +150,7 @@ export default class HateSelectionsInputs extends React.Component {
         const words = categories[i - 1].split(' ');
         const hash = words.join('-').toLowerCase();
         window.location.hash = `hate-selections/${hash}`;
-        this.setState({ hashroute: `hate-selections/${hash}` }, () => {
+        this.setState({ hashroute: `hate-selections/${hash}`, isLoading: true }, () => {
           this.getSelections();
         });
       }
@@ -176,7 +177,7 @@ export default class HateSelectionsInputs extends React.Component {
       fetch(`/api/selections/${categoryId}`)
         .then(res => res.json())
         .then(result => {
-          this.setState({ inputSelections: result });
+          this.setState({ inputSelections: result, isLoading: false });
         });
     }
   }
@@ -187,14 +188,13 @@ export default class HateSelectionsInputs extends React.Component {
       fetch('/api/selections/1')
         .then(res => res.json())
         .then(result => {
-          this.setState({ inputSelections: result });
+          this.setState({ inputSelections: result, isLoading: false });
         });
     }
   }
 
   render() {
-    // console.log('STATE', this.state);
-    const { inputSelections } = this.state;
+    const { inputSelections, isLoading } = this.state;
     const { categories } = this.props;
     if (inputSelections.length === 0) {
       this.getSelections();
@@ -288,7 +288,7 @@ export default class HateSelectionsInputs extends React.Component {
     return (
       <form onSubmit={this.handleSubmit}>
         {
-          (inputSelections.length === 0)
+          (inputSelections.length === 0 || isLoading)
             ? <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
             : <div className={`row ${rowNumberClass} row-cols-sm-2`}>
                 { inputs }
