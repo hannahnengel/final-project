@@ -141,7 +141,6 @@ export default class MatchList extends React.Component {
               </div>
               <div className="row d-flex justify-content-center align-items-center">
                 <button className='text-center btn-link red-link mb-0 mt-3' type='button' onClick={this.seeProfile}><u id={match.id}>view profile</u></button>
-                {/* <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end {}" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button> */}
               </div>
             </div>
           </div>
