@@ -209,6 +209,14 @@ i:hover {
   font-size: 20px;
 }
 
+.matched {
+  background-color: rgb(74, 217, 105, 0.7);
+  width: 155px;
+  height: 112px;
+  color: white;
+  font-size: 20px;
+}
+
 .white-overlay {
   background-color: rgb(240, 240, 240, 0.6);
   width: 155px;
