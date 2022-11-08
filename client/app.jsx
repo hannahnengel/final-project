@@ -10,6 +10,7 @@ import NotFound from './pages/not-found';
 import ProfileInfo from './pages/profile-info';
 import HateSelections from './pages/hate-selections';
 import Profile from './pages/profile';
+import MatchList from './pages/match-list';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -53,18 +54,12 @@ export default class App extends React.Component {
           'x-access-token': token
         }
       };
-      fetch('api/auth/profile-info', req)
+      fetch('/api/auth/profile-friend-preference-info', req)
         .then(result => {
           if (result.status === 200) {
             const profileInfoComplete = true;
-            this.setState({ profileInfoComplete });
-            fetch('api/auth/friend-preferences', req)
-              .then(result => {
-                if (result.status === 200) {
-                  const friendPreferencesComplete = true;
-                  this.setState({ friendPreferencesComplete });
-                }
-              });
+            const friendPreferencesComplete = true;
+            this.setState({ profileInfoComplete, friendPreferencesComplete });
           }
         });
     }
@@ -95,6 +90,9 @@ export default class App extends React.Component {
     }
     if (route.path === 'my-profile') {
       return <Profile />;
+    }
+    if (route.path === 'match-list') {
+      return <MatchList />;
     }
     return <NotFound />;
   }

@@ -52,18 +52,29 @@ CREATE TABLE "forgottenPasswords" (
   OIDS=FALSE
 );
 
-CREATE TABLE "userMatches" (
-  "matchId" serial NOT NULL,
-  "userId1" integer NOT NULL,
-  "user1Status" TEXT NOT NULL,
-  "userId2" integer NOT NULL,
-  "user2Status" TEXT NOT NULL,
-  "matchStatus" TEXT NOT NULL,
-  "matchType" TEXT NOT NULL,
-  CONSTRAINT "userMatches_pk" PRIMARY KEY ("matchId")
+
+CREATE TABLE "matches" (
+    "userId1" integer NOT NULL,
+    "userId2" integer NOT NULL,
+    "matchType" TEXT NOT NULL,
+    "user1Status" TEXT,
+    "user2Status" TEXT,
+    "matchStatus" TEXT,
+    CONSTRAINT "matches_pk" PRIMARY KEY ("userId1", "userId2")
 ) WITH (
   OIDS=FALSE
 );
+
+CREATE TABLE "matchSelections" (
+  "userId1" integer NOT NULL,
+	"userId2" integer NOT NULL,
+	"selectionId" integer NOT NULL,
+	"categoryId" integer NOT NULL,
+	CONSTRAINT "matchSelections_pk" PRIMARY KEY ("userId1","userId2","categoryId")
+) WITH (
+  OIDS=FALSE
+);
+
 CREATE TABLE "profilePics" (
   "profilePicId" serial NOT NULL,
   "userId" integer NOT NULL,
@@ -98,10 +109,14 @@ CREATE TABLE "userSelections" (
   OIDS=FALSE
 );
 ALTER TABLE "forgottenPasswords" ADD CONSTRAINT "forgottenPasswords_fk0" FOREIGN KEY ("userId") REFERENCES "users"("userId");
-ALTER TABLE "userMatches" ADD CONSTRAINT "userMatches_fk0" FOREIGN KEY ("userId1") REFERENCES "users"("userId");
-ALTER TABLE "userMatches" ADD CONSTRAINT "userMatches_fk1" FOREIGN KEY ("userId2") REFERENCES "users"("userId");
+ALTER TABLE "matches" ADD CONSTRAINT "matches_fk0" FOREIGN KEY ("userId1") REFERENCES "users"("userId");
+ALTER TABLE "matches" ADD CONSTRAINT "matches_fk1" FOREIGN KEY ("userId2") REFERENCES "users"("userId");
 ALTER TABLE "profilePics" ADD CONSTRAINT "profilePics_fk0" FOREIGN KEY ("userId") REFERENCES "users"("userId");
 ALTER TABLE "selections" ADD CONSTRAINT "selections_fk0" FOREIGN KEY ("categoryId") REFERENCES "categories"("categoryId");
 ALTER TABLE "userSelections" ADD CONSTRAINT "userSelections_fk0" FOREIGN KEY ("userId") REFERENCES "users"("userId");
 ALTER TABLE "userSelections" ADD CONSTRAINT "userSelections_fk1" FOREIGN KEY ("categoryId") REFERENCES "categories"("categoryId");
 ALTER TABLE "userSelections" ADD CONSTRAINT "userSelections_fk2" FOREIGN KEY ("selectionId") REFERENCES "selections"("selectionId");
+ALTER TABLE "matchSelections" ADD CONSTRAINT "matchSelections_fk0" FOREIGN KEY ("userId1") REFERENCES "users"("userId");
+ALTER TABLE "matchSelections" ADD CONSTRAINT "matchSelections_fk1" FOREIGN KEY ("userId2") REFERENCES "users"("userId");
+ALTER TABLE "matchSelections" ADD CONSTRAINT "matchSelections_fk2" FOREIGN KEY ("selectionId") REFERENCES "selections"("selectionId");
+ALTER TABLE "matchSelections" ADD CONSTRAINT "matchSelections_fk3" FOREIGN KEY ("categoryId") REFERENCES "categories"("categoryId");

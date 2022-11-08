@@ -48,6 +48,10 @@ button {
   color: #4ad969;
 }
 
+.yellow {
+  color: #e3b100;
+}
+
 .grey {
   color: #6d6969;
 }
@@ -58,6 +62,14 @@ a {
 }
 
 a:hover {
+  color: #d68785;
+}
+
+.red-link {
+  color: #ab1716;
+}
+
+.red-link:hover {
   color: #d68785;
 }
 
@@ -227,4 +239,18 @@ i:hover {
 
 .edit-icon {
   color: #292929;
+}
+
+.spinner {
+  animation: spin infinite 5s linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
