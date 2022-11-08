@@ -14,25 +14,7 @@ export default function Map(props) {
   if (loadError) return 'Error loading maps';
   if (!isLoaded) return 'Loading Maps';
 
-  let { lat } = props;
-
-  let { lng } = props;
-
-  if (lat === null) {
-    lat = 33.6652;
-    lng = -117.7491;
-  }
-
-  const center = {
-    lat,
-    lng
-  };
-
-  const mapContainerStyle = {
-    width: '100%',
-    height: '300px'
-  };
-
+  const { action } = props;
   const options = {
     styles: [
       {
@@ -208,34 +190,62 @@ export default function Map(props) {
     zoomControl: true
 
   };
-
-  const circleOptions = {
-    strokeColor: '#d68785',
-    strokeOpacity: 0.8,
-    strokeWeight: 2,
-    fillColor: '#d68785',
-    fillOpacity: 0.35
-  };
-
-  let { radius } = props;
-  radius = radius * 1609.34;
+  let lat;
+  let lng;
+  let center;
+  let mapContainerStyle;
+  let circleOptions;
+  let radius;
   let zoom;
-  if (radius < 10000) {
-    zoom = 11;
-  } else if (radius < 20000) {
-    zoom = 10;
-  } else if (radius < 40000) {
-    zoom = 9;
-  } else if (radius < 72000) {
-    zoom = 8;
-  } else if (radius < 320200) {
-    zoom = 7;
-  } else if (radius < 480000) {
-    zoom = 5;
-  } else if (radius < 600000) {
-    zoom = 4;
-  } else if (radius < 5000000) {
-    zoom = 3;
+
+  if (action === 'profile-info-form') {
+    ({ lat } = props);
+
+    ({ lng } = props);
+
+    if (lat === null) {
+      lat = 33.6652;
+      lng = -117.7491;
+    }
+
+    center = {
+      lat,
+      lng
+    };
+
+    mapContainerStyle = {
+      width: '100%',
+      height: '300px'
+    };
+
+    circleOptions = {
+      strokeColor: '#d68785',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#d68785',
+      fillOpacity: 0.35
+    };
+
+    ({ radius } = props);
+    radius = radius * 1609.34;
+
+    if (radius < 10000) {
+      zoom = 11;
+    } else if (radius < 20000) {
+      zoom = 10;
+    } else if (radius < 40000) {
+      zoom = 9;
+    } else if (radius < 72000) {
+      zoom = 8;
+    } else if (radius < 320200) {
+      zoom = 7;
+    } else if (radius < 480000) {
+      zoom = 5;
+    } else if (radius < 600000) {
+      zoom = 4;
+    } else if (radius < 5000000) {
+      zoom = 3;
+    }
   }
 
   return (

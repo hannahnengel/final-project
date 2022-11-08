@@ -227,9 +227,8 @@ export default class Matches extends React.Component {
     };
 
     const cardStyle = {
-      width: '100%',
       height: '100%',
-      minHeight: 'calc(100vh - 500px)',
+      minHeight: 'calc(100vh - 700px)',
       backgroundColor: '#F0F0F0'
     };
 
@@ -274,7 +273,7 @@ export default class Matches extends React.Component {
                 ? (
         <div className="row">
           <form style={formStyle} className='px-2'>
-            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
+            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing dynamic-width" style={cardStyle}>
               <div className="row row-cols-lg-1 row-cols-sm-2 m-0 p-0">
                 <div className="col-4 d-flex justify-content-center pt-2 px-0">
                   {profilePicture}

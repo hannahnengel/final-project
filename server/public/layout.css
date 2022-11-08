@@ -28,6 +28,10 @@
   height: 400px;
 }
 
+.dynamic-width {
+  width: 500px;
+}
+
 @media only screen and (max-width: 600px) {
   .text-align-end {
     text-align: end;
@@ -51,5 +55,9 @@
 @media only screen and (max-width: 767px) {
   .dynamic-height {
     height: 350px;
+  }
+
+  .dynamic-width {
+    width: 350px;
   }
 }

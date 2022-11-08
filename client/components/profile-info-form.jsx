@@ -527,7 +527,7 @@ export default class ProfileInfoForm extends React.Component {
           <div className="col">
             <p className='mb-1'>Your Location</p>
             <Locate geoLocate={geoLocate}/>
-            <Map radius={radius} lat={lat} lng={lng}/>
+            <Map radius={radius} lat={lat} lng={lng} action="profile-info-form"/>
           </div>
         </div>
 
