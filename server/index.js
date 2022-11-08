@@ -19,6 +19,30 @@ const db = new pg.Pool({
   }
 });
 
+const getAge = birthday => {
+  const today = new Date();
+  const birthDate = new Date(birthday);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const pointDistance = (centerLatDeg, centerLngDeg, checkLatDeg, checkLngDeg) => {
+  const radiusEarth = 6378.1;
+  const centerLat = centerLatDeg * Math.PI / 180;
+  const centerLng = centerLngDeg * Math.PI / 180;
+  const checkLat = checkLatDeg * Math.PI / 180;
+  const checkLng = checkLngDeg * Math.PI / 180;
+
+  const deltaLng = Math.abs(centerLng - checkLng);
+  const distance = radiusEarth * Math.acos((Math.sin(centerLat) * Math.sin(checkLat)) + (Math.cos(centerLat) * Math.cos(checkLat) * Math.cos(deltaLng)));
+  const distanceMiles = Math.round(((distance / 1.609344) * 10), 1) / 10;
+  return distanceMiles;
+};
+
 if (process.env.NODE_ENV === 'development') {
   app.use(require('./dev-middleware')(publicPath));
 } else {
@@ -129,33 +153,6 @@ app.get('/api/categories', (req, res, next) => {
     });
 });
 
-app.get('/api/friend-preferences/:userId', (req, res, next) => {
-  const userId = Number(req.params.userId);
-  if (!Number.isInteger(userId) || userId < 1) {
-    throw new ClientError(400, 'User Id must be a positive integer');
-  }
-
-  const sql = `
-  select *
-     from "friendPreferences"
-   where "userId" = $1
-  `;
-
-  const params = [userId];
-  db.query(sql, params)
-    .then(result => {
-      const users = result.rows;
-      if (!users) {
-        throw new ClientError(404, `Cannot find user with userId ${userId}`);
-      } else {
-        res.json(users);
-      }
-    })
-    .catch(err => {
-      next(err);
-    });
-});
-
 app.get('/api/categories/:categoryId', (req, res, next) => {
   const categoryId = Number(req.params.categoryId);
   if (!Number.isInteger(categoryId) || categoryId < 1) {
@@ -206,62 +203,6 @@ app.get('/api/selections/selection/:selectionId', (req, res, next) => {
     .catch(err => {
       next(err);
     });
-});
-
-app.get('/api/user-selections', (req, res, next) => {
-  const sql = `
-  select * from "userSelections"
-  `;
-  db.query(sql)
-    .then(result => {
-      const allSelections = result.rows;
-      res.status(201).json(allSelections);
-    })
-    .catch(err => {
-      next(err);
-    });
-});
-
-app.post('/api/user-info', (req, res, next) => {
-  const { friendGender } = req.body;
-  if (!friendGender) {
-    throw new ClientError(400, 'Friend gender is a required field');
-  }
-  const sql = `
-    select * from "userInfos"
-    where "gender" = $1
-    `;
-  const params = [friendGender];
-  db.query(sql, params)
-    .then(result => {
-      if (result.rows.length !== 0) {
-        res.status(201).json(result.rows);
-      }
-      if (result.rows.length === 0) {
-        res.status(202).json('no users with that gender');
-      }
-    })
-    .catch(err => next(err));
-
-});
-
-app.get('/api/user-selections/:userId', (req, res, next) => {
-  const userId = Number(req.params.userId);
-  if (!Number.isInteger(userId) || userId < 0) {
-    throw new ClientError(400, 'User Id must be a positive integer');
-  }
-  const sql = `
-  select * from "userSelections"
-  where "userId" = $1
-  `;
-  const params = [userId];
-  db.query(sql, params)
-    .then(result => {
-      if (result.rows.length === 0) {
-        res.status(202).json('no info exists');
-      } else res.status(200).json(result.rows);
-    })
-    .catch(err => next(err));
 });
 
 app.post('/api/match-selections', (req, res, next) => {
@@ -444,10 +385,14 @@ app.post('/api/auth/friend-preferences', (req, res, next) => {
     .catch(err => next(err));
 });
 
-app.get('/api/auth/profile-info', (req, res, next) => {
+app.get('/api/auth/profile-friend-preference-info', (req, res, next) => {
   const { userId } = req.user;
   const sql = `
-  select * from "userInfos"
+  select
+    "userInfos".*,
+    "friendPreferences".*
+  from "userInfos"
+    join "friendPreferences" using ("userId")
   where "userId" = $1
   `;
   const params = [userId];
@@ -455,39 +400,18 @@ app.get('/api/auth/profile-info', (req, res, next) => {
     .then(result => {
       if (result.rows.length === 0) {
         res.status(202).json('no info exists');
-      } else res.status(200).json(result.rows);
-    });
+      } else {
+        const { gender } = result.rows[0];
+        const { friendGender } = result.rows[0];
+        if (gender === null || friendGender === null) {
+          res.status(202).json('no info exists');
+        } else {
+          res.status(200).json(result.rows);
+        }
+      }
+    })
+    .catch(err => next(err));
 });
-
-app.get('/api/auth/friend-preferences', (req, res, next) => {
-  const { userId } = req.user;
-  const sql = `
-  select * from "friendPreferences"
-  where "userId" = $1
-  `;
-  const params = [userId];
-  db.query(sql, params)
-    .then(result => {
-      if (result.rows.length === 0) {
-        res.status(202).json('no info exists');
-      } else res.status(200).json(result.rows);
-    });
-});
-
-// app.get('/api/auth/user-info', (req, res, next) => {
-//   const { userId } = req.user;
-//   const sql = `
-//   select * from "users"
-//   where "userId" = $1
-//   `;
-//   const params = [userId];
-//   db.query(sql, params)
-//     .then(result => {
-//       if (result.rows.length === 0) {
-//         res.status(202).json('no info exists');
-//       } else res.status(200).json(result.rows);
-//     });
-// });
 
 app.post('/api/auth/user-selections', (req, res, next) => {
   const { userId } = req.user;
@@ -637,30 +561,25 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
             } else {
               const potentialGenderMatches = result.rows;
               const potentialMatches = [];
-              //         const potentialMatchMileage = [];
-
-              const getAge = birthday => {
-                const today = new Date();
-                const birthDate = new Date(birthday);
-                let age = today.getFullYear() - birthDate.getFullYear();
-                const m = today.getMonth() - birthDate.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                  age--;
-                }
-                return age;
-              };
 
               const isAgeMatch = (age, friendAge) => {
-                const friendAgeArray = friendAge.split('-');
-                const youngestFriend = parseInt(friendAgeArray[0]);
-                const oldestFriend = parseInt(friendAgeArray[1]);
-                if (age >= youngestFriend && age <= oldestFriend) {
-                  return true;
+                if (friendAge === '52+') {
+                  const youngestFriend = 52;
+                  if (age >= youngestFriend) {
+                    return true;
+                  } else return false;
                 } else {
-                  return false;
+                  const friendAgeArray = friendAge.split('-');
+                  const youngestFriend = parseInt(friendAgeArray[0]);
+                  const oldestFriend = parseInt(friendAgeArray[1]);
+                  if (age >= youngestFriend && age <= oldestFriend) {
+                    return true;
+                  } else {
+                    return false;
+                  }
                 }
-              };
 
+              };
               const isGenderMatch = (gender, friendGender) => {
                 let genderMatch = false;
                 const checkGenderArray = friendGender.replace(/{|}|"|"/g, '').split(',');
@@ -678,19 +597,6 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
                 return genderMatch;
               };
 
-              const pointDistance = (centerLatDeg, centerLngDeg, checkLatDeg, checkLngDeg) => {
-                const radiusEarth = 6378.1;
-                const centerLat = centerLatDeg * Math.PI / 180;
-                const centerLng = centerLngDeg * Math.PI / 180;
-                const checkLat = checkLatDeg * Math.PI / 180;
-                const checkLng = checkLngDeg * Math.PI / 180;
-
-                const deltaLng = Math.abs(centerLng - checkLng);
-                const distance = radiusEarth * Math.acos((Math.sin(centerLat) * Math.sin(checkLat)) + (Math.cos(centerLat) * Math.cos(checkLat) * Math.cos(deltaLng)));
-                const distanceMiles = Math.round(((distance / 1.609344) * 10), 1) / 10;
-                return distanceMiles;
-              };
-
               potentialGenderMatches.forEach(potentialMatch => {
                 if (potentialMatch.userId !== currentUserInfo.userId) {
                   const kmCenterRadius = currentUserInfo.mileRadius * 1.60934;
@@ -705,12 +611,10 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
                   const userNearPotentialMatch = distance <= kmCheckRadius;
 
                   const locationMatch = !!(potentialMatchNear && userNearPotentialMatch);
-
                   if (isAgeMatch(getAge(potentialMatch.birthday), currentUserInfo.friendAge) &&
                     isAgeMatch(getAge(currentUserInfo.birthday), potentialMatch.friendAge) &&
                     isGenderMatch(potentialMatch.gender, currentUserInfo.friendGender) &&
-                    isGenderMatch(currentUserInfo.gender, potentialMatch.friendGender) &&
-                    locationMatch) {
+                    isGenderMatch(currentUserInfo.gender, potentialMatch.friendGender) && locationMatch) {
                     potentialMatch.age = getAge(potentialMatch.birthday);
                     potentialMatch.mileage = distance;
                     potentialMatches.push(potentialMatch);
@@ -991,30 +895,6 @@ app.get('/api/auth/get-matches', (req, res, next) => {
         db.query(sql, params)
           .then(result => {
             const matchInfos = result.rows;
-
-            const getAge = birthday => {
-              const today = new Date();
-              const birthDate = new Date(birthday);
-              let age = today.getFullYear() - birthDate.getFullYear();
-              const m = today.getMonth() - birthDate.getMonth();
-              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-              }
-              return age;
-            };
-
-            const pointDistance = (centerLatDeg, centerLngDeg, checkLatDeg, checkLngDeg) => {
-              const radiusEarth = 6378.1;
-              const centerLat = centerLatDeg * Math.PI / 180;
-              const centerLng = centerLngDeg * Math.PI / 180;
-              const checkLat = checkLatDeg * Math.PI / 180;
-              const checkLng = checkLngDeg * Math.PI / 180;
-
-              const deltaLng = Math.abs(centerLng - checkLng);
-              const distance = radiusEarth * Math.acos((Math.sin(centerLat) * Math.sin(checkLat)) + (Math.cos(centerLat) * Math.cos(checkLat) * Math.cos(deltaLng)));
-              const distanceMiles = Math.round(((distance / 1.609344) * 10), 1) / 10;
-              return distanceMiles;
-            };
 
             const sql = `
             select "userId", "lat", "lng"

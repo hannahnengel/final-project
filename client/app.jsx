@@ -54,18 +54,12 @@ export default class App extends React.Component {
           'x-access-token': token
         }
       };
-      fetch('api/auth/profile-info', req)
+      fetch('/api/auth/profile-friend-preference-info', req)
         .then(result => {
           if (result.status === 200) {
             const profileInfoComplete = true;
-            this.setState({ profileInfoComplete });
-            fetch('api/auth/friend-preferences', req)
-              .then(result => {
-                if (result.status === 200) {
-                  const friendPreferencesComplete = true;
-                  this.setState({ friendPreferencesComplete });
-                }
-              });
+            const friendPreferencesComplete = true;
+            this.setState({ profileInfoComplete, friendPreferencesComplete });
           }
         });
     }

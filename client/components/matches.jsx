@@ -6,9 +6,11 @@ export default class Matches extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true
+      isLoading: true,
+      linkText: 'view all'
     };
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleExpandList = this.handleExpandList.bind(this);
   }
 
   handleSubmit(event) {
@@ -60,6 +62,14 @@ export default class Matches extends React.Component {
 
   handleClick() {
     window.location.hash = 'match-list';
+  }
+
+  handleExpandList(event) {
+    if (event.target.innerHTML === 'view all') {
+      this.setState({ linkText: 'see less' });
+    } else {
+      this.setState({ linkText: 'view all' });
+    }
   }
 
   componentDidMount() {
@@ -181,6 +191,8 @@ export default class Matches extends React.Component {
               this.setState({ matchesToDisplay, isLoading: false });
             });
 
+        } else {
+          this.setState({ isLoading: false });
         }
 
       });
@@ -198,7 +210,7 @@ export default class Matches extends React.Component {
     let matchType;
     let matchSelections;
 
-    const { matchesToDisplay, isLoading } = this.state;
+    const { matchesToDisplay, isLoading, linkText } = this.state;
     if (matchesToDisplay !== undefined) {
       for (let i = 0; i < matchesToDisplay.length; i++) {
         if (matchesToDisplay[i].newUserStatus === 'pending') {
@@ -248,17 +260,6 @@ export default class Matches extends React.Component {
       matchTypeClass = 'danger';
     }
 
-    let linkText;
-
-    const $selection3 = document.getElementById('selection3');
-    if ($selection3 !== null) {
-      if ($selection3.classList.contains('show')) {
-        linkText = 'show less';
-      } else {
-        linkText = 'view all';
-      }
-    }
-
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
         {isLoading
@@ -304,7 +305,7 @@ export default class Matches extends React.Component {
                     {matchSelections.map((selection, index) => {
                       let li;
                       if (index < 3) {
-                        li = <li key={index}>{`hates ${selection.selectionName}`}</li>;
+                        li = <li id={`selection${index}`} key={index}>{`hates ${selection.selectionName}`}</li>;
                       } else if (index >= 3) {
                         li = (
                           <li className='collapse collapse-li' id={`selection${index}`} key={index}>{`hates ${selection.selectionName}`}</li>
@@ -318,7 +319,7 @@ export default class Matches extends React.Component {
 
               <div className="row mb-3">
                 <div className="col d-flex justify-content-end me-lg-4">
-                      <button className="btn-link red-link p-0 m-0 justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9"><u>{linkText}</u></button>
+                    <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end {}" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
                 </div>
               </div>
 

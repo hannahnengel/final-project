@@ -4,7 +4,9 @@ export default class MatchList extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      isLoading: true
+    };
   }
 
   handleClick(event) {
@@ -34,12 +36,12 @@ export default class MatchList extends React.Component {
       .then(res => res.json())
       .then(result => {
         const matches = result;
-        this.setState({ matches });
+        this.setState({ matches, isLoading: false });
       });
   }
 
   render() {
-    const { matches } = this.state;
+    const { matches, isLoading } = this.state;
 
     const noMatches = (
         <div className="row">
@@ -50,9 +52,9 @@ export default class MatchList extends React.Component {
     );
 
     const cardStyle = {
-      width: '100%',
-      maxWidth: '500px',
-      height: '350px',
+      width: '400px',
+      height: '100%',
+      minHeight: '350px',
       backgroundColor: '#F0F0F0'
     };
 
@@ -130,30 +132,39 @@ export default class MatchList extends React.Component {
     );
 
     return (
-      <div className=' text-center d-flex flex-column align-items-center justify-content-center'>
-        <div className='row mb-5 mt-5'>
-          <div className='col mt-5'>
-            <h1>MATCHES</h1>
+      <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
+        {isLoading
+          ? (
+          <div className="row">
+            <h1><i className="fa-solid fa-spinner fa-lg danger spin spinner"></i></h1>
           </div>
-        </div>
-        {matches === undefined || matches === 'no matches yet'
-          ? noMatches
-          : matchBlock
-        }
-        <div className="row row-cols-1 w-100 m-5">
-          <div className="col d-flex justify-content-center">
-            <button onClick={this.handleClick} action='retake' className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0 mb-3'>
-              Retake Quiz
-            </button>
-          </div>
-          <div className="col d-flex justify-content-center">
-            <button onClick={this.handleClick} action='view-pending' className='lt-red-btn  px-1 mt-1 mx-0'>
-              Pending Matches
-            </button>
-          </div>
-        </div>
-    </div>);
-
+            )
+          : (
+            <>
+              <div className='row mb-5 mt-5'>
+                <div className='col mt-5'>
+                  <h1>MATCHES</h1>
+                </div>
+              </div>
+              {matches === undefined || matches === 'no matches yet'
+                ? noMatches
+                : matchBlock
+              }
+              <div className="row row-cols-1 w-100 m-5">
+                <div className="col d-flex justify-content-center">
+                  <button onClick={this.handleClick} action='retake' className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0 mb-3'>
+                    Retake Quiz
+                  </button>
+                </div>
+                <div className="col d-flex justify-content-center">
+                  <button onClick={this.handleClick} action='view-pending' className='lt-red-btn  px-1 mt-1 mx-0'>
+                    Pending Matches
+                  </button>
+                </div>
+              </div>
+            </>
+            )}
+      </div>
+    );
   }
-
 }
