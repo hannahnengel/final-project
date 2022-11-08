@@ -7,7 +7,8 @@ export default class AuthForm extends React.Component {
       firstName: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      error: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -15,24 +16,27 @@ export default class AuthForm extends React.Component {
 
   handleChange(event) {
     const { name, value } = event.target;
-    this.setState({ [name]: value });
+    this.setState({ [name]: value, error: false });
   }
 
   handleSubmit(event) {
     event.preventDefault();
     const { action } = this.props;
+    const { firstName, email, password, confirmPassword } = this.state;
+    const body = { firstName, email, password, confirmPassword };
     const req = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(this.state)
+      body: JSON.stringify(body)
     };
     fetch(`/api/auth/${action}`, req)
       .then(res => res.json())
       .then(result => {
         if (result.error) {
-          alert(result.error);
+          this.setState({ error: true });
+          return;
         }
         if (action === 'register') {
           window.location.hash = 'sign-in';
@@ -73,6 +77,12 @@ export default class AuthForm extends React.Component {
       confirmClass = '';
     } else if (confirmPassword.length > 0 && password !== confirmPassword) {
       doesNotMatchClass = '';
+    }
+
+    const { error } = this.state;
+    let errorClass = 'hidden';
+    if (error) {
+      errorClass = '';
     }
 
     const registerInputs =
@@ -149,6 +159,7 @@ export default class AuthForm extends React.Component {
           name='password'
           onChange={handleChange}
           className='form-control input-sm form-font border-0' />
+          <span className={`${errorClass} danger form-font mt-1 text-start`}>Incorrect email or password</span>
       </>;
 
     const inputs = action === 'sign-in'
