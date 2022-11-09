@@ -6,7 +6,8 @@ export default class PhotoModal extends React.Component {
     super(props);
     this.state = {
       url: null,
-      fileName: null
+      fileName: null,
+      isLoading: false
     };
     this.fileInputRef = React.createRef();
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -14,6 +15,7 @@ export default class PhotoModal extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
+    this.setState({ isLoading: true });
     const action = event.target.getAttribute('id');
     const xaccesstoken = localStorage.getItem('react-context-jwt');
     const req = {
@@ -34,14 +36,13 @@ export default class PhotoModal extends React.Component {
         .then(res => res.json())
         .then(result => {
           const { fileName, url } = result;
-          this.setState({ url, fileName });
+          this.setState({ url, fileName, isLoading: false });
         });
     } else if (action === 'delete-photo') {
       req.method = 'DELETE';
-
       fetch('/api/auth/profile-picture/', req)
         .then(result => {
-          this.setState({ url: null, fileName: null });
+          this.setState({ url: null, fileName: null, isLoading: false });
         });
     }
 
@@ -62,7 +63,7 @@ export default class PhotoModal extends React.Component {
           this.setState({ url: null, fileName: null });
         } else {
           const { fileName, url } = result;
-          this.setState({ url, fileName });
+          this.setState({ url, fileName, isLoading: false });
         }
 
       });
@@ -70,19 +71,21 @@ export default class PhotoModal extends React.Component {
 
   render() {
     const { getDBInfo } = this.props;
+    const { isLoading, fileName, url } = this.state;
 
     let profilePicture =
     (<div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px', backgroundColor: '#D9D9D9' }}>
       <i className="fa-solid fa-camera fa-2xl" style={{ color: '#6D6969' }}></i>
     </div>);
 
-    if (this.state.url !== null && this.state.fileName !== null) {
-      const { fileName, url } = this.state;
-      profilePicture = (
-        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px' }}>
-          <img className='profile-picture' src={url} alt={fileName} />
-        </div>
-      );
+    if (!isLoading) {
+      if (this.state.url !== null && this.state.url !== undefined && this.state.fileName !== null && this.state.fileName !== undefined) {
+        profilePicture = (
+          <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '175px', height: '175px' }}>
+            <img className='profile-picture' src={url} alt={fileName} />
+          </div>
+        );
+      }
     }
 
     const modalCardStyle = {

@@ -11,6 +11,7 @@ export default class Profile extends React.Component {
     };
     this.handleClick = this.handleClick.bind(this);
     this.handleMouseHover = this.handleMouseHover.bind(this);
+    this.getDBInfo = this.getDBInfo.bind(this);
   }
 
   editInfo(event) {
@@ -62,6 +63,26 @@ export default class Profile extends React.Component {
     this.setState({ selections: selectionsCopy });
   }
 
+  getDBInfo() {
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'GET',
+      headers: {
+        'x-access-token': xaccesstoken
+      }
+    };
+    fetch('/api/auth/profile-picture/', req)
+      .then(res => res.json())
+      .then(result => {
+        if (result === 'no info exists') {
+          this.setState({ url: null, fileName: null });
+        } else {
+          const { fileName, url } = result;
+          this.setState({ url, fileName });
+        }
+      });
+  }
+
   componentDidMount() {
     const xaccesstoken = window.localStorage.getItem('react-context-jwt');
     const req = {
@@ -103,51 +124,62 @@ export default class Profile extends React.Component {
     let fileName;
     let age;
     const friendGenderPreference = [];
+
     let profilePicture = (
       <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
         <a><i className="fa-solid fa-camera fa-xl" style={{ color: '#6D6969' }} data-bs-toggle="modal" data-bs-target="#photo-modal" id='modal'></i></a>
       </div>);
 
-    if (userInfo !== undefined) {
-      if (userInfo !== 'no info exists') {
-        ({ gender, birthday, phone, contact, firstName, email, city, zipCode, friendAge, friendGender, mileRadius, url, fileName } = userInfo[0]);
+    if (!isLoading) {
+      if (userInfo !== undefined) {
+        if (userInfo !== 'no info exists') {
+          ({ gender, birthday, phone, contact, firstName, email, city, zipCode, friendAge, friendGender, mileRadius, url, fileName } = userInfo[0]);
 
-        if (contact.includes('phone') && contact.includes('email')) {
-          contactPreference = [phone, email];
-        } else if (contact.includes('email') && (!contact.includes('phone'))) {
-          contactPreference = [email];
-        } else if (contact.includes('phone') && (!contact.includes('email'))) {
-          contactPreference = [phone];
-        }
-
-        let friendGenderPreferenceArray = [];
-        friendGenderPreferenceArray = friendGender.replace(/{|}|"|"/g, '').split(',');
-        for (let i = 0; i < friendGenderPreferenceArray.length; i++) {
-          if (i < friendGenderPreferenceArray.length - 1) {
-            friendGenderPreference.push(friendGenderPreferenceArray[i][0].toUpperCase() + friendGenderPreferenceArray[i].substring(1) + ', ');
-          } else {
-            friendGenderPreference.push(friendGenderPreferenceArray[i][0].toUpperCase() + friendGenderPreferenceArray[i].substring(1));
+          if (contact.includes('phone') && contact.includes('email')) {
+            contactPreference = [phone, email];
+          } else if (contact.includes('email') && (!contact.includes('phone'))) {
+            contactPreference = [email];
+          } else if (contact.includes('phone') && (!contact.includes('email'))) {
+            contactPreference = [phone];
           }
-        }
 
-        const today = new Date();
-        const birthDate = new Date(birthday);
-        age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
+          let friendGenderPreferenceArray = [];
+          friendGenderPreferenceArray = friendGender.replace(/{|}|"|"/g, '').split(',');
+          for (let i = 0; i < friendGenderPreferenceArray.length; i++) {
+            if (i < friendGenderPreferenceArray.length - 1) {
+              friendGenderPreference.push(friendGenderPreferenceArray[i][0].toUpperCase() + friendGenderPreferenceArray[i].substring(1) + ', ');
+            } else {
+              friendGenderPreference.push(friendGenderPreferenceArray[i][0].toUpperCase() + friendGenderPreferenceArray[i].substring(1));
+            }
+          }
 
-        if (url !== null && fileName !== null) {
-          profilePicture = (
-        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
-          <a><img data-bs-toggle="modal" data-bs-target="#photo-modal" className='profile-picture' id='modal' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
-        </div>
-          );
-        }
+          const today = new Date();
+          const birthDate = new Date(birthday);
+          age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
 
-      } else {
-        return (<Redirect to='' />);
+          if (fileName !== null && url !== null) {
+            profilePicture = (
+          <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
+            <a><img data-bs-toggle="modal" data-bs-target="#photo-modal" className='profile-picture' id='modal' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
+          </div>
+            );
+          }
+
+        } else {
+          return (<Redirect to='' />);
+        }
+      }
+      if (this.state.url !== null && this.state.url !== undefined && this.state.fileName !== null && this.state.fileName !== undefined) {
+        ({ fileName, url } = this.state);
+        profilePicture = (
+          <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
+            <a><img data-bs-toggle="modal" data-bs-target="#photo-modal" className='profile-picture' id='modal' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
+          </div>
+        );
       }
     }
 

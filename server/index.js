@@ -1068,25 +1068,11 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
 
   const sql = `
   select "lat",
-         "lng"
+         "lng",
+         "mileRadius"
     from "friendPreferences"
     where "userId" = $1
     `;
-  // const sql = `
-  // select
-  //   "users"."firstName",
-  //   "users"."email",
-  //   "userInfos"."userId" as "id",
-  //   "userInfos".*,
-  //   "friendPreferences"."city",
-  //   "friendPreferences"."zipCode",
-  //   "profilePics".*
-  // from "users"
-  //   join "userInfos" using ("userId")
-  //   join "friendPreferences" using ("userId")
-  //   left join "profilePics" using ("userId")
-  // where "userId" = $1
-  // `;
 
   const params = [userId];
 
@@ -1137,10 +1123,12 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
               "userInfos"."birthday",
               "userInfos"."gender",
               "friendPreferences"."lat",
-              "friendPreferences"."lng"
+              "friendPreferences"."lng",
+              "profilePics".*
             from "users"
               join "userInfos" using ("userId")
               join "friendPreferences" using ("userId")
+              left join "profilePics" using ("userId")
             ${where}
             `;
 
