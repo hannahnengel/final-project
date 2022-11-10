@@ -1,4 +1,5 @@
 import React from 'react';
+import AppContext from '../lib/app-context';
 
 export default class HateSelectionsInputs extends React.Component {
 
@@ -75,6 +76,87 @@ export default class HateSelectionsInputs extends React.Component {
               });
             window.location.hash = 'my-profile';
           }
+          // find matches, determine type and repost type
+          const { user } = this.context;
+          req.method = 'GET';
+          req.body = null;
+          fetch('/api/auth/find-matches/', req)
+            .then(res => res.json())
+            .then(result => {
+              if (result !== 'no potential matches exist') {
+                const { potentialMatches, matchSelections } = result;
+
+                const otherUsers = [];
+                matchSelections.forEach(matchSelection => {
+                  let otherUser;
+                  if (matchSelection.userId1 === user.userId) {
+                    otherUser = matchSelection.userId2;
+                  } else {
+                    otherUser = matchSelection.userId1;
+                  }
+                  otherUsers.push(otherUser);
+                });
+
+                const uniqueOtherUsers = otherUsers.filter((user, index) => {
+                  return otherUsers.indexOf(user) === index;
+                });
+
+                const allMatchTypes = [];
+                uniqueOtherUsers.forEach(otherUser => {
+                  let count = 0;
+                  let matchType = '';
+                  otherUsers.forEach(occurance => {
+                    if (otherUser === occurance) {
+                      count++;
+                    }
+                  });
+                  if (count <= 4) {
+                    matchType = 'good';
+                  } else if (count <= 9) {
+                    matchType = 'great';
+                  } else if (count === 10) {
+                    matchType = 'perfect';
+                  }
+                  let userId1;
+                  let userId2;
+                  if (user.userId < otherUser) {
+                    userId1 = user.userId;
+                    userId2 = otherUser;
+                  } else {
+                    userId1 = otherUser;
+                    userId2 = user.userId;
+                  }
+                  allMatchTypes.push({
+                    userId1,
+                    userId2,
+                    matchType
+                  });
+
+                });
+
+                allMatchTypes.forEach(matchType => {
+                  potentialMatches.forEach((potentialMatch, i) => {
+                    if (potentialMatch.userId === matchType.userId1 || potentialMatch.userId === matchType.userId2) {
+                      potentialMatches[i].matchType = matchType.matchType;
+                    }
+                  });
+                });
+                // this.setState({ potentialMatches, matchSelections });
+                const currentUser = user.userId;
+                const body = {
+                  matchSelections, allMatchTypes, currentUser
+                };
+                req.method = 'POST';
+                req.body = JSON.stringify(body);
+
+                fetch('/api/auth/post-matches/', req)
+                  .then(res => res.json())
+                  .then(result => {
+                  });
+
+              }
+            });
+
         });
       return;
     }
@@ -124,6 +206,87 @@ export default class HateSelectionsInputs extends React.Component {
               localStorage.removeItem('selections');
               localStorage.removeItem('action');
               window.location.hash = 'my-profile';
+
+              // find matches, determine type and repost type
+              const { user } = this.context;
+              req.method = 'GET';
+              req.body = null;
+              fetch('/api/auth/find-matches/', req)
+                .then(res => res.json())
+                .then(result => {
+                  if (result !== 'no potential matches exist') {
+                    const { potentialMatches, matchSelections } = result;
+
+                    const otherUsers = [];
+                    matchSelections.forEach(matchSelection => {
+                      let otherUser;
+                      if (matchSelection.userId1 === user.userId) {
+                        otherUser = matchSelection.userId2;
+                      } else {
+                        otherUser = matchSelection.userId1;
+                      }
+                      otherUsers.push(otherUser);
+                    });
+
+                    const uniqueOtherUsers = otherUsers.filter((user, index) => {
+                      return otherUsers.indexOf(user) === index;
+                    });
+
+                    const allMatchTypes = [];
+                    uniqueOtherUsers.forEach(otherUser => {
+                      let count = 0;
+                      let matchType = '';
+                      otherUsers.forEach(occurance => {
+                        if (otherUser === occurance) {
+                          count++;
+                        }
+                      });
+                      if (count <= 4) {
+                        matchType = 'good';
+                      } else if (count <= 9) {
+                        matchType = 'great';
+                      } else if (count === 10) {
+                        matchType = 'perfect';
+                      }
+                      let userId1;
+                      let userId2;
+                      if (user.userId < otherUser) {
+                        userId1 = user.userId;
+                        userId2 = otherUser;
+                      } else {
+                        userId1 = otherUser;
+                        userId2 = user.userId;
+                      }
+                      allMatchTypes.push({
+                        userId1,
+                        userId2,
+                        matchType
+                      });
+
+                    });
+
+                    allMatchTypes.forEach(matchType => {
+                      potentialMatches.forEach((potentialMatch, i) => {
+                        if (potentialMatch.userId === matchType.userId1 || potentialMatch.userId === matchType.userId2) {
+                          potentialMatches[i].matchType = matchType.matchType;
+                        }
+                      });
+                    });
+                    const currentUser = user.userId;
+                    const body = {
+                      matchSelections, allMatchTypes, currentUser
+                    };
+                    req.method = 'POST';
+                    req.body = JSON.stringify(body);
+
+                    fetch('/api/auth/post-matches/', req)
+                      .then(res => res.json())
+                      .then(result => {
+                      });
+
+                  }
+                });
+
               return;
             }
           }
@@ -304,3 +467,5 @@ export default class HateSelectionsInputs extends React.Component {
   }
 
 }
+
+HateSelectionsInputs.contextType = AppContext;

@@ -330,7 +330,11 @@ export default function Map(props) {
       );
     }
 
-    matchTypeDescription = `${matchType[0].toUpperCase() + matchType.substring(1)} Match!`;
+    if (matchType !== 'no longer a match') {
+      matchTypeDescription = `${matchType[0].toUpperCase() + matchType.substring(1)} Match!`;
+    } else {
+      matchTypeDescription = `${matchType[0].toUpperCase() + matchType.slice(1, -5) + matchType.slice(12, -4).toUpperCase() + (matchType.slice(-4))}.`;
+    }
 
     if (matchTypeDescription === 'Perfect Match!') {
       matchTypeClass = 'yellow';
@@ -338,6 +342,8 @@ export default function Map(props) {
       matchTypeClass = 'green';
     } else if (matchTypeDescription === 'Good Match!') {
       matchTypeClass = 'danger';
+    } else {
+      matchTypeClass = 'grey';
     }
 
   }

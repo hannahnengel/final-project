@@ -42,7 +42,32 @@ export default class MatchList extends React.Component {
     fetch('/api/auth/get-matches', req)
       .then(res => res.json())
       .then(result => {
-        const matches = result;
+        const perfectMatches = [];
+        const greatMatches = [];
+        const goodMatches = [];
+        const nonMatches = [];
+        let matches = [];
+
+        if (result !== 'no matches yet') {
+          result.forEach(match => {
+            if (match.matchType === 'perfect') {
+              perfectMatches.push(match);
+            } else if (match.matchType === 'great') {
+              greatMatches.push(match);
+            } else if (match.matchType === 'good') {
+              goodMatches.push(match);
+            } else if (match.matchType === 'no longer a match') {
+              nonMatches.push(match);
+            }
+          });
+          perfectMatches.forEach(perfectMatch => matches.push(perfectMatch));
+          greatMatches.forEach(greatMatch => matches.push(greatMatch));
+          goodMatches.forEach(goodMatch => matches.push(goodMatch));
+          nonMatches.forEach(nonMatch => matches.push(nonMatch));
+        } else {
+          matches = result;
+        }
+
         this.setState({ matches, isLoading: false });
       });
   }
@@ -88,7 +113,11 @@ export default class MatchList extends React.Component {
 
         let matchTypeDescription;
         if (match.matchType !== undefined) {
-          matchTypeDescription = `${match.matchType[0].toUpperCase() + match.matchType.substring(1)} Match!`;
+          if (match.matchType !== 'no longer a match') {
+            matchTypeDescription = `${match.matchType[0].toUpperCase() + match.matchType.substring(1)} Match!`;
+          } else {
+            matchTypeDescription = `${match.matchType[0].toUpperCase() + match.matchType.slice(1, -5) + match.matchType.slice(12, -4).toUpperCase() + (match.matchType.slice(-4))}.`;
+          }
         }
 
         let matchTypeClass;
@@ -98,6 +127,8 @@ export default class MatchList extends React.Component {
           matchTypeClass = 'green';
         } else if (matchTypeDescription === 'Good Match!') {
           matchTypeClass = 'danger';
+        } else {
+          matchTypeClass = 'grey';
         }
 
         let profilePicture = (

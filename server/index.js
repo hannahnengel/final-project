@@ -98,12 +98,18 @@ app.post('/api/auth/register', (req, res, next) => {
       const sql = `
       insert into "users" ("firstName", "email", "hashedPassword")
       values ($1, $2, $3)
+
+      on conflict on constraint "users_email_key"
+        do nothing
       returning "userId", "email", "createdAt"
-      `;
+        `;
       const params = [firstName, email, hashedPassword];
       return db.query(sql, params);
     })
     .then(result => {
+      if (result.rows.length === 0) {
+        res.status(202).json('email already exists');
+      }
       const [user] = result.rows;
       res.status(201).json(user);
     })
@@ -277,10 +283,10 @@ app.post('/api/match-status-update', (req, res, next) => {
   if (!userId1 || !userId2 || !statusToUpdate || !status) {
     throw new ClientError(400, 'user1Id, user2Id, status to update, and status are required fields');
   }
-  if (!Number.isInteger(userId1) || userId1 < 1) {
+  if (!Number.isInteger(Number(userId1)) || Number(userId1) < 1) {
     throw new ClientError(400, 'userId1 must be a positive integer');
   }
-  if (!Number.isInteger(userId2) || userId2 < 1) {
+  if (!Number.isInteger(Number(userId2)) || Number(userId2) < 1) {
     throw new ClientError(400, 'userId2 must be a positive integer');
   }
 
@@ -789,7 +795,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                   }
                   if (matchesToReject.length > 0) {
                     matchesToReject.forEach(match => {
-                      match.matchStatus = 'rejected';
+                      // match.matchStatus = 'rejected';
                       match.matchType = 'no longer a match';
                       postMatches.push(match);
                     });
