@@ -65,7 +65,8 @@ export default class Matches extends React.Component {
   }
 
   handleExpandList(event) {
-    if (event.target.innerHTML === 'view all') {
+    const expanded = event.target.parentNode.getAttribute('aria-expanded');
+    if (expanded === 'true') {
       this.setState({ linkText: 'see less' });
     } else {
       this.setState({ linkText: 'view all' });
@@ -324,7 +325,7 @@ export default class Matches extends React.Component {
                 <div className="col d-flex justify-content-end me-lg-4">
                     {moreThan3
                       ? (
-                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end {}" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
+                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
                         )
                       : (<></>) }
 

@@ -141,7 +141,6 @@ export default class HateSelectionsInputs extends React.Component {
                     }
                   });
                 });
-                // this.setState({ potentialMatches, matchSelections });
                 const currentUser = user.userId;
                 const body = {
                   matchSelections, allMatchTypes, currentUser
@@ -376,13 +375,13 @@ export default class HateSelectionsInputs extends React.Component {
     let inputs = '';
     if (inputSelections.length > 0) {
       if (inputSelections.length === 6) {
-        rowNumberClass = 'row-cols-md-3';
+        rowNumberClass = 'row-cols-lg-3';
       }
       if (inputSelections.length === 8) {
-        rowNumberClass = 'row-cols-md-4';
+        rowNumberClass = 'row-cols-lg-4';
       }
       if (inputSelections.length === 10) {
-        rowNumberClass = 'row-cols-md-5';
+        rowNumberClass = 'row-cols-lg-5';
       }
 
       inputs = inputSelections.map(selection => {

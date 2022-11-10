@@ -108,6 +108,12 @@ export default class Profile extends React.Component {
   render() {
     const { isLoading, selections, userInfo } = this.state;
 
+    if (selections === 'no info exists') {
+      return (
+        <Redirect to='' />
+      );
+    }
+
     let gender;
     let birthday;
     let phone;
@@ -190,7 +196,8 @@ export default class Profile extends React.Component {
       localStorage.setItem('action', action);
       window.location.hash = `hate-selections/${category}`;
     }
-    if (selections !== undefined) {
+
+    if (selections !== undefined && selections !== 'no info exists') {
       selections.sort((a, b) => {
         return (a.categoryId - b.categoryId);
       });
