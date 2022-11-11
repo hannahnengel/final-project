@@ -53,7 +53,7 @@ export default class MatchMap extends React.Component {
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
-        <div className='row mb-5'>
+        <div className='row mb-4'>
           <div className='col'>
             <h1>MATCH MAP</h1>
           </div >

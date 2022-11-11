@@ -272,7 +272,7 @@ export default function Map(props) {
   if (action === 'match-map') {
     mapContainerStyle = {
       width: '100%',
-      height: '700px'
+      height: '600px'
     };
 
     zoom *= 1.4;
@@ -313,7 +313,7 @@ export default function Map(props) {
   const handleClick = () => { window.location.hash = `hate-mate-profile/${id}`; };
 
   let profilePicture = (
-    <div className="rounded-circle text-center d-flex justify-content-center align-items-center " style={{ width: '120px', height: '120px', backgroundColor: '#D9D9D9' }}>
+    <div className="rounded-circle text-center d-flex justify-content-center align-items-center picture-dynamic-size" style={{ backgroundColor: '#D9D9D9' }}>
       <i className="fa-solid fa-user fa-xl" style={{ color: '#6D6969' }}></i>
     </div>);
 
@@ -324,8 +324,8 @@ export default function Map(props) {
 
     if (url !== null) {
       profilePicture = (
-        <div className="rounded-circle text-center d-flex justify-content-center align-items-center" style={{ width: '120px', height: '120px' }}>
-          <a><img className='profile-picture' style={{ width: '120px', height: '120px' }} src={url} alt={fileName} /></a>
+        <div className="rounded-circle text-center d-flex justify-content-center align-items-center picture-dynamic-size">
+          <a><img className='profile-picture' src={url} alt={fileName} /></a>
         </div>
       );
     }
@@ -348,7 +348,6 @@ export default function Map(props) {
 
   }
   const cardStyle = {
-    width: '400px',
     height: '100%',
     minHeight: '350px',
     backgroundColor: '#F0F0F0',
@@ -365,41 +364,41 @@ export default function Map(props) {
         >
         {markers}
         {selectedMatch && (
-          <InfoWindow
-          onCloseClick={() => {
-            setSelectedMatch(null);
-          }}
-          position={{ lat: selectedMatchLat, lng: selectedMatchLng }}
-          >
-            <div className="row card border-0 shadow p-1 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
-              <div className="row m-0">
-                <div className={`col d-flex justify-content-center ${matchTypeClass}`}>
-                  <h5>{matchTypeDescription}</h5>
+            <InfoWindow
+              onCloseClick={() => {
+                setSelectedMatch(null);
+              }}
+              position={{ lat: selectedMatchLat, lng: selectedMatchLng }}
+            >
+              <div className="row card border-0 shadow p-1 m-0 text-start d-flex align-items-center justify-content-center box-sizing card-dynamic-width" style={cardStyle}>
+                <div className="row m-0">
+                  <div className={`col d-flex justify-content-center text-center p-0 ${matchTypeClass}`}>
+                    <h5 className='match-dynamic-font'>{matchTypeDescription}</h5>
+                  </div>
                 </div>
-              </div>
-              <div className="row row-cols-2 m-0 p-0">
-                <div className="col-4 d-flex justify-content-center pt-2 px-0">
-                  {profilePicture}
-                </div>
-                <div className="col-8 d-flex justify-content-center pt-2 px-0 ">
-                  <div className="row w-100 row-cols-1">
-                    <div className="col d-flex justify-content-center px-0">
-                      <h1>{firstName}</h1>
-                    </div>
-                    <div className="col d-flex justify-content-center px-0">
-                      <p className='m-0 form-font'>{`${gender[0].toUpperCase() + gender.substring(1)}, ${age} years old`}</p>
-                    </div>
-                    <div className="col d-flex justify-content-center px-0">
-                      <p className='m-0 form-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{`${distance} miles away`}</p>
+                <div className="row row-cols-1 m-0 p-0">
+                  <div className="col-md-4 d-flex justify-content-center pt-2 px-0">
+                    {profilePicture}
+                  </div>
+                  <div className="col-md-8 d-flex justify-content-center pt-2 px-0 ">
+                    <div className="row w-100 row-cols-1">
+                      <div className="col d-flex justify-content-center px-0">
+                      <h1 className='match-dynamic-font-h1'>{firstName}</h1>
+                      </div>
+                      <div className="col d-flex justify-content-center px-0">
+                       <p className='m-0 description-dynamic-font'>{`${gender[0].toUpperCase() + gender.substring(1)}, ${age} years old`}</p>
+                      </div>
+                      <div className="col d-flex justify-content-center px-0">
+                        <p className='m-0 description-dynamic-font'><span className='ps-0 pe-1'><i className="fa-solid fa-location-dot"></i></span>{`${distance} miles away`}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div className="row d-flex justify-content-center align-items-center">
+                <button className='text-center btn-link red-link mx-0 px-0 mb-0 mt-3' type='button'><u className='description-dynamic-font' onClick={handleClick}>view profile</u></button>
+                </div>
               </div>
-              <div className="row d-flex justify-content-center align-items-center">
-                <button className='text-center btn-link red-link mb-0 mt-3' type='button'><u onClick={handleClick}>view profile</u></button>
-              </div>
-            </div>
-          </InfoWindow>
+            </InfoWindow>
         )}
         </GoogleMap>
       </>

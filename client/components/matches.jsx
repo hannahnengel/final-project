@@ -120,6 +120,7 @@ export default class Matches extends React.Component {
             } else if (count === 10) {
               matchType = 'perfect';
             }
+
             let userId1;
             let userId2;
             if (user.userId < otherUser) {
@@ -160,35 +161,67 @@ export default class Matches extends React.Component {
 
               const matchesToDisplay = [];
 
-              potentialMatches.forEach(potentialMatch => {
-                let currentUser;
-                matchStatuses.forEach(matchStatus => {
-                  if (potentialMatch.userId === matchStatus.userId1 || potentialMatch.userId === matchStatus.userId2) {
-                    potentialMatch.userId1 = matchStatus.userId1;
-                    potentialMatch.userId2 = matchStatus.userId2;
-                    if (user.userId === matchStatus.userId1) {
-                      currentUser = 'userId1';
-                    } else {
-                      currentUser = 'userId2';
+              if (potentialMatches.length <= matchStatuses.length) {
+                potentialMatches.forEach(potentialMatch => {
+                  let currentUser;
+                  matchStatuses.forEach(matchStatus => {
+                    if (potentialMatch.userId === matchStatus.userId1 || potentialMatch.userId === matchStatus.userId2) {
+                      potentialMatch.userId1 = matchStatus.userId1;
+                      potentialMatch.userId2 = matchStatus.userId2;
+                      if (user.userId === matchStatus.userId1) {
+                        currentUser = 'userId1';
+                      } else {
+                        currentUser = 'userId2';
+                      }
+                      potentialMatch.user1Status = matchStatus.user1Status;
+                      potentialMatch.user2Status = matchStatus.user2Status;
+                      potentialMatch.matchStatus = matchStatus.matchStatus;
+                      potentialMatch.matchSelections = matchStatus.matchSelections;
+                      potentialMatch.newUserStatus = 'pending';
                     }
-                    potentialMatch.user1Status = matchStatus.user1Status;
-                    potentialMatch.user2Status = matchStatus.user2Status;
-                    potentialMatch.matchStatus = matchStatus.matchStatus;
-                    potentialMatch.matchSelections = matchStatus.matchSelections;
-                    potentialMatch.newUserStatus = 'pending';
+                  });
+                  if (currentUser === 'userId1') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                      matchesToDisplay.push(potentialMatch);
+                    }
+                  } else if (currentUser === 'userId2') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                      matchesToDisplay.push(potentialMatch);
+                    }
                   }
-                });
-                if (currentUser === 'userId1') {
-                  if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.matchStatus === 'pending') {
-                    matchesToDisplay.push(potentialMatch);
-                  }
-                } else if (currentUser === 'userId2') {
-                  if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.matchStatus === 'pending') {
-                    matchesToDisplay.push(potentialMatch);
-                  }
-                }
 
-              });
+                });
+              } else {
+                matchStatuses.forEach(matchStatus => {
+                  let currentUser;
+                  potentialMatches.forEach(potentialMatch => {
+                    if (potentialMatch.userId === matchStatus.userId1 || potentialMatch.userId === matchStatus.userId2) {
+                      potentialMatch.userId1 = matchStatus.userId1;
+                      potentialMatch.userId2 = matchStatus.userId2;
+                      if (user.userId === matchStatus.userId1) {
+                        currentUser = 'userId1';
+                      } else {
+                        currentUser = 'userId2';
+                      }
+                      potentialMatch.user1Status = matchStatus.user1Status;
+                      potentialMatch.user2Status = matchStatus.user2Status;
+                      potentialMatch.matchStatus = matchStatus.matchStatus;
+                      potentialMatch.matchSelections = matchStatus.matchSelections;
+                      potentialMatch.newUserStatus = 'pending';
+                      if (currentUser === 'userId1') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                          matchesToDisplay.push(potentialMatch);
+                        }
+                      } else if (currentUser === 'userId2') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                          matchesToDisplay.push(potentialMatch);
+                        }
+                      }
+                    }
+                  });
+                });
+              }
+
               this.setState({ matchesToDisplay, isLoading: false });
             });
 
@@ -210,12 +243,16 @@ export default class Matches extends React.Component {
     let url;
     let matchType;
     let matchSelections;
+    let moreThan3 = false;
 
     const { matchesToDisplay, isLoading, linkText } = this.state;
     if (matchesToDisplay !== undefined) {
       for (let i = 0; i < matchesToDisplay.length; i++) {
         if (matchesToDisplay[i].newUserStatus === 'pending') {
           ({ userId, age, fileName, firstName, gender, mileage, url, matchSelections, matchType } = matchesToDisplay[i]);
+          if (matchSelections.length > 3) {
+            moreThan3 = true;
+          }
           break;
         }
       }
@@ -259,7 +296,6 @@ export default class Matches extends React.Component {
     } else if (matchTypeDescription === 'Good Match!') {
       matchTypeClass = 'danger';
     }
-    let moreThan3 = false;
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
@@ -305,9 +341,6 @@ export default class Matches extends React.Component {
                   <ol className='m-0 p-0'>
                     {matchSelections.map((selection, index) => {
                       let li;
-                      if (index === 3) {
-                        moreThan3 = true;
-                      }
                       if (index < 3) {
                         li = <li id={`selection${index}`} key={index}>{`hates ${selection.selectionName}`}</li>;
                       } else if (index >= 3) {
@@ -325,7 +358,7 @@ export default class Matches extends React.Component {
                 <div className="col d-flex justify-content-end me-lg-4">
                     {moreThan3
                       ? (
-                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
+                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-expanded='true' aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
                         )
                       : (<></>) }
 

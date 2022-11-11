@@ -253,6 +253,13 @@ i:hover {
   animation: spin infinite 5s linear;
 }
 
+.first-name {
+  text-align: "center";
+  height: "auto";
+  width: "100%";
+  font-size: "1.55em";
+}
+
 button[title]:hover::after {
   content: attr(title);
   font-size: 20px;

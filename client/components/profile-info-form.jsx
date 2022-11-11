@@ -209,8 +209,19 @@ export default class ProfileInfoForm extends React.Component {
           }
         }
         if (zipCode === '') {
-          zipCode = this.state.zipCode;
+          alert('incorrect zip code. Try again with correct zip code.');
+          this.setState({
+            coordsCity: '',
+            coordsZipCode: null,
+            city: '',
+            zipCode,
+            lat: null,
+            lng: null,
+            isLoaded: true
+          });
+          return;
         }
+        zipCode = this.state.zipCode;
         this.setState({
           coordsCity: city,
           coordsZipCode: zipCode,

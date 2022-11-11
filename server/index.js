@@ -795,7 +795,11 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                   }
                   if (matchesToReject.length > 0) {
                     matchesToReject.forEach(match => {
-                      // match.matchStatus = 'rejected';
+                      if (match.matchStatus === 'rejected' || match.user1Status === 'rejected' || match.user2Status === 'rejected') {
+                        match.matchStatus = 'rejected';
+                      } else {
+                        match.matchStatus = 'pending';
+                      }
                       match.matchType = 'no longer a match';
                       postMatches.push(match);
                     });
@@ -856,7 +860,7 @@ app.get('/api/auth/get-matches', (req, res, next) => {
   const sql = `
  select * from matches
   where ("userId1" = $1 OR "userId2" = $1)
-  AND ("matchStatus" = 'accepted' OR "matchType" = 'no longer a match')
+  AND ("matchStatus" = 'accepted' OR ("matchType" = 'no longer a match' AND "matchStatus" != 'rejected'))
   `;
   const params = [userId];
   db.query(sql, params)

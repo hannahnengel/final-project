@@ -88,7 +88,9 @@ export default class MatchList extends React.Component {
     );
 
     const cardStyle = {
-      width: '400px',
+      width: '100%',
+      minWidth: '315px',
+      maxWidth: '400px',
       height: '100%',
       minHeight: '350px',
       backgroundColor: '#F0F0F0',
@@ -100,13 +102,13 @@ export default class MatchList extends React.Component {
     if (matches !== undefined && matches !== 'no matches yet') {
 
       if (matches.length === 1) {
-        rowColsClass = 'row-cols-md-1';
+        rowColsClass = 'row-cols-lg-1';
       }
       if (matches.length === 2) {
-        rowColsClass = 'row-cols-md-2';
+        rowColsClass = 'row-cols-lg-2';
       }
       if (matches.length >= 3) {
-        rowColsClass = 'row-cols-md-3';
+        rowColsClass = 'row-cols-lg-3';
       }
 
       matchList = matches.map((match, index) => {
@@ -145,7 +147,7 @@ export default class MatchList extends React.Component {
         }
 
         return (
-          <div className="col mb-3 px-1" key={index}>
+          <div className="col d-flex justify-content-center mb-3 px-1" key={index}>
             <div className="row card border-0 shadow p-1 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
               <div className="row mt-0 mb-1">
                 <div className={`col d-flex justify-content-center text-center p-0 ${matchTypeClass}`}>
@@ -159,7 +161,7 @@ export default class MatchList extends React.Component {
                 <div className="col-8 d-flex justify-content-center pt-2 px-0 ">
                   <div className="row w-100 row-cols-1">
                     <div className="col d-flex justify-content-center px-0">
-                      <h1>{match.firstName}</h1>
+                      <h1 className='first-name'>{match.firstName}</h1>
                     </div>
                     <div className="col d-flex justify-content-center px-0">
                       <p className='m-0 form-font'>{`${match.gender[0].toUpperCase() + match.gender.substring(1)}, ${match.age} years old`}</p>
@@ -181,7 +183,7 @@ export default class MatchList extends React.Component {
     }
 
     const matchBlock = (
-      <div className={`row ${rowColsClass} row-cols-1`}>
+      <div className={`row row-cols-1 row-cols-md-2 ${rowColsClass}`}>
         {matchList}
       </div>
     );
