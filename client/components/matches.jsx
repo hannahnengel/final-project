@@ -83,6 +83,7 @@ export default class Matches extends React.Component {
         'x-access-token': xaccesstoken
       }
     };
+
     fetch('/api/auth/find-matches/', req)
       .then(res => res.json())
       .then(result => {
@@ -90,37 +91,39 @@ export default class Matches extends React.Component {
           const { potentialMatches, matchSelections } = result;
 
           const otherUsers = [];
-          matchSelections.forEach(matchSelection => {
-            let otherUser;
-            if (matchSelection.userId1 === user.userId) {
-              otherUser = matchSelection.userId2;
-            } else {
-              otherUser = matchSelection.userId1;
-            }
-            otherUsers.push(otherUser);
-          });
-
-          const uniqueOtherUsers = otherUsers.filter((user, index) => {
-            return otherUsers.indexOf(user) === index;
-          });
+          const uniqueOtherUsers = potentialMatches.map(potentialMatch => potentialMatch.userId);
+          if (matchSelections.length !== 0) {
+            matchSelections.forEach(matchSelection => {
+              let otherUser;
+              if (matchSelection.userId1 === user.userId) {
+                otherUser = matchSelection.userId2;
+              } else {
+                otherUser = matchSelection.userId1;
+              }
+              otherUsers.push(otherUser);
+            });
+          }
 
           const allMatchTypes = [];
           uniqueOtherUsers.forEach(otherUser => {
             let count = 0;
             let matchType = '';
-            otherUsers.forEach(occurance => {
-              if (otherUser === occurance) {
-                count++;
-              }
-            });
-            if (count <= 4) {
+            if (otherUsers.length !== 0) {
+              otherUsers.forEach(occurance => {
+                if (otherUser === occurance) {
+                  count++;
+                }
+              });
+            }
+            if (count === 0) {
+              matchType = 'no longer a match';
+            } else if (count <= 4) {
               matchType = 'good';
             } else if (count <= 9) {
               matchType = 'great';
             } else if (count === 10) {
               matchType = 'perfect';
             }
-
             let userId1;
             let userId2;
             if (user.userId < otherUser) {
@@ -145,7 +148,6 @@ export default class Matches extends React.Component {
               }
             });
           });
-
           this.setState({ potentialMatches, matchSelections });
           const currentUser = user.userId;
           const body = {
@@ -158,7 +160,6 @@ export default class Matches extends React.Component {
             .then(res => res.json())
             .then(result => {
               const matchStatuses = result;
-
               const matchesToDisplay = [];
 
               if (potentialMatches.length <= matchStatuses.length) {
@@ -181,11 +182,11 @@ export default class Matches extends React.Component {
                     }
                   });
                   if (currentUser === 'userId1') {
-                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
                       matchesToDisplay.push(potentialMatch);
                     }
                   } else if (currentUser === 'userId2') {
-                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
                       matchesToDisplay.push(potentialMatch);
                     }
                   }
@@ -209,11 +210,11 @@ export default class Matches extends React.Component {
                       potentialMatch.matchSelections = matchStatus.matchSelections;
                       potentialMatch.newUserStatus = 'pending';
                       if (currentUser === 'userId1') {
-                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
                           matchesToDisplay.push(potentialMatch);
                         }
                       } else if (currentUser === 'userId2') {
-                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.user2Status === 'pending') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
                           matchesToDisplay.push(potentialMatch);
                         }
                       }
@@ -221,14 +222,11 @@ export default class Matches extends React.Component {
                   });
                 });
               }
-
               this.setState({ matchesToDisplay, isLoading: false });
             });
 
-        } else {
-          this.setState({ isLoading: false });
         }
-
+        this.setState({ isLoading: false });
       });
   }
 

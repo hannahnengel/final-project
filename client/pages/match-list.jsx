@@ -6,7 +6,9 @@ export default class MatchList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true
+      isLoading: true,
+      profileInfoComplete: false,
+      friendPreferencesComplete: false
     };
     this.seeProfile = this.seeProfile.bind(this);
   }
@@ -26,7 +28,12 @@ export default class MatchList extends React.Component {
   }
 
   seeProfile(event) {
-    const hateMateUserId = event.target.getAttribute('id');
+    let hateMateUserId;
+    if (event.target.nodeName.toUpperCase() === 'BUTTON') {
+      hateMateUserId = event.target.getAttribute('id');
+    } else {
+      hateMateUserId = event.target.parentNode.getAttribute('id');
+    }
     this.setState({ hateMateUserId });
   }
 
@@ -39,41 +46,48 @@ export default class MatchList extends React.Component {
         'x-access-token': xaccesstoken
       }
     };
-    fetch('/api/auth/get-matches', req)
-      .then(res => res.json())
+    fetch('/api/auth/profile-friend-preference-info', req)
       .then(result => {
-        const perfectMatches = [];
-        const greatMatches = [];
-        const goodMatches = [];
-        const nonMatches = [];
-        let matches = [];
-
-        if (result !== 'no matches yet') {
-          result.forEach(match => {
-            if (match.matchType === 'perfect') {
-              perfectMatches.push(match);
-            } else if (match.matchType === 'great') {
-              greatMatches.push(match);
-            } else if (match.matchType === 'good') {
-              goodMatches.push(match);
-            } else if (match.matchType === 'no longer a match') {
-              nonMatches.push(match);
-            }
-          });
-          perfectMatches.forEach(perfectMatch => matches.push(perfectMatch));
-          greatMatches.forEach(greatMatch => matches.push(greatMatch));
-          goodMatches.forEach(goodMatch => matches.push(goodMatch));
-          nonMatches.forEach(nonMatch => matches.push(nonMatch));
-        } else {
-          matches = result;
+        if (result.status === 200) {
+          const profileInfoComplete = true;
+          const friendPreferencesComplete = true;
+          this.setState({ profileInfoComplete, friendPreferencesComplete });
         }
+        fetch('/api/auth/get-matches', req)
+          .then(res => res.json())
+          .then(result => {
+            const perfectMatches = [];
+            const greatMatches = [];
+            const goodMatches = [];
+            const nonMatches = [];
+            let matches = [];
 
-        this.setState({ matches, isLoading: false });
+            if (result !== 'no matches yet') {
+              result.forEach(match => {
+                if (match.matchType === 'perfect') {
+                  perfectMatches.push(match);
+                } else if (match.matchType === 'great') {
+                  greatMatches.push(match);
+                } else if (match.matchType === 'good') {
+                  goodMatches.push(match);
+                } else if (match.matchType === 'no longer a match') {
+                  nonMatches.push(match);
+                }
+              });
+              perfectMatches.forEach(perfectMatch => matches.push(perfectMatch));
+              greatMatches.forEach(greatMatch => matches.push(greatMatch));
+              goodMatches.forEach(goodMatch => matches.push(goodMatch));
+              nonMatches.forEach(nonMatch => matches.push(nonMatch));
+            } else {
+              matches = result;
+            }
+            this.setState({ matches, isLoading: false });
+          });
       });
   }
 
   render() {
-    const { matches, isLoading, hateMateUserId } = this.state;
+    const { matches, isLoading, hateMateUserId, profileInfoComplete, friendPreferencesComplete } = this.state;
 
     if (hateMateUserId !== undefined) {
       return <Redirect to={`hate-mate-profile/${hateMateUserId}`}/>;
@@ -173,7 +187,7 @@ export default class MatchList extends React.Component {
                 </div>
               </div>
               <div className="row d-flex justify-content-center align-items-center">
-                <button className='text-center btn-link red-link mb-0 mt-3' type='button' onClick={this.seeProfile}><u id={match.id}>view profile</u></button>
+                <button className='text-center btn-link red-link mb-0 mt-3' type='button' onClick={this.seeProfile} id={match.id}><u>view profile</u></button>
               </div>
             </div>
           </div>
@@ -207,18 +221,25 @@ export default class MatchList extends React.Component {
                 ? noMatches
                 : matchBlock
               }
-              <div className="row row-cols-1 w-100 m-5">
-                <div className="col d-flex justify-content-center">
-                  <button onClick={this.handleClick} action='retake' className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0 mb-3'>
-                    Retake Quiz
-                  </button>
+              {profileInfoComplete && friendPreferencesComplete
+                ? (
+                <div className="row row-cols-1 w-100 m-5">
+                  <div className="col d-flex justify-content-center">
+                    <button onClick={this.handleClick} action='retake' className='lt-red-btn retake-quiz-btn px-1 mt-1 mx-0 mb-3'>
+                      Retake Quiz
+                    </button>
+                  </div>
+                  <div className="col d-flex justify-content-center">
+                    <button onClick={this.handleClick} action='view-pending' className='lt-red-btn  px-1 mt-1 mx-0'>
+                      Pending Matches
+                    </button>
+                  </div>
                 </div>
-                <div className="col d-flex justify-content-center">
-                  <button onClick={this.handleClick} action='view-pending' className='lt-red-btn  px-1 mt-1 mx-0'>
-                    Pending Matches
-                  </button>
-                </div>
-              </div>
+                  )
+                : (
+                <></>
+                  )}
+
             </>
             )}
       </div>

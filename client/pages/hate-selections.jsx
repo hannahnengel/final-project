@@ -1,7 +1,6 @@
 import React from 'react';
 import AppContext from '../lib/app-context';
 import HateSelectionsInputs from '../components/hate-selections-inputs';
-// import IncompleteProfile from '../components/incomplete-profile';
 
 export default class HateSelections extends React.Component {
 

@@ -101,7 +101,6 @@ export default class Profile extends React.Component {
         } else {
           this.setState({ selections: result, userInfo: result });
         }
-
       });
   }
 

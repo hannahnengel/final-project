@@ -211,73 +211,6 @@ app.get('/api/selections/selection/:selectionId', (req, res, next) => {
     });
 });
 
-app.post('/api/match-selections', (req, res, next) => {
-  const { userId1, userId2, selectionId, categoryId } = req.body;
-  if (!selectionId || !categoryId) {
-    throw new ClientError(400, 'SelectionId and categoryId are required fields');
-  }
-  if (!Number.isInteger(categoryId) || categoryId < 1) {
-    throw new ClientError(400, 'CategoryId must be a positive integer');
-  }
-  if (!Number.isInteger(selectionId) || selectionId < 1) {
-    throw new ClientError(400, 'SelectionId must be a positive integer');
-  }
-  if (!Number.isInteger(userId1) || userId1 < 1) {
-    throw new ClientError(400, 'UserId1 must be a positive integer');
-  }
-  if (!Number.isInteger(userId2) || userId2 < 1) {
-    throw new ClientError(400, 'UserId2 must be a positive integer');
-  }
-
-  const sql = `
-  insert into "matchSelections" ("userId1", "userId2", "selectionId", "categoryId")
-  values ($1, $2, $3, $4)
-  on conflict on constraint "matchSelections_pk"
-    do
-    update set "selectionId" = $3
-  returning *
-  `;
-  const params = [userId1, userId2, selectionId, categoryId];
-  db.query(sql, params)
-    .then(result => {
-      res.status(201).json(result.rows);
-    })
-    .catch(err => next(err));
-});
-
-app.post('/api/matches', (req, res, next) => {
-  const { userId1, userId2, matchType } = req.body;
-
-  if (!matchType || !userId1 || !userId2) {
-    throw new ClientError(400, 'Match Type, user1Id, and user2Id are required fields');
-  }
-
-  if (!Number.isInteger(userId1) || userId1 < 1) {
-    throw new ClientError(400, 'userId1 must be a positive integer');
-  }
-  if (!Number.isInteger(userId2) || userId2 < 1) {
-    throw new ClientError(400, 'userId2 must be a positive integer');
-  }
-  const user1Status = 'pending';
-  const user2Status = 'pending';
-  const matchStatus = 'pending';
-
-  const sql = `
-  insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
-  values ($1, $2, $3, $4, $5, $6)
-  on conflict on constraint "matches_pk"
-    do
-    update set "matchType" = $3
-  returning *
-  `;
-  const params = [userId1, userId2, matchType, user1Status, user2Status, matchStatus];
-  db.query(sql, params)
-    .then(result => {
-      res.status(201).json(result.rows);
-    })
-    .catch(err => next(err));
-});
-
 app.post('/api/match-status-update', (req, res, next) => {
   const { userId1, userId2, statusToUpdate, status } = req.body;
   if (!userId1 || !userId2 || !statusToUpdate || !status) {
@@ -421,26 +354,48 @@ app.get('/api/auth/profile-friend-preference-info', (req, res, next) => {
 
 app.post('/api/auth/user-selections', (req, res, next) => {
   const { userId } = req.user;
-  const { selectionId, categoryId } = req.body;
-  if (!selectionId || !categoryId) {
-    throw new ClientError(400, 'SelectionId and categoryId are required fields');
-  }
-  if (!Number.isInteger(categoryId) || categoryId < 1) {
-    throw new ClientError(400, 'CategoryId must be a positive integer');
-  }
-  if (!Number.isInteger(selectionId) || selectionId < 1) {
-    throw new ClientError(400, 'SelectionId must be a positive integer');
+  const { selections } = req.body;
+
+  if (!selections) {
+    throw new ClientError(400, 'Selections are required');
   }
 
+  const params = [];
+  let values = 'values ';
+
+  selections.forEach((selection, index) => {
+    const { categoryId, selectionId } = selection;
+    if (!selectionId || !categoryId) {
+      throw new ClientError(400, 'SelectionIds and categoryIds are required fields');
+    }
+    if (!Number.isInteger(categoryId) || categoryId < 1) {
+      throw new ClientError(400, 'CategoryId must be a positive integer');
+    }
+    if (!Number.isInteger(selectionId) || selectionId < 1) {
+      throw new ClientError(400, 'SelectionId must be a positive integer');
+    }
+
+    params.push(Number(userId), Number(categoryId), Number(selectionId));
+  });
+
+  params.forEach((param, i) => {
+    if (i === params.length - 1) {
+      values += `($${i - 1}, $${i}, $${i + 1})`;
+    } else if (i !== 0 && i % 3 === 0) {
+      values += `($${i - 2}, $${i - 1}, $${i}), `;
+    }
+  });
+
   const sql = `
-  insert into "userSelections" ("userId", "selectionId", "categoryId")
-  values ($1, $2, $3)
+  insert into "userSelections" ("userId", "categoryId", "selectionId")
+  ${values}
   on conflict on constraint "userSelections_pk"
     do
-    update set "selectionId" = $2, "categoryId" = $3
+    update set
+      "selectionId" = EXCLUDED."selectionId"
   returning *
   `;
-  const params = [userId, selectionId, categoryId];
+
   db.query(sql, params)
     .then(result => {
       res.status(201).json(result.rows);
@@ -706,123 +661,129 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
   const params = [currentUser];
   db.query(sql, params)
     .then(result => {
-
       const params = [];
       let values = 'values ';
-      matchSelections.forEach((matchSelection, i) => {
-        params.push(matchSelection.userId1);
-        params.push(matchSelection.userId2);
-        params.push(matchSelection.categoryId);
-        params.push(matchSelection.selectionId);
-      });
-      params.forEach((param, i) => {
-        if (i === params.length - 1) {
-          values += `($${i - 2}, $${i - 1}, $${i}, $${i + 1})`;
-        } else if (i !== 0 && i % 4 === 0) {
-          values += `($${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
-        }
-      });
-      const sql = `
+      if (matchSelections.length !== 0) {
+        matchSelections.forEach((matchSelection, i) => {
+          params.push(matchSelection.userId1);
+          params.push(matchSelection.userId2);
+          params.push(matchSelection.categoryId);
+          params.push(matchSelection.selectionId);
+        });
+        params.forEach((param, i) => {
+          if (i === params.length - 1) {
+            values += `($${i - 2}, $${i - 1}, $${i}, $${i + 1})`;
+          } else if (i !== 0 && i % 4 === 0) {
+            values += `($${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
+          }
+        });
+        const sql = `
         insert into "matchSelections" ("userId1", "userId2", "categoryId", "selectionId")
         ${values}
+        on conflict on constraint "matchSelections_pk"
+          do
+          update set
+            "selectionId" = EXCLUDED."selectionId"
         returning *
         `;
-      db.query(sql, params)
-        .then(result => {
-          const sql = `
+        db.query(sql, params)
+          .then(result => {
+            const sql = `
           select * from "matchSelections"
           join "selections" using ("selectionId")
           `;
-          db.query(sql)
-            .then(result => {
-              const selections = result.rows;
-              const sql = `
+            db.query(sql)
+              .then(result => {
+                const selections = result.rows;
+                const sql = `
               select * from "matches"
               where "userId1" = $1 OR "userId2" = $1
               `;
-              const params = [currentUser];
+                const params = [currentUser];
 
-              db.query(sql, params)
-                .then(result => {
-                  const existingMatches = result.rows;
-                  const matchesToUpdate = [];
-                  const matchesToUpload = [];
-                  const matchesToReject = [];
+                db.query(sql, params)
+                  .then(result => {
+                    const existingMatches = result.rows;
+                    const matchesToUpdate = [];
+                    const matchesToUpload = [];
+                    const matchesToReject = [];
 
-                  for (let i = 0; i < allMatchTypes.length; i++) {
-                    let found = false;
-                    for (let j = 0; j < existingMatches.length; j++) {
-                      if (allMatchTypes[i].userId1 === existingMatches[j].userId1 && allMatchTypes[i].userId2 === existingMatches[j].userId2) {
-                        found = true;
-                        existingMatches[j].matchType = allMatchTypes[i].matchType;
-                        matchesToUpdate.push(existingMatches[j]);
-                        break;
+                    for (let i = 0; i < allMatchTypes.length; i++) {
+                      let found = false;
+                      for (let j = 0; j < existingMatches.length; j++) {
+                        if (allMatchTypes[i].userId1 === existingMatches[j].userId1 && allMatchTypes[i].userId2 === existingMatches[j].userId2) {
+                          found = true;
+                          existingMatches[j].matchType = allMatchTypes[i].matchType;
+                          matchesToUpdate.push(existingMatches[j]);
+                          break;
+                        }
+                      }
+                      if (!found) {
+                        matchesToUpload.push(allMatchTypes[i]);
                       }
                     }
-                    if (!found) {
-                      matchesToUpload.push(allMatchTypes[i]);
-                    }
-                  }
 
-                  for (let i = 0; i < existingMatches.length; i++) {
-                    let found = false;
-                    for (let j = 0; j < allMatchTypes.length; j++) {
-                      if (existingMatches[i].userId1 === allMatchTypes[j].userId1 && existingMatches[i].userId2 === allMatchTypes[j].userId2) {
-                        found = true;
-                        break;
+                    for (let i = 0; i < existingMatches.length; i++) {
+                      let found = false;
+                      for (let j = 0; j < allMatchTypes.length; j++) {
+                        if (existingMatches[i].userId1 === allMatchTypes[j].userId1 && existingMatches[i].userId2 === allMatchTypes[j].userId2) {
+                          found = true;
+                          break;
+                        }
+                      }
+                      if (!found) {
+                        matchesToReject.push(existingMatches[i]);
                       }
                     }
-                    if (!found) {
-                      matchesToReject.push(existingMatches[i]);
+
+                    const postMatches = [];
+
+                    if (matchesToUpdate.length > 0) {
+                      matchesToUpdate.forEach(match => {
+                        postMatches.push(match);
+                      });
                     }
-                  }
 
-                  const postMatches = [];
-
-                  if (matchesToUpdate.length > 0) {
-                    matchesToUpdate.forEach(match => {
-                      postMatches.push(match);
-                    });
-                  }
-
-                  if (matchesToUpload.length > 0) {
-                    matchesToUpload.forEach(match => {
-                      match.user1Status = 'pending';
-                      match.user2Status = 'pending';
-                      match.matchStatus = 'pending';
-                      postMatches.push(match);
-                    });
-                  }
-                  if (matchesToReject.length > 0) {
-                    matchesToReject.forEach(match => {
-                      if (match.matchStatus === 'rejected' || match.user1Status === 'rejected' || match.user2Status === 'rejected') {
-                        match.matchStatus = 'rejected';
-                      } else {
+                    if (matchesToUpload.length > 0) {
+                      matchesToUpload.forEach(match => {
+                        match.user1Status = 'pending';
+                        match.user2Status = 'pending';
                         match.matchStatus = 'pending';
-                      }
-                      match.matchType = 'no longer a match';
-                      postMatches.push(match);
-                    });
-                  }
-                  const params = [];
-                  let values = 'values ';
-                  postMatches.forEach((match, i) => {
-                    params.push(match.userId1);
-                    params.push(match.userId2);
-                    params.push(match.matchType);
-                    params.push(match.user1Status);
-                    params.push(match.user2Status);
-                    params.push(match.matchStatus);
-                  });
-                  params.forEach((param, i) => {
-                    if (i === params.length - 1) {
-                      values += `($${i - 4}, $${i - 3}, $${i - 2}, $${i - 1},  $${i} , $${i + 1})`;
-                    } else if (i !== 0 && i % 6 === 0) {
-                      values += `($${i - 5}, $${i - 4}, $${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
+                        postMatches.push(match);
+                      });
                     }
-                  });
+                    if (matchesToReject.length > 0) {
+                      matchesToReject.forEach(match => {
+                        if (match.matchStatus === 'rejected' || match.user1Status === 'rejected' || match.user2Status === 'rejected') {
+                          match.matchStatus = 'rejected';
+                        } else if (match.matchStatus === 'accepted' || (match.user1Status === 'accepted' && match.user2Status === 'accepted')) {
+                          match.matchStatus = 'accepted';
+                        } else {
+                          match.matchStatus = 'pending';
+                        }
+                        match.matchType = 'no longer a match';
+                        postMatches.push(match);
+                      });
+                    }
+                    const params = [];
+                    let values = 'values ';
+                    postMatches.forEach((match, i) => {
+                      params.push(match.userId1);
+                      params.push(match.userId2);
+                      params.push(match.matchType);
+                      params.push(match.user1Status);
+                      params.push(match.user2Status);
+                      params.push(match.matchStatus);
+                    });
+                    params.forEach((param, i) => {
+                      if (i === params.length - 1) {
+                        values += `($${i - 4}, $${i - 3}, $${i - 2}, $${i - 1},  $${i} , $${i + 1})`;
+                      } else if (i !== 0 && i % 6 === 0) {
+                        values += `($${i - 5}, $${i - 4}, $${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
+                      }
+                    });
 
-                  const sql = `
+                    const sql = `
                   insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
                   ${values}
                   on conflict on constraint "matches_pk"
@@ -832,24 +793,146 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                     "matchStatus" = EXCLUDED."matchStatus"
                   returning *
                   `;
-                  db.query(sql, params)
-                    .then(result => {
-                      const matches = result.rows;
-                      matches.forEach(match => {
-                        const matchSelections = [];
-                        selections.forEach(selection => {
-                          if (match.userId1 === selection.userId1 && match.userId2 === selection.userId2) {
-                            matchSelections.push(selection);
-                          }
+                    db.query(sql, params)
+                      .then(result => {
+                        const matches = result.rows;
+                        matches.forEach(match => {
+                          const matchSelections = [];
+                          selections.forEach(selection => {
+                            if (match.userId1 === selection.userId1 && match.userId2 === selection.userId2) {
+                              matchSelections.push(selection);
+                            }
+                          });
+                          match.matchSelections = matchSelections;
                         });
-                        match.matchSelections = matchSelections;
+                        res.status(201).json(matches);
                       });
-                      res.status(201).json(matches);
-                    });
+                  });
+
+              });
+          });
+      } else {
+        const sql = `
+          select * from "matchSelections"
+          join "selections" using ("selectionId")
+          `;
+        db.query(sql)
+          .then(result => {
+            const selections = result.rows;
+            const sql = `
+              select * from "matches"
+              where "userId1" = $1 OR "userId2" = $1
+              `;
+            const params = [currentUser];
+
+            db.query(sql, params)
+              .then(result => {
+                const existingMatches = result.rows;
+                const matchesToUpdate = [];
+                const matchesToUpload = [];
+                const matchesToReject = [];
+
+                for (let i = 0; i < allMatchTypes.length; i++) {
+                  let found = false;
+                  for (let j = 0; j < existingMatches.length; j++) {
+                    if (allMatchTypes[i].userId1 === existingMatches[j].userId1 && allMatchTypes[i].userId2 === existingMatches[j].userId2) {
+                      found = true;
+                      existingMatches[j].matchType = allMatchTypes[i].matchType;
+                      matchesToUpdate.push(existingMatches[j]);
+                      break;
+                    }
+                  }
+                  if (!found) {
+                    matchesToUpload.push(allMatchTypes[i]);
+                  }
+                }
+
+                for (let i = 0; i < existingMatches.length; i++) {
+                  let found = false;
+                  for (let j = 0; j < allMatchTypes.length; j++) {
+                    if (existingMatches[i].userId1 === allMatchTypes[j].userId1 && existingMatches[i].userId2 === allMatchTypes[j].userId2) {
+                      found = true;
+                      break;
+                    }
+                  }
+                  if (!found) {
+                    matchesToReject.push(existingMatches[i]);
+                  }
+                }
+
+                const postMatches = [];
+
+                if (matchesToUpdate.length > 0) {
+                  matchesToUpdate.forEach(match => {
+                    postMatches.push(match);
+                  });
+                }
+
+                if (matchesToUpload.length > 0) {
+                  matchesToUpload.forEach(match => {
+                    match.user1Status = 'pending';
+                    match.user2Status = 'pending';
+                    match.matchStatus = 'pending';
+                    postMatches.push(match);
+                  });
+                }
+                if (matchesToReject.length > 0) {
+                  matchesToReject.forEach(match => {
+                    if (match.matchStatus === 'rejected' || match.user1Status === 'rejected' || match.user2Status === 'rejected') {
+                      match.matchStatus = 'rejected';
+                    } else {
+                      match.matchStatus = 'pending';
+                    }
+                    match.matchType = 'no longer a match';
+                    postMatches.push(match);
+                  });
+                }
+                const params = [];
+                let values = 'values ';
+                postMatches.forEach((match, i) => {
+                  params.push(match.userId1);
+                  params.push(match.userId2);
+                  params.push(match.matchType);
+                  params.push(match.user1Status);
+                  params.push(match.user2Status);
+                  params.push(match.matchStatus);
+                });
+                params.forEach((param, i) => {
+                  if (i === params.length - 1) {
+                    values += `($${i - 4}, $${i - 3}, $${i - 2}, $${i - 1},  $${i} , $${i + 1})`;
+                  } else if (i !== 0 && i % 6 === 0) {
+                    values += `($${i - 5}, $${i - 4}, $${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
+                  }
                 });
 
-            });
-        });
+                const sql = `
+                  insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
+                  ${values}
+                  on conflict on constraint "matches_pk"
+                    do
+                    update set
+                    "matchType"= EXCLUDED."matchType",
+                    "matchStatus" = EXCLUDED."matchStatus"
+                  returning *
+                  `;
+                db.query(sql, params)
+                  .then(result => {
+                    const matches = result.rows;
+                    matches.forEach(match => {
+                      const matchSelections = [];
+                      selections.forEach(selection => {
+                        if (match.userId1 === selection.userId1 && match.userId2 === selection.userId2) {
+                          matchSelections.push(selection);
+                        }
+                      });
+                      match.matchSelections = matchSelections;
+                    });
+                    res.status(201).json(matches);
+                  });
+              });
+
+          });
+      }
 
     });
 
@@ -860,7 +943,7 @@ app.get('/api/auth/get-matches', (req, res, next) => {
   const sql = `
  select * from matches
   where ("userId1" = $1 OR "userId2" = $1)
-  AND ("matchStatus" = 'accepted' OR ("matchType" = 'no longer a match' AND "matchStatus" != 'rejected'))
+  AND ("matchStatus" = 'accepted') OR ("matchType" = 'no longer a match' AND "matchStatus" = 'accepted')
   `;
   const params = [userId];
   db.query(sql, params)
@@ -1099,7 +1182,7 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
                 "userId2",
                 "matchType"
         from "matches"
-        where "userId1" = $1 OR "userId2" = $1
+        where ("userId1" = $1 OR "userId2" = $1) and ("matchStatus" = 'accepted')
         `;
 
         db.query(sql, params)
