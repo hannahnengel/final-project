@@ -1,4 +1,5 @@
 import React from 'react';
+import AppContext from '../lib/app-context';
 
 export default class HateSelectionsInputs extends React.Component {
 
@@ -27,6 +28,7 @@ export default class HateSelectionsInputs extends React.Component {
     const preValue = this.state[category];
     const value = preValue.replaceAll('-', ' ');
     let selection = {};
+    const { categories } = this.props;
     const xaccesstoken = window.localStorage.getItem('react-context-jwt');
     const req = {
       method: 'POST',
@@ -35,7 +37,6 @@ export default class HateSelectionsInputs extends React.Component {
         'x-access-token': xaccesstoken
       }
     };
-
     for (let i = 0; i < this.state.inputSelections.length; i++) {
       if (this.state.inputSelections[i].selectionName.toLowerCase() === value) {
         selection = this.state.inputSelections[i];
@@ -44,37 +45,114 @@ export default class HateSelectionsInputs extends React.Component {
 
     const edit = event.target.querySelector('button[action=edit]');
     if (edit !== null) {
-      const selectionEdits = [];
+      const selections = [];
       req.method = 'GET';
       fetch('/api/auth/user-selections', req)
         .then(res => res.json())
         .then(result => {
           for (let i = 0; i < result.length; i++) {
             if (selection.categoryId !== result[i].categoryId) {
-              selectionEdits.push(result[i]);
+              selections.push(result[i]);
             }
           }
-          selectionEdits.push(selection);
-          for (let j = 0; j < selectionEdits.length; j++) {
-            const selectionId = selectionEdits[j].selectionId;
-            const categoryId = selectionEdits[j].categoryId;
-            let body = {
-              categoryId,
-              selectionId
-            };
-            req.method = 'POST';
-            req.body = JSON.stringify(body);
-            fetch('/api/auth/user-selections', req)
-              .then(res => res.json())
-              .then(result => {
-                if (result.error) {
-                  alert(result.error);
-                } else {
-                  body = {};
-                }
-              });
-            window.location.hash = 'my-profile';
-          }
+          const editSelection = {
+            userId: selections[0].userId,
+            categoryId: selection.categoryId,
+            selectionId: selection.selectionId
+          };
+          selections.push(editSelection);
+          const body = {
+            selections
+          };
+          req.method = 'POST';
+          req.body = JSON.stringify(body);
+          fetch('/api/auth/user-selections', req)
+            .then(res => res.json())
+            .then(result => {
+              if (result.error) {
+                alert(result.error);
+              }
+              const { user } = this.context;
+              req.method = 'GET';
+              req.body = null;
+              fetch('/api/auth/find-matches/', req)
+                .then(res => res.json())
+                .then(result => {
+                  if (result !== 'no potential matches exist') {
+                    const { potentialMatches, matchSelections } = result;
+
+                    const otherUsers = [];
+                    matchSelections.forEach(matchSelection => {
+                      let otherUser;
+                      if (matchSelection.userId1 === user.userId) {
+                        otherUser = matchSelection.userId2;
+                      } else {
+                        otherUser = matchSelection.userId1;
+                      }
+                      otherUsers.push(otherUser);
+                    });
+
+                    const uniqueOtherUsers = otherUsers.filter((user, index) => {
+                      return otherUsers.indexOf(user) === index;
+                    });
+
+                    const allMatchTypes = [];
+                    uniqueOtherUsers.forEach(otherUser => {
+                      let count = 0;
+                      let matchType = '';
+                      otherUsers.forEach(occurance => {
+                        if (otherUser === occurance) {
+                          count++;
+                        }
+                      });
+                      if (count <= 4) {
+                        matchType = 'good';
+                      } else if (count <= 9) {
+                        matchType = 'great';
+                      } else if (count === 10) {
+                        matchType = 'perfect';
+                      }
+                      let userId1;
+                      let userId2;
+                      if (user.userId < otherUser) {
+                        userId1 = user.userId;
+                        userId2 = otherUser;
+                      } else {
+                        userId1 = otherUser;
+                        userId2 = user.userId;
+                      }
+                      allMatchTypes.push({
+                        userId1,
+                        userId2,
+                        matchType
+                      });
+
+                    });
+
+                    allMatchTypes.forEach(matchType => {
+                      potentialMatches.forEach((potentialMatch, i) => {
+                        if (potentialMatch.userId === matchType.userId1 || potentialMatch.userId === matchType.userId2) {
+                          potentialMatches[i].matchType = matchType.matchType;
+                        }
+                      });
+                    });
+                    const currentUser = user.userId;
+                    const body = {
+                      matchSelections, allMatchTypes, currentUser
+                    };
+                    req.method = 'POST';
+                    req.body = JSON.stringify(body);
+
+                    fetch('/api/auth/post-matches/', req)
+                      .then(res => res.json())
+                      .then(result => {
+                        localStorage.removeItem('selections');
+                        window.location.hash = 'my-profile';
+                      });
+                  }
+                  window.location.hash = 'my-profile';
+                });
+            });
         });
       return;
     }
@@ -93,40 +171,116 @@ export default class HateSelectionsInputs extends React.Component {
       localStorage.setItem('selections', JSON.stringify([selection]));
     }
 
-    const { categories } = this.props;
-
+    let data;
+    let dataParsed;
     for (let i = 0; i < categories.length; i++) {
       const currentCategoryArray = categories[i].split(' ');
       const currentCategory = currentCategoryArray.join('-').toLowerCase();
 
       if (category === currentCategory) {
         if (categories[i] === categories[categories.length - 1]) {
-          const data = localStorage.getItem('selections');
-          const dataParsed = JSON.parse(data);
-          let body = {};
-          for (let j = 0; j < dataParsed.length; j++) {
-            const { categoryId, selectionId } = dataParsed[j];
-            body = {
-              categoryId,
-              selectionId
-            };
-            req.body = JSON.stringify(body);
-            fetch('/api/auth/user-selections', req)
-              .then(res => res.json())
-              .then(result => {
-                if (result.error) {
-                  alert(result.error);
-                } else {
-                  body = {};
-                }
-              });
-            if (j === dataParsed.length - 1) {
-              localStorage.removeItem('selections');
-              localStorage.removeItem('action');
-              window.location.hash = 'my-profile';
-              return;
-            }
-          }
+          data = localStorage.getItem('selections');
+          dataParsed = JSON.parse(data);
+        }
+        if (dataParsed !== undefined) {
+          const selections = dataParsed;
+          const body = { selections };
+          req.body = JSON.stringify(body);
+          fetch('/api/auth/user-selections', req)
+            .then(res => res.json())
+            .then(result => {
+              if (result.error) {
+                alert(result.error);
+              }
+
+              const { user } = this.context;
+              req.method = 'GET';
+              req.body = null;
+              fetch('/api/auth/find-matches/', req)
+                .then(res => res.json())
+                .then(result => {
+                  if (result !== 'no potential matches exist') {
+                    const { potentialMatches, matchSelections } = result;
+
+                    const otherUsers = [];
+                    const uniqueOtherUsers = potentialMatches.map(potentialMatch => potentialMatch.userId);
+                    if (matchSelections.length !== 0) {
+                      matchSelections.forEach(matchSelection => {
+                        let otherUser;
+                        if (matchSelection.userId1 === user.userId) {
+                          otherUser = matchSelection.userId2;
+                        } else {
+                          otherUser = matchSelection.userId1;
+                        }
+                        otherUsers.push(otherUser);
+                      });
+                    }
+
+                    const allMatchTypes = [];
+                    uniqueOtherUsers.forEach(otherUser => {
+                      let count = 0;
+                      let matchType = '';
+                      if (otherUsers.length !== 0) {
+                        otherUsers.forEach(occurance => {
+                          if (otherUser === occurance) {
+                            count++;
+                          }
+                        });
+                      }
+                      if (count === 0) {
+                        matchType = 'no longer a match';
+                      } else if (count <= 4) {
+                        matchType = 'good';
+                      } else if (count <= 9) {
+                        matchType = 'great';
+                      } else if (count === 10) {
+                        matchType = 'perfect';
+                      }
+                      let userId1;
+                      let userId2;
+                      if (user.userId < otherUser) {
+                        userId1 = user.userId;
+                        userId2 = otherUser;
+                      } else {
+                        userId1 = otherUser;
+                        userId2 = user.userId;
+                      }
+                      allMatchTypes.push({
+                        userId1,
+                        userId2,
+                        matchType
+                      });
+
+                    });
+
+                    allMatchTypes.forEach(matchType => {
+                      potentialMatches.forEach((potentialMatch, i) => {
+                        if (potentialMatch.userId === matchType.userId1 || potentialMatch.userId === matchType.userId2) {
+                          potentialMatches[i].matchType = matchType.matchType;
+                        }
+                      });
+                    });
+                    const currentUser = user.userId;
+                    const body = {
+                      matchSelections, allMatchTypes, currentUser
+                    };
+                    req.method = 'POST';
+                    req.body = JSON.stringify(body);
+
+                    fetch('/api/auth/post-matches/', req)
+                      .then(res => res.json())
+                      .then(result => {
+                        localStorage.removeItem('selections');
+                        localStorage.removeItem('action');
+                        window.location.hash = 'my-profile';
+                      });
+                  }
+                  localStorage.removeItem('selections');
+                  localStorage.removeItem('action');
+                  window.location.hash = 'my-profile';
+                });
+            });
+          return;
         }
         const words = categories[i + 1].split(' ');
         const hash = words.join('-').toLowerCase();
@@ -135,7 +289,6 @@ export default class HateSelectionsInputs extends React.Component {
           this.getSelections();
         });
       }
-
     }
 
   }
@@ -213,13 +366,13 @@ export default class HateSelectionsInputs extends React.Component {
     let inputs = '';
     if (inputSelections.length > 0) {
       if (inputSelections.length === 6) {
-        rowNumberClass = 'row-cols-md-3';
+        rowNumberClass = 'row-cols-lg-3';
       }
       if (inputSelections.length === 8) {
-        rowNumberClass = 'row-cols-md-4';
+        rowNumberClass = 'row-cols-lg-4';
       }
       if (inputSelections.length === 10) {
-        rowNumberClass = 'row-cols-md-5';
+        rowNumberClass = 'row-cols-lg-5';
       }
 
       inputs = inputSelections.map(selection => {
@@ -304,3 +457,5 @@ export default class HateSelectionsInputs extends React.Component {
   }
 
 }
+
+HateSelectionsInputs.contextType = AppContext;

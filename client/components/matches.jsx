@@ -65,7 +65,8 @@ export default class Matches extends React.Component {
   }
 
   handleExpandList(event) {
-    if (event.target.innerHTML === 'view all') {
+    const expanded = event.target.parentNode.getAttribute('aria-expanded');
+    if (expanded === 'true') {
       this.setState({ linkText: 'see less' });
     } else {
       this.setState({ linkText: 'view all' });
@@ -82,6 +83,7 @@ export default class Matches extends React.Component {
         'x-access-token': xaccesstoken
       }
     };
+
     fetch('/api/auth/find-matches/', req)
       .then(res => res.json())
       .then(result => {
@@ -89,30 +91,33 @@ export default class Matches extends React.Component {
           const { potentialMatches, matchSelections } = result;
 
           const otherUsers = [];
-          matchSelections.forEach(matchSelection => {
-            let otherUser;
-            if (matchSelection.userId1 === user.userId) {
-              otherUser = matchSelection.userId2;
-            } else {
-              otherUser = matchSelection.userId1;
-            }
-            otherUsers.push(otherUser);
-          });
-
-          const uniqueOtherUsers = otherUsers.filter((user, index) => {
-            return otherUsers.indexOf(user) === index;
-          });
+          const uniqueOtherUsers = potentialMatches.map(potentialMatch => potentialMatch.userId);
+          if (matchSelections.length !== 0) {
+            matchSelections.forEach(matchSelection => {
+              let otherUser;
+              if (matchSelection.userId1 === user.userId) {
+                otherUser = matchSelection.userId2;
+              } else {
+                otherUser = matchSelection.userId1;
+              }
+              otherUsers.push(otherUser);
+            });
+          }
 
           const allMatchTypes = [];
           uniqueOtherUsers.forEach(otherUser => {
             let count = 0;
             let matchType = '';
-            otherUsers.forEach(occurance => {
-              if (otherUser === occurance) {
-                count++;
-              }
-            });
-            if (count <= 4) {
+            if (otherUsers.length !== 0) {
+              otherUsers.forEach(occurance => {
+                if (otherUser === occurance) {
+                  count++;
+                }
+              });
+            }
+            if (count === 0) {
+              matchType = 'no longer a match';
+            } else if (count <= 4) {
               matchType = 'good';
             } else if (count <= 9) {
               matchType = 'great';
@@ -143,7 +148,6 @@ export default class Matches extends React.Component {
               }
             });
           });
-
           this.setState({ potentialMatches, matchSelections });
           const currentUser = user.userId;
           const body = {
@@ -156,45 +160,73 @@ export default class Matches extends React.Component {
             .then(res => res.json())
             .then(result => {
               const matchStatuses = result;
-
               const matchesToDisplay = [];
 
-              potentialMatches.forEach(potentialMatch => {
-                let currentUser;
-                matchStatuses.forEach(matchStatus => {
-                  if (potentialMatch.userId === matchStatus.userId1 || potentialMatch.userId === matchStatus.userId2) {
-                    potentialMatch.userId1 = matchStatus.userId1;
-                    potentialMatch.userId2 = matchStatus.userId2;
-                    if (user.userId === matchStatus.userId1) {
-                      currentUser = 'userId1';
-                    } else {
-                      currentUser = 'userId2';
+              if (potentialMatches.length <= matchStatuses.length) {
+                potentialMatches.forEach(potentialMatch => {
+                  let currentUser;
+                  matchStatuses.forEach(matchStatus => {
+                    if (potentialMatch.userId === matchStatus.userId1 || potentialMatch.userId === matchStatus.userId2) {
+                      potentialMatch.userId1 = matchStatus.userId1;
+                      potentialMatch.userId2 = matchStatus.userId2;
+                      if (user.userId === matchStatus.userId1) {
+                        currentUser = 'userId1';
+                      } else {
+                        currentUser = 'userId2';
+                      }
+                      potentialMatch.user1Status = matchStatus.user1Status;
+                      potentialMatch.user2Status = matchStatus.user2Status;
+                      potentialMatch.matchStatus = matchStatus.matchStatus;
+                      potentialMatch.matchSelections = matchStatus.matchSelections;
+                      potentialMatch.newUserStatus = 'pending';
                     }
-                    potentialMatch.user1Status = matchStatus.user1Status;
-                    potentialMatch.user2Status = matchStatus.user2Status;
-                    potentialMatch.matchStatus = matchStatus.matchStatus;
-                    potentialMatch.matchSelections = matchStatus.matchSelections;
-                    potentialMatch.newUserStatus = 'pending';
+                  });
+                  if (currentUser === 'userId1') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
+                      matchesToDisplay.push(potentialMatch);
+                    }
+                  } else if (currentUser === 'userId2') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
+                      matchesToDisplay.push(potentialMatch);
+                    }
                   }
-                });
-                if (currentUser === 'userId1') {
-                  if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.matchStatus === 'pending') {
-                    matchesToDisplay.push(potentialMatch);
-                  }
-                } else if (currentUser === 'userId2') {
-                  if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.matchStatus === 'pending') {
-                    matchesToDisplay.push(potentialMatch);
-                  }
-                }
 
-              });
+                });
+              } else {
+                matchStatuses.forEach(matchStatus => {
+                  let currentUser;
+                  potentialMatches.forEach(potentialMatch => {
+                    if (potentialMatch.userId === matchStatus.userId1 || potentialMatch.userId === matchStatus.userId2) {
+                      potentialMatch.userId1 = matchStatus.userId1;
+                      potentialMatch.userId2 = matchStatus.userId2;
+                      if (user.userId === matchStatus.userId1) {
+                        currentUser = 'userId1';
+                      } else {
+                        currentUser = 'userId2';
+                      }
+                      potentialMatch.user1Status = matchStatus.user1Status;
+                      potentialMatch.user2Status = matchStatus.user2Status;
+                      potentialMatch.matchStatus = matchStatus.matchStatus;
+                      potentialMatch.matchSelections = matchStatus.matchSelections;
+                      potentialMatch.newUserStatus = 'pending';
+                      if (currentUser === 'userId1') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
+                          matchesToDisplay.push(potentialMatch);
+                        }
+                      } else if (currentUser === 'userId2') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
+                          matchesToDisplay.push(potentialMatch);
+                        }
+                      }
+                    }
+                  });
+                });
+              }
               this.setState({ matchesToDisplay, isLoading: false });
             });
 
-        } else {
-          this.setState({ isLoading: false });
         }
-
+        this.setState({ isLoading: false });
       });
   }
 
@@ -209,12 +241,16 @@ export default class Matches extends React.Component {
     let url;
     let matchType;
     let matchSelections;
+    let moreThan3 = false;
 
     const { matchesToDisplay, isLoading, linkText } = this.state;
     if (matchesToDisplay !== undefined) {
       for (let i = 0; i < matchesToDisplay.length; i++) {
         if (matchesToDisplay[i].newUserStatus === 'pending') {
           ({ userId, age, fileName, firstName, gender, mileage, url, matchSelections, matchType } = matchesToDisplay[i]);
+          if (matchSelections.length > 3) {
+            moreThan3 = true;
+          }
           break;
         }
       }
@@ -227,9 +263,8 @@ export default class Matches extends React.Component {
     };
 
     const cardStyle = {
-      width: '100%',
       height: '100%',
-      minHeight: 'calc(100vh - 500px)',
+      minHeight: 'calc(100vh - 700px)',
       backgroundColor: '#F0F0F0'
     };
 
@@ -259,7 +294,6 @@ export default class Matches extends React.Component {
     } else if (matchTypeDescription === 'Good Match!') {
       matchTypeClass = 'danger';
     }
-    let moreThan3 = false;
 
     return (
       <div className='vh-100 text-center d-flex flex-column align-items-center justify-content-center'>
@@ -274,7 +308,7 @@ export default class Matches extends React.Component {
                 ? (
         <div className="row">
           <form style={formStyle} className='px-2'>
-            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing" style={cardStyle}>
+            <div className="row card border-0 shadow p-2 m-0 text-start d-flex align-items-center justify-content-center box-sizing dynamic-width" style={cardStyle}>
               <div className="row row-cols-lg-1 row-cols-sm-2 m-0 p-0">
                 <div className="col-4 d-flex justify-content-center pt-2 px-0">
                   {profilePicture}
@@ -305,9 +339,6 @@ export default class Matches extends React.Component {
                   <ol className='m-0 p-0'>
                     {matchSelections.map((selection, index) => {
                       let li;
-                      if (index === 3) {
-                        moreThan3 = true;
-                      }
                       if (index < 3) {
                         li = <li id={`selection${index}`} key={index}>{`hates ${selection.selectionName}`}</li>;
                       } else if (index >= 3) {
@@ -325,7 +356,7 @@ export default class Matches extends React.Component {
                 <div className="col d-flex justify-content-end me-lg-4">
                     {moreThan3
                       ? (
-                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end {}" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
+                            <button id="view-all-collapse" className="btn-link red-link p-0 m-0 justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target=".collapse-li" aria-expanded='true' aria-controls="selection3 selection4 selection5 selection6 selection7 selection8 selection9" onClick={this.handleExpandList}><u>{linkText}</u></button>
                         )
                       : (<></>) }
 

@@ -12,6 +12,7 @@ import HateSelections from './pages/hate-selections';
 import Profile from './pages/profile';
 import MatchList from './pages/match-list';
 import HateMateProfile from './pages/hate-mate-profile';
+import MatchMap from './pages/match-map';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -97,6 +98,9 @@ export default class App extends React.Component {
     }
     if (route.path.includes('hate-mate-profile')) {
       return <HateMateProfile />;
+    }
+    if (route.path === 'match-map') {
+      return <MatchMap />;
     }
     return <NotFound />;
   }

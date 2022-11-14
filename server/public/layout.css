@@ -28,6 +28,19 @@
   height: 400px;
 }
 
+.dynamic-width {
+  width: 500px;
+}
+
+.card-dynamic-width {
+  width: 400px;
+}
+
+.picture-dynamic-size {
+  height: 100px;
+  width: 100px;
+}
+
 @media only screen and (max-width: 600px) {
   .text-align-end {
     text-align: end;
@@ -40,6 +53,27 @@
   .justify-dynamic {
     justify-content: end;
   }
+
+  .card-dynamic-width {
+    width: 180px;
+  }
+
+  .picture-dynamic-size {
+    max-height: 75px;
+    max-width: 75px;
+  }
+
+  .match-dynamic-font {
+    font-size: 0.95rem;
+  }
+
+  .match-dynamic-font-h1 {
+    font-size: 1.25rem;
+  }
+
+  .description-dynamic-font {
+    font-size: 0.75rem;
+  }
 }
 
 @media only screen and (max-width: 990px) {
@@ -51,5 +85,9 @@
 @media only screen and (max-width: 767px) {
   .dynamic-height {
     height: 350px;
+  }
+
+  .dynamic-width {
+    width: 350px;
   }
 }

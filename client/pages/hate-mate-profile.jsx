@@ -39,6 +39,9 @@ export default class HateMateProfile extends React.Component {
       })
       .then(result => {
         const { userInfo, userSelections, matchSelections } = result;
+        userSelections.sort((a, b) => {
+          return (a.categoryId - b.categoryId);
+        });
         this.setState({ isLoading: false, userInfo, userSelections, matchSelections });
       });
   }

@@ -8,7 +8,8 @@ export default class AuthForm extends React.Component {
       email: '',
       password: '',
       confirmPassword: '',
-      error: false
+      error: false,
+      emailExists: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -32,14 +33,21 @@ export default class AuthForm extends React.Component {
       body: JSON.stringify(body)
     };
     fetch(`/api/auth/${action}`, req)
-      .then(res => res.json())
+      .then(res => {
+        if (res.status === 202) {
+          this.setState({ emailExists: true });
+        }
+        return res.json();
+      })
       .then(result => {
         if (result.error) {
           this.setState({ error: true });
           return;
         }
         if (action === 'register') {
-          window.location.hash = 'sign-in';
+          if (result !== 'email already exists') {
+            window.location.hash = 'sign-in';
+          } else return;
         }
         if (action === 'sign-in') {
           if (result.user && result.token) {
@@ -79,10 +87,14 @@ export default class AuthForm extends React.Component {
       doesNotMatchClass = '';
     }
 
-    const { error } = this.state;
+    const { error, emailExists } = this.state;
     let errorClass = 'hidden';
+    let emailExistsClass = 'hidden';
     if (error) {
       errorClass = '';
+    }
+    if (emailExists) {
+      emailExistsClass = '';
     }
 
     const registerInputs =
@@ -183,7 +195,8 @@ export default class AuthForm extends React.Component {
       : registerButton;
 
     return (
-        <form onSubmit={handleSubmit}>
+      <>
+      <form onSubmit={handleSubmit}>
           <div className="card border-0 shadow p-4 m-1" style={style}>
             { inputs }
           </div>
@@ -193,6 +206,10 @@ export default class AuthForm extends React.Component {
             </button>
           </div>
       </form>
+      <div className="row">
+          <p className={`${emailExistsClass} danger mt-1 text-start`}>Email already exsists. <a href='#sign-in'> <u>Sign here in instead.</u></a></p>
+      </div>
+      </>
     );
   }
 }
