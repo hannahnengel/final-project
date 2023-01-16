@@ -122,7 +122,7 @@ export default class PhotoModal extends React.Component {
                 <div className="row my-2 d-flex justify-content-center">
                   <div className="col col-md-1 px-4">
                     <div className="col d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-                      <form>
+                      <form encType="multipart/form-data">
                         <label htmlFor="upload-photo"><i className="fa-solid fa-arrow-up-from-bracket fa-xl" style={{ color: 'white' }}></i></label>
                         <input ref={this.fileInputRef} className='invisible' type="file" accept="image/jpeg, image/png, image/jpg" name="image" id="upload-photo" onChange={this.handleSubmit} />
                       </form>

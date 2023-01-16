@@ -8,7 +8,6 @@ const ClientError = require('./client-error');
 const errorMiddleware = require('./error-middleware');
 const authorizationMiddleware = require('./authorization-middleware');
 const uploadsMiddleware = require('./uploads-middleware');
-const fs = require('fs');
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
@@ -1260,8 +1259,8 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
-  const fileName = req.file.filename;
-  const url = '/images/' + fileName;
+  const fileName = req.file.originalname;
+  const url = req.file.location;
 
   const sql = `
   insert into "profilePics" ("userId", "url", "fileName")
@@ -1291,16 +1290,6 @@ app.delete('/api/auth/profile-picture', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       res.status(204).json(result.rows);
-      if (result.rows.length !== 0) {
-        const url = result.rows[0].url;
-        const pathToFile = path.join('./server/public', url);
-        fs.unlink(pathToFile, function (err) {
-          if (err) {
-            throw err;
-          }
-        });
-      }
-
     })
     .catch(err => next(err));
 });
