@@ -48,6 +48,9 @@ if (process.env.NODE_ENV === 'development') {
   app.use(express.static(publicPath));
 }
 
+app.use(express.urlencoded({ extended: false }));
+app.set('view engine', 'jsx');
+
 const jsonMiddleware = express.json();
 app.use(jsonMiddleware);
 
@@ -83,6 +86,7 @@ app.post('/api/auth/sign-in', (req, res, next) => {
     .catch(err => next(err));
 });
 
+const { JWT_SECRET } = process.env;
 app.post('/api/auth/forgot-password', (req, res, next) => {
   const { forgottenEmail } = req.body;
   if (!forgottenEmail) {
@@ -90,7 +94,8 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
   }
   const sql = `
    select "userId",
-          "email"
+          "email",
+          "hashedPassword"
       from "users"
      where "email" = $1
   `;
@@ -101,10 +106,38 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
       if (!user) {
         throw new ClientError(202, 'User with this email does not exist');
       }
-      res.status(201).json(user);
+      // CREATE A ONE TIME LINK VALID FOR 15 MINUTES
+      const secret = JWT_SECRET + user.hashedPassword;
+      const payload = {
+        email: user.email,
+        id: user.userId
+      };
+      const token = jwt.sign(payload, secret, { expiresIn: '15m' });
+      const link = `http://localhost:3000/#reset-password/${user.userId}/${token}`;
+      // SEND LINK TO USER USING GMAIL API
+      res.status(201).json(link);
     })
     .catch(err => next(err));
 });
+
+/* app.get('api/auth/reset-password/:id/:token')
+check if the user.userId exists and verify the token
+
+if valid user
+sql search for user by id
+if (id !== user.userId) {
+  throw new ClientError(202, 'User does not exist');
+}
+const secret = JWT_SECRET + user.hashedPassword;
+
+try {
+  const payload = jwt.verify(token, secret);
+  res.status(201).json('success' <- ensure to tell browser to load page)
+} catch (error) {
+  alert(error.message);
+  res.send(error.message);
+}
+*/
 
 app.post('/api/auth/register', (req, res, next) => {
   const { firstName, email, password, confirmPassword } = req.body;
