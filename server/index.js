@@ -83,6 +83,29 @@ app.post('/api/auth/sign-in', (req, res, next) => {
     .catch(err => next(err));
 });
 
+app.post('/api/auth/forgot-password', (req, res, next) => {
+  const { forgottenEmail } = req.body;
+  if (!forgottenEmail) {
+    throw new ClientError(400, 'Forgotten email is a required field');
+  }
+  const sql = `
+   select "userId",
+          "email"
+      from "users"
+     where "email" = $1
+  `;
+  const params = [forgottenEmail];
+  db.query(sql, params)
+    .then(result => {
+      const [user] = result.rows;
+      if (!user) {
+        throw new ClientError(202, 'User with this email does not exist');
+      }
+      res.status(201).json(user);
+    })
+    .catch(err => next(err));
+});
+
 app.post('/api/auth/register', (req, res, next) => {
   const { firstName, email, password, confirmPassword } = req.body;
   if (!firstName || !email || !password) {

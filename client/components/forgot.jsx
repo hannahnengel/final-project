@@ -7,15 +7,25 @@ export default class ForgotPassword extends React.Component {
 
     this.state = {
       forgottenEmail: '',
-      success: false
+      success: false,
+      emailExist: true
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleClose = this.handleClose.bind(this);
   }
 
   handleChange(event) {
     const { name, value } = event.target;
     this.setState({ [name]: value });
+  }
+
+  handleClose() {
+    this.setState({
+      forgottenEmail: '',
+      success: false,
+      emailExist: true
+    });
   }
 
   handleSubmit(event) {
@@ -30,10 +40,19 @@ export default class ForgotPassword extends React.Component {
       },
       body: JSON.stringify(body)
     };
+    let status;
     fetch(`/api/auth/${action}`, req)
-      .then(res => res.json())
+      .then(res => {
+        status = res.status;
+        return res.json();
+      })
       .then(result => {
-        this.setState({ success: true });
+        // console.log(result);
+        if (status !== 202) {
+          this.setState({ success: true });
+        } else {
+          this.setState({ emailExist: false });
+        }
       });
   }
 
@@ -46,10 +65,15 @@ export default class ForgotPassword extends React.Component {
       backgroundColor: 'rgba(41, 41, 41, 0.70)'
     };
 
+    let emailExistClass = 'invisible';
     let successClass = 'invisible';
     let forgotFormClass = '';
     if (this.state.success === true) {
       successClass = '';
+      forgotFormClass = 'invisible';
+    }
+    if (this.state.success === false && this.state.emailExist === false) {
+      emailExistClass = '';
       forgotFormClass = 'invisible';
     }
 
@@ -73,11 +97,11 @@ export default class ForgotPassword extends React.Component {
                   <div className="row">
                     <div className="col">
                       <p className='mt-3'>
-                        We&apos;ll email you a link to reset it.
+                        We&apos;ll email you a link to reset it. <span><small className='grey'>(if the email exists)</small></span>
                       </p>
                     </div>
                   </div>
-                  <form onSubmit={this.handleSubmit}>
+                  <form onSubmit={this.handleSubmit} action="forgot-password">
                     <div className='row d-flex justify-content-start'>
                       <label htmlFor='forgottenEmail' className='form-label px-2 text-start mt-2'>
                         Email
@@ -112,6 +136,22 @@ export default class ForgotPassword extends React.Component {
                 <div className="row">
                   <div className="col mt-3 d-flex justify-content-center">
                     <button type='button' data-bs-dismiss="modal" className='lt-red-btn'>Close</button>
+                  </div>
+                </div>
+              </div>
+              <div className={`container-fluid ${emailExistClass}`}>
+                <div className="row">
+                  <div className="col">
+                    <h2 className="modal-title danger" style={{ fontSize: '1.5rem' }}>
+                      <span><i className="fa-solid fa-circle-xmark fa-2xl"></i></span>
+                      <br />
+                      Email does not exist.
+                    </h2>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col mt-3 d-flex justify-content-center">
+                    <button type='button' data-bs-dismiss="modal" onClick={this.handleClose} className='lt-red-btn'>Close</button>
                   </div>
                 </div>
               </div>
