@@ -1,4 +1,5 @@
 import React from 'react';
+import ForgotPassword from './forgot';
 
 export default class AuthForm extends React.Component {
   constructor(props) {
@@ -171,6 +172,7 @@ export default class AuthForm extends React.Component {
           name='password'
           onChange={handleChange}
           className='form-control input-sm form-font border-0' />
+        <a href='#sign-in' className='form-font py-3' data-bs-toggle="modal" data-bs-target="#forgotPassword"> Forgot Password? </a>
           <span className={`${errorClass} danger form-font mt-1 text-start`}>Incorrect email or password</span>
       </>;
 
@@ -196,6 +198,7 @@ export default class AuthForm extends React.Component {
 
     return (
       <>
+      <ForgotPassword action='forgot-password' />
       <form onSubmit={handleSubmit}>
           <div className="card border-0 shadow p-4 m-1" style={style}>
             { inputs }
