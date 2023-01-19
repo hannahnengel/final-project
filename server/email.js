@@ -24,8 +24,8 @@ module.exports = {
         html:
         `
         <p>Hello ${name},<p/>
-        <p>Please reset your password here: <b style="color:#ab1716">${link}}<b>
-        <br/> <span>Please note, this token will expire in 15 minutes.</span></b></p>
+        <p>Please reset your password here: <span><b>${link}</b></span>
+        <br/><span style="color:#ab1716"><b>Please note, this token will expire in 15 minutes.</b></span></p>
         <br/>
         <p style="color:#6d6969"><small>Do not reply to this email</small></p>
          <a href="https://hate-mate.hate-mate.com/">

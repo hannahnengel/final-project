@@ -122,24 +122,26 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
     .catch(err => next(err));
 });
 
-/* app.get('api/auth/reset-password/:id/:token')
-check if the user.userId exists and verify the token
+app.get('/api/auth/reset-password/:id/:token', (req, res, next) => {
+  // const { id, token } = req.params;
+  res.status(201).json('success');
+  // check if the user.userId exists and verify the token
 
-if valid user
-sql search for user by id
-if (id !== user.userId) {
-  throw new ClientError(202, 'User does not exist');
-}
-const secret = JWT_SECRET + user.hashedPassword;
+  // if valid user
+  // sql search for user by id
+  // if (id !== user.userId) {
+  //   throw new ClientError(202, 'User does not exist');
+  // }
+  // const secret = JWT_SECRET + user.hashedPassword;
 
-try {
-  const payload = jwt.verify(token, secret);
-  res.status(201).json('success' <- ensure to tell browser to load page)
-} catch (error) {
-  alert(error.message);
-  res.send(error.message);
-}
-*/
+  // try {
+  //   const payload = jwt.verify(token, secret);
+  //   res.status(201).json('success' < - ensure to tell browser to load page)
+  // } catch (error) {
+  //   alert(error.message);
+  //   res.send(error.message);
+  // }
+});
 
 app.post('/api/auth/register', (req, res, next) => {
   const { firstName, email, password, confirmPassword } = req.body;

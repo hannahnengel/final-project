@@ -102,6 +102,32 @@ export default class App extends React.Component {
     if (route.path === 'match-map') {
       return <MatchMap />;
     }
+    if (route.path.includes('reset-password') && route.path.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')) {
+      const idAndToken = route.path.slice(15);
+      let id = '';
+      for (let i = 0; i < idAndToken.length; i++) {
+        if (idAndToken[i] === '/') {
+          break;
+        }
+        id += idAndToken[i];
+      }
+      const token = idAndToken.slice(id.length + 1);
+      // console.log('id', id);
+      // console.log('token', token);
+      const req = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      };
+      fetch(`/api/auth/reset-password/${id}/${token}`, req)
+        .then(res => res.json())
+        .then(result => {
+          if (result === 'success') {
+            window.location.hash = `reset-password/${id}`;
+          }
+        });
+    }
     return <NotFound />;
   }
 
