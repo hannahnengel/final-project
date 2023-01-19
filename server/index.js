@@ -8,6 +8,7 @@ const ClientError = require('./client-error');
 const errorMiddleware = require('./error-middleware');
 const authorizationMiddleware = require('./authorization-middleware');
 const uploadsMiddleware = require('./uploads-middleware');
+const sendUserEmail = require('./email');
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
@@ -94,6 +95,7 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
   }
   const sql = `
    select "userId",
+          "firstName",
           "email",
           "hashedPassword"
       from "users"
@@ -106,7 +108,6 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
       if (!user) {
         throw new ClientError(202, 'User with this email does not exist');
       }
-      // CREATE A ONE TIME LINK VALID FOR 15 MINUTES
       const secret = JWT_SECRET + user.hashedPassword;
       const payload = {
         email: user.email,
@@ -114,7 +115,8 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
       };
       const token = jwt.sign(payload, secret, { expiresIn: '15m' });
       const link = `http://localhost:3000/#reset-password/${user.userId}/${token}`;
-      // SEND LINK TO USER USING GMAIL API
+      sendUserEmail.sendUserEmail(user.firstName, user.email, link, token);
+      // console.log(verifyUserEmail.verifyUserEmail(user.firstName, user.email, link, token));
       res.status(201).json(link);
     })
     .catch(err => next(err));
