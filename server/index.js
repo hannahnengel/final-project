@@ -116,15 +116,39 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
       const token = jwt.sign(payload, secret, { expiresIn: '15m' });
       const link = `http://localhost:3000/#reset-password/${user.userId}/${token}`;
       sendUserEmail.sendUserEmail(user.firstName, user.email, link, token);
-      // console.log(verifyUserEmail.verifyUserEmail(user.firstName, user.email, link, token));
       res.status(201).json(link);
     })
     .catch(err => next(err));
 });
 
 app.get('/api/auth/reset-password/:id/:token', (req, res, next) => {
-  // const { id, token } = req.params;
-  res.status(201).json('success');
+  const { id, token } = req.params;
+
+  const sql = `
+   select "userId",
+          "firstName",
+          "email",
+          "hashedPassword"
+      from "users"
+     where "userId" = $1
+  `;
+
+  const params = [id];
+  db.query(sql, params)
+    .then(result => {
+      const [user] = result.rows;
+      if (!user || user.userId !== id) {
+        res.status(202, 'Not a valid user');
+      }
+      const secret = JWT_SECRET + user.hashedPassword;
+
+      try {
+        jwt.verify(token, secret);
+        res.status(201).json(`success! User email is: ${user.email}`);
+      } catch (error) {
+        res.status(202).json(error.message);
+      }
+    });
   // check if the user.userId exists and verify the token
 
   // if valid user

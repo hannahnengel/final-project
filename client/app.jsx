@@ -112,8 +112,6 @@ export default class App extends React.Component {
         id += idAndToken[i];
       }
       const token = idAndToken.slice(id.length + 1);
-      // console.log('id', id);
-      // console.log('token', token);
       const req = {
         method: 'GET',
         headers: {
@@ -123,8 +121,10 @@ export default class App extends React.Component {
       fetch(`/api/auth/reset-password/${id}/${token}`, req)
         .then(res => res.json())
         .then(result => {
-          if (result === 'success') {
+          if (result.includes('success!')) {
             window.location.hash = `reset-password/${id}`;
+          } else {
+            alert('Invalid link');
           }
         });
     }
