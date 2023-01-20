@@ -8,7 +8,7 @@ const ClientError = require('./client-error');
 const errorMiddleware = require('./error-middleware');
 const authorizationMiddleware = require('./authorization-middleware');
 const uploadsMiddleware = require('./uploads-middleware');
-const fs = require('fs');
+const sendUserEmail = require('./email');
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
@@ -49,6 +49,9 @@ if (process.env.NODE_ENV === 'development') {
   app.use(express.static(publicPath));
 }
 
+app.use(express.urlencoded({ extended: false }));
+app.set('view engine', 'jsx');
+
 const jsonMiddleware = express.json();
 app.use(jsonMiddleware);
 
@@ -82,6 +85,100 @@ app.post('/api/auth/sign-in', (req, res, next) => {
         });
     })
     .catch(err => next(err));
+});
+
+const { TOKEN_SECRET } = process.env;
+app.post('/api/auth/forgot-password', (req, res, next) => {
+  const { forgottenEmail } = req.body;
+  const urlHost = req.get('host');
+  if (!forgottenEmail) {
+    throw new ClientError(400, 'Forgotten email is a required field');
+  }
+  const sql = `
+   select "userId",
+          "firstName",
+          "email",
+          "hashedPassword"
+      from "users"
+     where "email" = $1
+  `;
+  const params = [forgottenEmail];
+  db.query(sql, params)
+    .then(result => {
+      const [user] = result.rows;
+      if (!user) {
+        throw new ClientError(202, 'User with this email does not exist');
+      }
+      const secret = TOKEN_SECRET + user.hashedPassword;
+      const payload = {
+        email: user.email,
+        id: user.userId
+      };
+      const token = jwt.sign(payload, secret, { expiresIn: '15m' });
+      const link = `http://${urlHost}/#reset-password/${user.userId}/${token}`;
+      sendUserEmail.sendUserEmail(user.firstName, user.email, link, token);
+      res.status(201).json(link);
+    })
+    .catch(err => next(err));
+});
+
+app.get('/api/auth/reset-password/:id/:token', (req, res, next) => {
+  const { id, token } = req.params;
+
+  const sql = `
+   select "userId",
+          "firstName",
+          "email",
+          "hashedPassword"
+      from "users"
+     where "userId" = $1
+  `;
+
+  const params = [id];
+  db.query(sql, params)
+    .then(result => {
+      const [user] = result.rows;
+      if (!user || user.userId !== id) {
+        res.status(202, 'Not a valid user');
+      }
+      const secret = TOKEN_SECRET + user.hashedPassword;
+
+      try {
+        jwt.verify(token, secret);
+        res.status(201).json(user);
+      } catch (error) {
+        res.status(202).json(error.message);
+      }
+    });
+});
+
+app.post('/api/auth/reset-password', (req, res, next) => {
+  const { userId, password, confirmPassword } = req.body;
+  if (!password || !confirmPassword) {
+    throw new ClientError(400, 'Password is a required field');
+  }
+  if (password !== confirmPassword) {
+    throw new ClientError(400, 'passwords do not match');
+  }
+  argon2
+    .hash(password)
+    .then(hashedPassword => {
+      const sql = `
+      update "users"
+      set "hashedPassword" = $2
+    where "userId" = $1
+    returning *
+        `;
+      const params = [userId, hashedPassword];
+      return db.query(sql, params);
+    })
+    .then(result => {
+      const [user] = result.rows;
+      res.status(201).json(user);
+    })
+    .catch(err => {
+      next(err);
+    });
 });
 
 app.post('/api/auth/register', (req, res, next) => {
@@ -1260,8 +1357,8 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
-  const fileName = req.file.filename;
-  const url = '/images/' + fileName;
+  const fileName = req.file.originalname;
+  const url = req.file.location;
 
   const sql = `
   insert into "profilePics" ("userId", "url", "fileName")
@@ -1291,16 +1388,6 @@ app.delete('/api/auth/profile-picture', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       res.status(204).json(result.rows);
-      if (result.rows.length !== 0) {
-        const url = result.rows[0].url;
-        const pathToFile = path.join('./server/public', url);
-        fs.unlink(pathToFile, function (err) {
-          if (err) {
-            throw err;
-          }
-        });
-      }
-
     })
     .catch(err => next(err));
 });

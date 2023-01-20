@@ -13,6 +13,7 @@ import Profile from './pages/profile';
 import MatchList from './pages/match-list';
 import HateMateProfile from './pages/hate-mate-profile';
 import MatchMap from './pages/match-map';
+import ResetPassword from './components/reset-password';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -101,6 +102,9 @@ export default class App extends React.Component {
     }
     if (route.path === 'match-map') {
       return <MatchMap />;
+    }
+    if (route.path.includes('reset-password')) {
+      return <ResetPassword />;
     }
     return <NotFound />;
   }
