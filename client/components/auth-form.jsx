@@ -172,7 +172,7 @@ export default class AuthForm extends React.Component {
           name='password'
           onChange={handleChange}
           className='form-control input-sm form-font border-0' />
-        <a href='#sign-in' className='form-font py-3' data-bs-toggle="modal" data-bs-target="#forgotPassword"> Forgot Password? </a>
+        <a href='#sign-in' className='form-font py-1' data-bs-toggle="modal" data-bs-target="#forgotPassword"> Forgot Password? </a>
           <span className={`${errorClass} danger form-font mt-1 text-start`}>Incorrect email or password</span>
       </>;
 

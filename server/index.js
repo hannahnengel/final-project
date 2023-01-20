@@ -87,9 +87,10 @@ app.post('/api/auth/sign-in', (req, res, next) => {
     .catch(err => next(err));
 });
 
-const { JWT_SECRET } = process.env;
+const { TOKEN_SECRET } = process.env;
 app.post('/api/auth/forgot-password', (req, res, next) => {
   const { forgottenEmail } = req.body;
+  const urlHost = req.get('host');
   if (!forgottenEmail) {
     throw new ClientError(400, 'Forgotten email is a required field');
   }
@@ -108,13 +109,13 @@ app.post('/api/auth/forgot-password', (req, res, next) => {
       if (!user) {
         throw new ClientError(202, 'User with this email does not exist');
       }
-      const secret = JWT_SECRET + user.hashedPassword;
+      const secret = TOKEN_SECRET + user.hashedPassword;
       const payload = {
         email: user.email,
         id: user.userId
       };
       const token = jwt.sign(payload, secret, { expiresIn: '15m' });
-      const link = `http://localhost:3000/#reset-password/${user.userId}/${token}`;
+      const link = `http://${urlHost}/#reset-password/${user.userId}/${token}`;
       sendUserEmail.sendUserEmail(user.firstName, user.email, link, token);
       res.status(201).json(link);
     })
@@ -140,7 +141,7 @@ app.get('/api/auth/reset-password/:id/:token', (req, res, next) => {
       if (!user || user.userId !== id) {
         res.status(202, 'Not a valid user');
       }
-      const secret = JWT_SECRET + user.hashedPassword;
+      const secret = TOKEN_SECRET + user.hashedPassword;
 
       try {
         jwt.verify(token, secret);
