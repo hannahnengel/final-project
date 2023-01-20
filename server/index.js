@@ -144,27 +144,40 @@ app.get('/api/auth/reset-password/:id/:token', (req, res, next) => {
 
       try {
         jwt.verify(token, secret);
-        res.status(201).json(`success! User email is: ${user.email}`);
+        res.status(201).json(user);
       } catch (error) {
         res.status(202).json(error.message);
       }
     });
-  // check if the user.userId exists and verify the token
+});
 
-  // if valid user
-  // sql search for user by id
-  // if (id !== user.userId) {
-  //   throw new ClientError(202, 'User does not exist');
-  // }
-  // const secret = JWT_SECRET + user.hashedPassword;
-
-  // try {
-  //   const payload = jwt.verify(token, secret);
-  //   res.status(201).json('success' < - ensure to tell browser to load page)
-  // } catch (error) {
-  //   alert(error.message);
-  //   res.send(error.message);
-  // }
+app.post('/api/auth/reset-password', (req, res, next) => {
+  const { userId, password, confirmPassword } = req.body;
+  if (!password || !confirmPassword) {
+    throw new ClientError(400, 'Password is a required field');
+  }
+  if (password !== confirmPassword) {
+    throw new ClientError(400, 'passwords do not match');
+  }
+  argon2
+    .hash(password)
+    .then(hashedPassword => {
+      const sql = `
+      update "users"
+      set "hashedPassword" = $2
+    where "userId" = $1
+    returning *
+        `;
+      const params = [userId, hashedPassword];
+      return db.query(sql, params);
+    })
+    .then(result => {
+      const [user] = result.rows;
+      res.status(201).json(user);
+    })
+    .catch(err => {
+      next(err);
+    });
 });
 
 app.post('/api/auth/register', (req, res, next) => {

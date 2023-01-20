@@ -47,7 +47,6 @@ export default class ForgotPassword extends React.Component {
         return res.json();
       })
       .then(result => {
-        // console.log(result);
         if (status !== 202) {
           this.setState({ success: true });
         } else {
@@ -135,7 +134,7 @@ export default class ForgotPassword extends React.Component {
                 </div>
                 <div className="row">
                   <div className="col mt-3 d-flex justify-content-center">
-                    <button type='button' data-bs-dismiss="modal" className='lt-red-btn'>Close</button>
+                    <button type='button' data-bs-dismiss="modal" onClick={this.handleClose} className='lt-red-btn'>Close</button>
                   </div>
                 </div>
               </div>
