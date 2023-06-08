@@ -20,6 +20,27 @@ export default class Home extends React.Component {
     window.location.href = '#register';
   }
 
+  handleDemoClick() {
+    const email = process.env.DEMO_USER_EMAIL;
+    const password = process.env.DEMO_USER_PWD;
+
+    const body = { email, password };
+
+    const req = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    };
+
+    fetch('/api/auth/sign-in', req)
+      .then(res => res.json())
+      .then(result => {
+        // console.log('success!');
+      });
+  }
+
   componentDidMount() {
     const { profileComplete } = this.state;
     const xaccesstoken = localStorage.getItem('react-context-jwt');
@@ -95,7 +116,7 @@ export default class Home extends React.Component {
               </div>
                 <div className="row">
                   <div className="col d-flex justify-content-center">
-                    <button className='confirm-btn lt-red-btn' onClick={this.handleSignInClick}>
+                    <button className='confirm-btn lt-red-btn' onClick={this.handleDemoClick}>
                       <i className="fa-solid fa-user py-2" />
                       Demo Account
                     </button>
