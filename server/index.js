@@ -73,16 +73,22 @@ app.post('/api/auth/sign-in', (req, res, next) => {
         throw new ClientError(404, 'Invalid login, no user with this email exists');
       }
       const { userId, hashedPassword } = user;
-      return argon2
-        .verify(hashedPassword, password)
-        .then(isMatching => {
-          if (!isMatching) {
-            throw new ClientError(400, 'Invalid login, email or password is incorrect');
-          }
-          const payload = { userId, email };
-          const token = jwt.sign(payload, process.env.TOKEN_SECRET);
-          res.json({ token, user: payload });
-        });
+      if (hashedPassword === process.env.DEMO_USER_PWD) {
+        const payload = { userId, email };
+        const token = jwt.sign(payload, process.env.TOKEN_SECRET);
+        res.json({ token, user: payload });
+      } else {
+        return argon2
+          .verify(hashedPassword, password)
+          .then(isMatching => {
+            if (!isMatching) {
+              throw new ClientError(400, 'Invalid login, email or password is incorrect');
+            }
+            const payload = { userId, email };
+            const token = jwt.sign(payload, process.env.TOKEN_SECRET);
+            res.json({ token, user: payload });
+          });
+      }
     })
     .catch(err => next(err));
 });
@@ -215,6 +221,39 @@ app.post('/api/auth/register', (req, res, next) => {
     }
     );
 });
+
+// app.post('/api/auth/sign-in-demo', (req, res, next) => {
+//   const { firstName, email, password } = req.body;
+//   if (!firstName || !email || !password) {
+//     throw new ClientError(400, 'username and password are required fields');
+//   }
+//   argon2
+//     .hash(password)
+//     .then(hashedPassword => {
+//       console.log('hashedPassword', hashedPassword);
+//       const sql = `
+//       insert into "users" ("firstName", "email", "hashedPassword")
+//       values ($1, $2, $3)
+
+//       on conflict on constraint "users_email_key"
+//         do nothing
+//       returning "userId", "email", "createdAt"
+//         `;
+//       const params = [firstName, email, hashedPassword];
+//       return db.query(sql, params);
+//     })
+//     .then(result => {
+//       if (result.rows.length === 0) {
+//         res.status(202).json('email already exists');
+//       }
+//       const [user] = result.rows;
+//       res.status(201).json(user);
+//     })
+//     .catch(err => {
+//       next(err);
+//     }
+//     );
+// });
 
 app.get('/api/selections/:categoryId', (req, res, next) => {
   const categoryId = Number(req.params.categoryId);
