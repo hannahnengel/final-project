@@ -79,7 +79,7 @@ export default class Home extends React.Component {
                   <p className='px-3'>A different approach to making new friends...<br /> <br /> Let mutual hatred fuel the fire! &#128293;</p>
                 </div>
               </div>
-              <div className="row m-5">
+              <div className="row mt-5">
                 <div className="col-md-6 d-flex justify-content-center">
                   <button className='lt-red-btn' onClick={this.handleSignInClick}>
                     <i className="fa-solid fa-arrow-right-to-bracket py-2 pe-2" />
@@ -93,6 +93,14 @@ export default class Home extends React.Component {
                   </button>
                 </div>
               </div>
+                <div className="row">
+                  <div className="col d-flex justify-content-center">
+                    <button className='confirm-btn lt-red-btn' onClick={this.handleSignInClick}>
+                      <i className="fa-solid fa-user py-2" />
+                      Demo Account
+                    </button>
+                  </div>
+                </div>
             </>
               )
           )
