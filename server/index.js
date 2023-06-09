@@ -1396,8 +1396,16 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
-  const fileName = req.file.originalname;
-  const url = req.file.location;
+
+  let fileName;
+  let url;
+  if (process.env.NODE_ENV === 'development') {
+    fileName = req.file.filename;
+    url = '/imgs/' + fileName;
+  } else {
+    url = req.file.location;
+    fileName = req.file.originalname;
+  }
 
   const sql = `
   insert into "profilePics" ("userId", "url", "fileName")
