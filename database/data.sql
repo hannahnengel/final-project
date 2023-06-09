@@ -30,3 +30,6 @@ insert into "friendPreferences"
 
 insert into "profilePics" ("userId", "url", "fileName")
   values (0, '/imgs/Hannah-Engelhardt.jpg', 'Hannah-Engelhardt.jpg');
+
+insert into "userSelections" ("userId", "categoryId", "selectionId")
+  values(0, 1, 3), (0, 2, 13), (0, 3, 16), (0, 4, 26), (0, 5, 28), (0, 6, 43), (0, 7, 54), (0, 8, 56), (0, 9, 73), (0, 10, 76);
