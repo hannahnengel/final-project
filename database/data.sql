@@ -17,5 +17,16 @@ insert into "selections"
 
 
 insert into "users"
-  ("firstName", "email", "hashedPassword")
-  values ('DemoUser', 'testemail123@email.com', '$argon2i$v=19$m=4096,t=3,p=1$fz5/wi10RpqSzv/q7jW7jA$5lWwrFVXjwDSTl+tebgLGIQ/57R+VXiwQ7r6oXPl8K8');
+  ("userId", "firstName", "email", "hashedPassword")
+  values (0, 'DemoUser', 'testemail123@email.com', '$argon2i$v=19$m=4096,t=3,p=1$fz5/wi10RpqSzv/q7jW7jA$5lWwrFVXjwDSTl+tebgLGIQ/57R+VXiwQ7r6oXPl8K8');
+
+insert into "userInfos"
+  ("userId", "birthday", "gender", "contact")
+  values (0, '1994-07-02', 'female', '{"email"}');
+
+insert into "friendPreferences"
+  ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
+  values (0, 'Irvine', 92618, 33.6544307, -117.7517141, 50, '{"female","male","nonBinary"}', '25-31');
+
+insert into "profilePics" ("userId", "url", "fileName")
+  values (0, '/imgs/Hannah-Engelhardt.jpg', 'Hannah-Engelhardt.jpg');
