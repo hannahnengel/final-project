@@ -40,6 +40,7 @@ export default class Home extends React.Component {
     fetch('/api/auth/sign-in', req)
       .then(res => res.json())
       .then(result => {
+        this.setState({ profileComplete: true });
         handleSignIn(result);
       });
   }
