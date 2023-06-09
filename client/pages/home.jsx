@@ -1,6 +1,7 @@
 import React from 'react';
 import IncompleteProfile from '../components/incomplete-profile';
 import Matches from '../components/matches';
+import AppContext from '../lib/app-context';
 
 export default class Home extends React.Component {
 
@@ -10,6 +11,7 @@ export default class Home extends React.Component {
       profileComplete: false,
       isLoading: true
     };
+    this.handleDemoClick = this.handleDemoClick.bind(this);
   }
 
   handleSignInClick() {
@@ -21,6 +23,7 @@ export default class Home extends React.Component {
   }
 
   handleDemoClick() {
+    const { handleSignIn } = this.context;
     const email = process.env.DEMO_USER_EMAIL;
     const password = process.env.DEMO_USER_PWD;
 
@@ -37,7 +40,7 @@ export default class Home extends React.Component {
     fetch('/api/auth/sign-in', req)
       .then(res => res.json())
       .then(result => {
-        // console.log('success!');
+        handleSignIn(result);
       });
   }
 
@@ -132,3 +135,5 @@ export default class Home extends React.Component {
     );
   }
 }
+
+Home.contextType = AppContext;
