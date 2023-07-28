@@ -414,6 +414,63 @@ app.post('/api/match-status-update', (req, res, next) => {
     .catch(err => next(err));
 });
 
+app.post('/api/setup-demo', (req, res, next) => {
+  const demoData = req.body;
+
+  if (!demoData) {
+    throw new ClientError(400, 'demoUserData required');
+  }
+
+  /* first we search for the userIds and add them to the demoData array
+ "users" where demoId = values
+ */
+  let where = 'where ';
+  const params = [];
+  demoData.forEach(demoUser => {
+    params.push(demoUser.demoId);
+  });
+
+  params.forEach((param, index) => {
+    if (index !== params.length - 1) {
+      where += `"demoId" = $${index + 1} OR `;
+    } else {
+      where += `"demoId" = $${index + 1}`;
+    }
+  });
+
+  const sql = `
+  select * from "users"
+    ${where}
+  `;
+
+  db.query(sql, params)
+    .then(result => {
+      const userData = result.rows;
+      userData.forEach(user => {
+        demoData.forEach(demoUser => {
+          if (demoUser.demoId === user.demoId) {
+            demoUser.userId = user.userId;
+          }
+        });
+      });
+      // console.log('demoData', demoData);
+      /* second we INSERT or UPDATE all the users' where userId = values info into:
+        "users"."firstName",
+         "userInfos",
+         "friendPreferences",
+         "profilePics",
+         "userSelections",
+         "matches"
+            separate array where demoUserId is between 1-9 (accepted) & 10-16 (pending)
+            and update all the statuses accordingly
+        */
+
+      res.status(201).json(demoData);
+    })
+    .catch(err => next(err));
+
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
