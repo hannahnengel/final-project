@@ -25,7 +25,7 @@ insert into "users"
   (4, 'Moogle', 'fakeemail3@email.com', 'hashedPassword'),
   (5, 'Cloud', 'fakeemail4@email.com', 'hashedPassword'),
   (6, 'Jinx', 'fakeemail5@email.com', 'hashedPassword'),
-  (7, 'NotBlitzcrank', 'fakeemail6@email.com', 'hashedPassword'),
+  (7, 'NotBlitz', 'fakeemail6@email.com', 'hashedPassword'),
   (8, 'Toad', 'fakeemail7@email.com', 'hashedPassword'),
   (9, 'Mine', 'fakeemail8@email.com', 'hashedPassword'),
   (10, 'Korok', 'fakeemail9@email.com', 'hashedPassword'),
@@ -33,7 +33,8 @@ insert into "users"
   (12, 'Zenitsu', 'fakeemail11@email.com', 'hashedPassword'),
   (13, 'Anya', 'fakeemail12@email.com', 'hashedPassword'),
   (14, 'Rick', 'fakeemail13@email.com', 'hashedPassword'),
-  (15, 'Peach', 'fakeemail14@email.com', 'hashedPassword');
+  (15, 'Peach', 'fakeemail14@email.com', 'hashedPassword'),
+  (16, 'Peter', 'fakeemail15@email.com', 'hashedPassword');
 
 insert into "userInfos"
   ("userId", "birthday", "gender", "contact")
@@ -49,10 +50,11 @@ insert into "userInfos"
   (9, '1995-02-14', 'female', '{"email"}'),
   (10, '1997-07-02', 'non-binary', '{"email"}'),
   (11, '1998-02-14', 'female', '{"email"}'),
-  (12, '1998-09-03', 'male', '{"email"}'),
+  (12, '1997-09-03', 'male', '{"email"}'),
   (13, '1998-02-14', 'female', '{"email"}'),
   (14, '1993-02-21', 'male', '{"email"}'),
-  (15, '1992-07-30', 'female', '{"email"}');
+  (15, '1992-07-30', 'female', '{"email"}'),
+  (16, '1994-08-10', 'male', '{"email"}');
 
 insert into "friendPreferences"
   ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
@@ -71,7 +73,8 @@ insert into "friendPreferences"
   (12, 'San Francisco', 94103, 37.7769228, -122.4159354, 1500, '{"female","male","nonBinary"}', '25-31'),
   (13, 'San Francisco', 94108, 37.7904144, -122.4068215, 1500, '{"female","male","nonBinary"}', '25-31'),
   (14, 'Seattle', 98104, 47.6038321, -122.330062, 1500, '{"female","male","nonBinary"}', '25-31'),
-  (15, 'Universal City', 91608, 34.138329, -118.359512, 1500, '{"female","male","nonBinary"}', '25-31');
+  (15, 'Universal City', 91608, 34.138329, -118.359512, 1500, '{"female","male","nonBinary"}', '25-31'),
+  (16, 'Anaheim', 92802, 38.81731, -121.29281, 1500, '{"female","male","nonBinary"}', '25-31');
 
 insert into "profilePics" ("userId", "url", "fileName")
   values
@@ -89,7 +92,8 @@ insert into "profilePics" ("userId", "url", "fileName")
   (12, '/imgs/Zenitsu.jpeg', 'Zenitsu.jpeg'),
   (13, '/imgs/Anya.png', 'Anya.png'),
   (14, '/imgs/RickSanchez.png', 'RickSanchez.png'),
-  (15, '/imgs/Princess_Peach.png', 'Princess_Peach.png');
+  (15, '/imgs/Princess_Peach.png', 'Princess_Peach.png'),
+  (16, '/imgs/Spiderman.png', 'Spiderman.png');
 
 insert into "userSelections" ("userId", "categoryId", "selectionId")
   values
@@ -107,4 +111,23 @@ insert into "userSelections" ("userId", "categoryId", "selectionId")
   (12, 1, 2), (12, 2, 14), (12, 3, 16), (12, 4, 26), (12, 5, 33), (12, 6, 42), (12, 7, 53), (12, 8, 56), (12, 9, 73), (12, 10, 76),
   (13, 1, 5), (13, 2, 9), (13, 3, 20), (13, 4, 22), (13, 5, 33), (13, 6, 41), (13, 7, 54), (13, 8, 58), (13, 9, 65), (13, 10, 78),
   (14, 1, 4), (14, 2, 9), (14, 3, 16), (14, 4, 26), (14, 5, 29), (14, 6, 43), (14, 7, 54), (14, 8, 60), (14, 9, 73), (14, 10, 75),
-  (15, 1, 1), (15, 2, 10), (15, 3, 19), (15, 4, 23), (15, 5, 32), (15, 6, 38), (15, 7, 49), (15, 8, 63), (15, 9, 74), (15, 10, 76);
+  (15, 1, 1), (15, 2, 10), (15, 3, 19), (15, 4, 23), (15, 5, 32), (15, 6, 38), (15, 7, 49), (15, 8, 63), (15, 9, 74), (15, 10, 76),
+  (16, 1, 4), (16, 2, 13), (16, 3, 20), (16, 4, 26), (16, 5, 30), (16, 6, 44), (16, 7, 54), (16, 8, 62), (16, 9, 72), (16, 10, 76);
+
+insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
+  values
+  (1, 2, 'perfect', 'accepted', 'accepted', 'accepted'),
+  (1, 3, 'perfect', 'accepted', 'accepted', 'accepted'),
+  (1, 4, 'great', 'accepted', 'accepted', 'accepted'),
+  (1, 5, 'great', 'accepted', 'accepted', 'accepted'),
+  (1, 6, 'great', 'accepted', 'accepted', 'accepted'),
+  (1, 7, 'good', 'accepted', 'accepted', 'accepted'),
+  (1, 8, 'good', 'accepted', 'accepted', 'accepted'),
+  (1, 9, 'good', 'accepted', 'accepted', 'accepted'),
+  (1, 10, 'perfect', 'pending', 'accepted', 'pending'),
+  (1, 11, 'perfect', 'pending', 'accepted', 'pending'),
+  (1, 12, 'great', 'pending', 'accepted', 'pending'),
+  (1, 13, 'good', 'pending', 'accepted', 'pending'),
+  (1, 14, 'great', 'pending', 'accepted', 'pending'),
+  (1, 15, 'good', 'pending', 'accepted', 'pending'),
+  (1, 16, 'good', 'accepted', 'accepted', 'accepted');
