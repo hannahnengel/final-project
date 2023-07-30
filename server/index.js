@@ -414,7 +414,7 @@ app.post('/api/match-status-update', (req, res, next) => {
     .catch(err => next(err));
 });
 
-app.post('/api/setup-demo', (req, res, next) => {
+app.post('/api/demo-ids', (req, res, next) => {
   const demoData = req.body;
 
   if (!demoData) {
@@ -446,26 +446,69 @@ app.post('/api/setup-demo', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       const userData = result.rows;
-      userData.forEach(user => {
-        demoData.forEach(demoUser => {
-          if (demoUser.demoId === user.demoId) {
-            demoUser.userId = user.userId;
-          }
-        });
-      });
-      // console.log('demoData', demoData);
-      /* second we INSERT or UPDATE all the users' where userId = values info into:
-        "users"."firstName",
-         "userInfos",
-         "friendPreferences",
-         "profilePics",
-         "userSelections",
-         "matches"
-            separate array where demoUserId is between 1-9 (accepted) & 10-16 (pending)
-            and update all the statuses accordingly
-        */
+      res.status(201).json(userData);
+    })
+    .catch(err => next(err));
+});
 
-      res.status(201).json(demoData);
+app.post('/api/setup-demo', (req, res, next) => {
+  const demoData = req.body;
+
+  if (!demoData) {
+    throw new ClientError(400, 'demoUserData required');
+  }
+
+  const sql = `
+WITH updated_users AS (
+  UPDATE "users"
+  SET "firstName" = $2
+  WHERE "userId" = $1
+  RETURNING *
+),
+updated_userInfos AS (
+  INSERT INTO "userInfos" ("userId", "birthday", "gender", "phone", "contact")
+  VALUES ($1, $3, $4, $5, $6)
+  ON CONFLICT ON CONSTRAINT "userInfos_pk"
+  DO UPDATE
+    SET "birthday" = excluded."birthday",
+        "gender" = excluded."gender",
+        "phone" = excluded."phone",
+        "contact" = excluded."contact"
+  RETURNING *
+),
+updated_friendPreferences AS (
+INSERT INTO "friendPreferences" ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
+VALUES ($1, $7, $8, $9, $10, $11, $12, $13)
+ON CONFLICT ON CONSTRAINT "friendPreferences_pk"
+DO UPDATE
+  SET "city" = excluded."city",
+      "zipCode" = excluded."zipCode",
+      "lat" = excluded."lat",
+      "lng" = excluded."lng",
+      "mileRadius" = excluded."mileRadius",
+      "friendGender" = excluded."friendGender",
+      "friendAge" = excluded."friendAge"
+  RETURNING *
+  )
+  INSERT INTO "profilePics" ("userId", "url", "fileName")
+  VALUES ($1, $14, $15)
+  ON CONFLICT ON CONSTRAINT "profilePics_pk"
+  DO UPDATE
+    SET "url" = excluded."url",
+        "fileName" = excluded."fileName"
+  RETURNING *
+
+  ;
+`;
+
+  const params = [demoData.userId, demoData.firstName,
+    demoData.userInfos.birthday, demoData.userInfos.gender, demoData.userInfos.phone, demoData.userInfos.contact,
+    demoData.friendPreferences.city, demoData.friendPreferences.zipCode, demoData.friendPreferences.lat, demoData.friendPreferences.lng, demoData.friendPreferences.mileRadius, demoData.friendPreferences.friendGender, demoData.friendPreferences.friendAge,
+    demoData.profilePics.url, demoData.profilePics.fileName
+  ];
+  db.query(sql, params)
+    .then(result => {
+      res.status(201).json(result.rows);
     })
     .catch(err => next(err));
 
