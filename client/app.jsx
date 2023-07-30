@@ -1,6 +1,6 @@
 import React from 'react';
 import jwtDecode from 'jwt-decode';
-import { parseRoute } from './lib';
+import { parseRoute, generateFakeEmails } from './lib';
 import AppContext from './lib/app-context';
 import Home from './pages/home';
 import PageContainer from './components/page-container';
@@ -112,7 +112,7 @@ export default class App extends React.Component {
   render() {
     const { user, route, profileInfoComplete, friendPreferencesComplete } = this.state;
     const { handleSignIn, handleSignOut, handleFormComplete } = this;
-    const contextValue = { user, route, profileInfoComplete, friendPreferencesComplete, handleSignIn, handleSignOut, handleFormComplete };
+    const contextValue = { user, route, profileInfoComplete, friendPreferencesComplete, handleSignIn, handleSignOut, handleFormComplete, generateFakeEmails };
     return (
       <AppContext.Provider value={contextValue}>
         <>
