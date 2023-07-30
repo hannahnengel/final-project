@@ -392,49 +392,62 @@ app.post('/api/demo-ids', (req, res, next) => {
  "users" where demoId = values
  */
   let where = 'where ';
-  const params = [];
-  demoData.forEach(demoUser => {
-    params.push(demoUser.demoId);
+  let demoUser;
+  const params2 = [];
+
+  demoData.forEach(demoDummy => {
+    if (demoDummy.demoId) {
+      params2.push(demoDummy.demoId);
+    } else {
+      demoUser = demoDummy;
+    }
+
   });
 
-  params.forEach((param, index) => {
-    if (index !== params.length - 1) {
+  params2.forEach((param, index) => {
+    if (index !== params2.length - 1) {
       where += `"demoId" = $${index + 1} OR `;
     } else {
       where += `"demoId" = $${index + 1}`;
     }
   });
 
-  const sql = `
+  const sql2 = `
   select * from "users"
     ${where}
   `;
 
+  const sql = `
+  insert into "users" ("firstName", "email", "hashedPassword")
+  values ($1, $2, $3)
+  RETURNING *
+  `;
+
+  const params = [demoUser.firstName, demoUser.email, demoUser.hashedPassword];
+
   db.query(sql, params)
     .then(result => {
-      const userData = result.rows;
-      res.status(201).json(userData);
+      const demoUser = result.rows;
+      db.query(sql2, params2)
+        .then(result => {
+          const userData = result.rows;
+          userData.push(demoUser[0]);
+          res.status(201).json(userData);
+        });
     })
     .catch(err => next(err));
 });
 
 app.post('/api/setup-demo', (req, res, next) => {
   const demoData = req.body;
-
   if (!demoData) {
     throw new ClientError(400, 'demoUserData required');
   }
 
   const sql = `
-WITH updated_users AS (
-  UPDATE "users"
-  SET "firstName" = $2
-  WHERE "userId" = $1
-  RETURNING *
-),
-updated_userInfos AS (
+WITH updated_userInfos AS (
   INSERT INTO "userInfos" ("userId", "birthday", "gender", "phone", "contact")
-  VALUES ($1, $3, $4, $5, $6)
+  VALUES ($1, $2, $3, $4, $5)
   ON CONFLICT ON CONSTRAINT "userInfos_pk"
   DO UPDATE
     SET "birthday" = excluded."birthday",
@@ -445,7 +458,7 @@ updated_userInfos AS (
 ),
 updated_friendPreferences AS (
 INSERT INTO "friendPreferences" ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
-VALUES ($1, $7, $8, $9, $10, $11, $12, $13)
+VALUES ($1, $6, $7, $8, $9, $10, $11, $12)
 ON CONFLICT ON CONSTRAINT "friendPreferences_pk"
 DO UPDATE
   SET "city" = excluded."city",
@@ -458,7 +471,7 @@ DO UPDATE
   RETURNING *
   )
   INSERT INTO "profilePics" ("userId", "url", "fileName")
-  VALUES ($1, $14, $15)
+  VALUES ($1, $13, $14)
   ON CONFLICT ON CONSTRAINT "profilePics_pk"
   DO UPDATE
     SET "url" = excluded."url",
@@ -468,7 +481,7 @@ DO UPDATE
   ;
 `;
 
-  const params = [demoData.userId, demoData.firstName,
+  const params = [demoData.userId,
     demoData.userInfos.birthday, demoData.userInfos.gender, demoData.userInfos.phone, demoData.userInfos.contact,
     demoData.friendPreferences.city, demoData.friendPreferences.zipCode, demoData.friendPreferences.lat, demoData.friendPreferences.lng, demoData.friendPreferences.mileRadius, demoData.friendPreferences.friendGender, demoData.friendPreferences.friendAge,
     demoData.profilePics.url, demoData.profilePics.fileName
