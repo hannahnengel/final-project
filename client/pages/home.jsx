@@ -23,13 +23,23 @@ export default class Home extends React.Component {
   }
 
   handleDemoClick() {
-    const { handleSignIn } = this.context;
+    const { handleSignIn, generateFakeEmails } = this.context;
     let updateComplete = false;
     let count = 0;
 
+    const demoUserEmail = generateFakeEmails(1)[0];
+    const demoUser = {
+      firstName: 'DemoUser',
+      email: demoUserEmail,
+      hashedPassword: process.env.DEMO_USER_PWD,
+      profilePics: { url: '/imgs/Hannah-Engelhardt.jpg', fileName: 'Hannah-Engelhardt.jpg' },
+      userInfos: { birthday: '1994-07-02', gender: 'female', phone: null, contact: '{"email"}' },
+      friendPreferences: { city: 'Irvine', zipCode: 92618, lat: 33.65, lng: -117.7437, mileRadius: 1500, friendGender: '{"female","male","nonBinary"}', friendAge: '25-31' },
+      userSelections: [{ categoryId: 1, selectionId: 3 }, { categoryId: 2, selectionId: 13 }, { categoryId: 3, selectionId: 16 }, { categoryId: 4, selectionId: 26 }, { categoryId: 5, selectionId: 28 }, { categoryId: 6, selectionId: 43 }, { categoryId: 7, selectionId: 54 }, { categoryId: 8, selectionId: 56 }, { categoryId: 9, selectionId: 73 }, { categoryId: 10, selectionId: 76 }]
+    };
     // create & reset demo and related dummy accounts
     const demoData = [
-      { demoId: 1, firstName: 'DemoUser', profilePics: { url: '/imgs/Hannah-Engelhardt.jpg', fileName: 'Hannah-Engelhardt.jpg' }, userInfos: { birthday: '1994-07-02', gender: 'female', phone: null, contact: '{"email"}' }, friendPreferences: { city: 'Irvine', zipCode: 92618, lat: 33.65, lng: -117.7437, mileRadius: 1500, friendGender: '{"female","male","nonBinary"}', friendAge: '25-31' }, userSelections: [{ categoryId: 1, selectionId: 3 }, { categoryId: 2, selectionId: 13 }, { categoryId: 3, selectionId: 16 }, { categoryId: 4, selectionId: 26 }, { categoryId: 5, selectionId: 28 }, { categoryId: 6, selectionId: 43 }, { categoryId: 7, selectionId: 54 }, { categoryId: 8, selectionId: 56 }, { categoryId: 9, selectionId: 73 }, { categoryId: 10, selectionId: 76 }] },
+      demoUser,
       { demoId: 2, firstName: 'Ken', profilePics: { url: '/imgs/ken.jpeg', fileName: 'ken.jpeg' }, userInfos: { birthday: '1993-01-31', gender: 'male', phone: null, contact: '{"email"}' }, friendPreferences: { city: 'El Segundo', zipCode: 90245, lat: 33.9203, lng: -118.391853, mileRadius: 1500, friendGender: '{"female","male","nonBinary"}', friendAge: '25-31' }, userSelections: [{ categoryId: 1, selectionId: 3 }, { categoryId: 2, selectionId: 13 }, { categoryId: 3, selectionId: 16 }, { categoryId: 4, selectionId: 26 }, { categoryId: 5, selectionId: 28 }, { categoryId: 6, selectionId: 43 }, { categoryId: 7, selectionId: 54 }, { categoryId: 8, selectionId: 56 }, { categoryId: 9, selectionId: 73 }, { categoryId: 10, selectionId: 76 }] },
       { demoId: 3, firstName: 'SailorMoon', profilePics: { url: '/imgs/SailorMoon.jpg', fileName: 'SailorMoon.jpg' }, userInfos: { birthday: '1992-02-07', gender: 'female', phone: null, contact: '{"email"}' }, friendPreferences: { city: 'Los Gatos', zipCode: 95032, lat: 37.2598686218261, lng: -121.962860107421, mileRadius: 1500, friendGender: '{"female","male","nonBinary"}', friendAge: '25-31' }, userSelections: [{ categoryId: 1, selectionId: 3 }, { categoryId: 2, selectionId: 13 }, { categoryId: 3, selectionId: 16 }, { categoryId: 4, selectionId: 26 }, { categoryId: 5, selectionId: 28 }, { categoryId: 6, selectionId: 43 }, { categoryId: 7, selectionId: 54 }, { categoryId: 8, selectionId: 56 }, { categoryId: 9, selectionId: 73 }, { categoryId: 10, selectionId: 76 }] },
       { demoId: 4, firstName: 'Moogle', profilePics: { url: '/imgs/moogle.png', fileName: 'moogle.png' }, userInfos: { birthday: '1997-01-31', gender: 'non-binary', phone: null, contact: '{"email"}' }, friendPreferences: { city: 'El Segundo', zipCode: 90245, lat: 33.93087, lng: -118.39628, mileRadius: 1500, friendGender: '{"female","male","nonBinary"}', friendAge: '25-31' }, userSelections: [{ categoryId: 1, selectionId: 1 }, { categoryId: 2, selectionId: 13 }, { categoryId: 3, selectionId: 17 }, { categoryId: 4, selectionId: 26 }, { categoryId: 5, selectionId: 28 }, { categoryId: 6, selectionId: 43 }, { categoryId: 7, selectionId: 50 }, { categoryId: 8, selectionId: 64 }, { categoryId: 9, selectionId: 72 }, { categoryId: 10, selectionId: 76 }] },
@@ -60,14 +70,17 @@ export default class Home extends React.Component {
       .then(result => {
         const userData = result;
         userData.forEach(user => {
-          demoData.forEach(demoUser => {
-            if (demoUser.demoId === user.demoId) {
-              demoUser.userId = user.userId;
+          demoData.forEach(demoDummy => {
+            if (user.demoId === null && demoDummy.demoId === undefined) {
+              demoDummy.userId = user.userId;
+            } else if (demoDummy.demoId === user.demoId) {
+              demoDummy.userId = user.userId;
             }
           });
         });
-        demoData.forEach((demoUser, index) => {
-          req.body = JSON.stringify(demoUser);
+
+        demoData.forEach((demoDummy, index) => {
+          req.body = JSON.stringify(demoDummy);
           fetch('/api/setup-demo', req)
             .then(res => res.json())
             .then(result => {
@@ -75,11 +88,10 @@ export default class Home extends React.Component {
               if (count === 16) {
                 updateComplete = true;
               }
-
               if (updateComplete) {
                 // // handling sign in for demo user
-                const email = process.env.DEMO_USER_EMAIL;
-                const password = process.env.DEMO_USER_PWD;
+                const email = demoUser.email;
+                const password = demoUser.hashedPassword;
 
                 const body = { email, password };
 
@@ -98,7 +110,6 @@ export default class Home extends React.Component {
                   });
               }
             });
-
         });
 
       });
