@@ -23,7 +23,7 @@ export default class Home extends React.Component {
   }
 
   handleDemoClick() {
-    // const { handleSignIn } = this.context;
+    const { handleSignIn } = this.context;
     let updateComplete = false;
     let count = 0;
 
@@ -93,9 +93,8 @@ export default class Home extends React.Component {
                 fetch('/api/auth/sign-in', req)
                   .then(res => res.json())
                   .then(result => {
-                    // console.log('result', result);
                     this.setState({ profileComplete: true });
-                    // handleSignIn(result);
+                    handleSignIn(result);
                   });
               }
             });

@@ -222,39 +222,6 @@ app.post('/api/auth/register', (req, res, next) => {
     );
 });
 
-// app.post('/api/auth/sign-in-demo', (req, res, next) => {
-//   const { firstName, email, password } = req.body;
-//   if (!firstName || !email || !password) {
-//     throw new ClientError(400, 'username and password are required fields');
-//   }
-//   argon2
-//     .hash(password)
-//     .then(hashedPassword => {
-//       console.log('hashedPassword', hashedPassword);
-//       const sql = `
-//       insert into "users" ("firstName", "email", "hashedPassword")
-//       values ($1, $2, $3)
-
-//       on conflict on constraint "users_email_key"
-//         do nothing
-//       returning "userId", "email", "createdAt"
-//         `;
-//       const params = [firstName, email, hashedPassword];
-//       return db.query(sql, params);
-//     })
-//     .then(result => {
-//       if (result.rows.length === 0) {
-//         res.status(202).json('email already exists');
-//       }
-//       const [user] = result.rows;
-//       res.status(201).json(user);
-//     })
-//     .catch(err => {
-//       next(err);
-//     }
-//     );
-// });
-
 app.get('/api/selections/:categoryId', (req, res, next) => {
   const categoryId = Number(req.params.categoryId);
   if (!Number.isInteger(categoryId) || categoryId < 1) {
@@ -508,7 +475,45 @@ DO UPDATE
   ];
   db.query(sql, params)
     .then(result => {
-      res.status(201).json(result.rows);
+      let values = 'values ';
+      const params2 = [];
+      demoData.userSelections.forEach((selection, index) => {
+        const { categoryId, selectionId } = selection;
+        if (!selectionId || !categoryId) {
+          throw new ClientError(400, 'SelectionIds and categoryIds are required fields');
+        }
+        if (!Number.isInteger(categoryId) || categoryId < 1) {
+          throw new ClientError(400, 'CategoryId must be a positive integer');
+        }
+        if (!Number.isInteger(selectionId) || selectionId < 1) {
+          throw new ClientError(400, 'SelectionId must be a positive integer');
+        }
+
+        params2.push(Number(demoData.userId), Number(categoryId), Number(selectionId));
+      });
+
+      params2.forEach((param, i) => {
+        if (i === params2.length - 1) {
+          values += `($${i - 1}, $${i}, $${i + 1})`;
+        } else if (i !== 0 && i % 3 === 0) {
+          values += `($${i - 2}, $${i - 1}, $${i}), `;
+        }
+      });
+
+      const sql2 = `
+         insert into "userSelections" ("userId", "categoryId", "selectionId")
+          ${values}
+          on conflict on constraint "userSelections_pk"
+            do
+            update set
+              "selectionId" = EXCLUDED."selectionId"
+          returning *
+      `;
+      db.query(sql2, params2)
+        .then(result => {
+          res.status(201).json(result.rows);
+        })
+        .catch(err => next(err));
     })
     .catch(err => next(err));
 
