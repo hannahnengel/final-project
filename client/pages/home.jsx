@@ -32,6 +32,7 @@ export default class Home extends React.Component {
       firstName: 'DemoUser',
       email: demoUserEmail,
       hashedPassword: process.env.DEMO_USER_PWD,
+      demoUser: true,
       profilePics: { url: '/imgs/Hannah-Engelhardt.jpg', fileName: 'Hannah-Engelhardt.jpg' },
       userInfos: { birthday: '1994-07-02', gender: 'female', phone: null, contact: '{"email"}' },
       friendPreferences: { city: 'Irvine', zipCode: 92618, lat: 33.65, lng: -117.7437, mileRadius: 1500, friendGender: '{"female","male","nonBinary"}', friendAge: '25-31' },
