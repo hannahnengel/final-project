@@ -62,7 +62,8 @@ app.post('/api/auth/sign-in', (req, res, next) => {
   }
   const sql = `
   select "userId",
-          "hashedPassword"
+          "hashedPassword",
+          "demoUser"
         from "users"
       where "email" = $1`;
   const params = [email];
@@ -72,9 +73,9 @@ app.post('/api/auth/sign-in', (req, res, next) => {
       if (!user) {
         throw new ClientError(404, 'Invalid login, no user with this email exists');
       }
-      const { userId, hashedPassword } = user;
+      const { userId, hashedPassword, demoUser } = user;
       if (hashedPassword === process.env.DEMO_USER_PWD) {
-        const payload = { userId, email };
+        const payload = { userId, email, demoUser };
         const token = jwt.sign(payload, process.env.TOKEN_SECRET);
         res.json({ token, user: payload });
       } else {
@@ -84,7 +85,7 @@ app.post('/api/auth/sign-in', (req, res, next) => {
             if (!isMatching) {
               throw new ClientError(400, 'Invalid login, email or password is incorrect');
             }
-            const payload = { userId, email };
+            const payload = { userId, email, demoUser };
             const token = jwt.sign(payload, process.env.TOKEN_SECRET);
             res.json({ token, user: payload });
           });
@@ -418,12 +419,12 @@ app.post('/api/demo-ids', (req, res, next) => {
   `;
 
   const sql = `
-  insert into "users" ("firstName", "email", "hashedPassword")
-  values ($1, $2, $3)
+  insert into "users" ("firstName", "email", "hashedPassword", "demoUser")
+  values ($1, $2, $3, $4)
   RETURNING *
   `;
 
-  const params = [demoUser.firstName, demoUser.email, demoUser.hashedPassword];
+  const params = [demoUser.firstName, demoUser.email, demoUser.hashedPassword, demoUser.demoUser];
 
   db.query(sql, params)
     .then(result => {
@@ -1549,6 +1550,59 @@ app.delete('/api/auth/profile-picture', (req, res, next) => {
   delete from "profilePics"
     where "userId" = $1
   returning *`;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      res.status(204).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.delete('/api/auth/delete-demo-user', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+ WITH deleted_profilePics AS (
+  DELETE FROM "profilePics"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_users AS (
+  DELETE FROM "users"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_userSelections AS (
+  DELETE FROM "userSelections"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_userInfos AS (
+  DELETE FROM "userInfos"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_friendPreferences AS (
+  DELETE FROM "friendPreferences"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_matches AS (
+  DELETE FROM "matches"
+  WHERE "userId1" = $1 OR "userId2" = $1
+  RETURNING *
+),
+deleted_matchSelections AS (
+  DELETE FROM "matchSelections"
+  WHERE "userId1" = $1 OR "userId2" = $1
+  RETURNING *
+)
+SELECT
+  (SELECT COUNT(*) FROM deleted_profilePics) AS profilePics_deleted,
+  (SELECT COUNT(*) FROM deleted_users) AS users_deleted,
+  (SELECT COUNT(*) FROM deleted_userSelections) AS userSelections_deleted,
+  (SELECT COUNT(*) FROM deleted_userInfos) AS userInfos_deleted,
+  (SELECT COUNT(*) FROM deleted_friendPreferences) AS friendPreferences_deleted;
+  `;
   const params = [userId];
   db.query(sql, params)
     .then(result => {

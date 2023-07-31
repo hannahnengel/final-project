@@ -10,6 +10,7 @@ CREATE TABLE "users" (
   "email" TEXT NOT NULL UNIQUE,
   "hashedPassword" TEXT NOT NULL,
   "demoId" integer,
+  "demoUser" BOOLEAN DEFAULT false,
   "createdAt" TIMESTAMPTZ NOT NULL default now(),
   CONSTRAINT "users_pk" PRIMARY KEY ("userId")
 ) WITH (

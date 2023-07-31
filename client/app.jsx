@@ -35,11 +35,33 @@ export default class App extends React.Component {
     this.setState({ user });
   }
 
-  handleSignOut() {
-    window.localStorage.removeItem('react-context-jwt');
-    window.localStorage.removeItem('selections');
-    window.localStorage.removeItem('action');
-    this.setState({ user: null });
+  handleSignOut(event) {
+    event.preventDefault();
+    const { user } = this.state;
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'DELETE',
+      headers: {
+        'x-access-token': xaccesstoken
+      }
+    };
+
+    if (user.demoUser === true) {
+      fetch('api/auth/delete-demo-user', req)
+        .then(result => {
+          window.localStorage.removeItem('react-context-jwt');
+          window.localStorage.removeItem('selections');
+          window.localStorage.removeItem('action');
+          this.setState({ user: null });
+        });
+
+    } else {
+      window.localStorage.removeItem('react-context-jwt');
+      window.localStorage.removeItem('selections');
+      window.localStorage.removeItem('action');
+      this.setState({ user: null });
+    }
+
   }
 
   componentDidMount() {
