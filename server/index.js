@@ -63,7 +63,8 @@ app.post('/api/auth/sign-in', (req, res, next) => {
   const sql = `
   select "userId",
           "hashedPassword",
-          "demoUser"
+          "demoUser",
+          "demoId"
         from "users"
       where "email" = $1`;
   const params = [email];
@@ -73,9 +74,9 @@ app.post('/api/auth/sign-in', (req, res, next) => {
       if (!user) {
         throw new ClientError(404, 'Invalid login, no user with this email exists');
       }
-      const { userId, hashedPassword, demoUser } = user;
+      const { userId, hashedPassword, demoUser, demoId } = user;
       if (hashedPassword === process.env.DEMO_USER_PWD) {
-        const payload = { userId, email, demoUser };
+        const payload = { userId, email, demoUser, demoId };
         const token = jwt.sign(payload, process.env.TOKEN_SECRET);
         res.json({ token, user: payload });
       } else {
@@ -85,7 +86,7 @@ app.post('/api/auth/sign-in', (req, res, next) => {
             if (!isMatching) {
               throw new ClientError(400, 'Invalid login, email or password is incorrect');
             }
-            const payload = { userId, email, demoUser };
+            const payload = { userId, email, demoUser, demoId };
             const token = jwt.sign(payload, process.env.TOKEN_SECRET);
             res.json({ token, user: payload });
           });
@@ -716,10 +717,13 @@ app.get('/api/auth/user-info/:userId', (req, res, next) => {
 app.get('/api/auth/find-matches/', (req, res, next) => {
   const { userId } = req.user;
   const sql = `
-  select "friendPreferences".*,
+  select "users"."demoUser",
+        "users"."demoId",
+        "friendPreferences".*,
          "userInfos".*,
          "userSelections".*
-  from "friendPreferences"
+  from "users"
+  join "friendPreferences" using ("userId")
   join "userInfos" using ("userId")
   join "userSelections" using ("userId")
   where "userId" = $1
@@ -748,28 +752,48 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
           bodyGenderArray.push({ friendGender });
         });
         let where;
-        if (bodyGenderArray.length === 1) {
-          where = 'where "gender" = $1';
-        } else if (bodyGenderArray.length === 2) {
-          where = 'where "gender" = $1 OR "gender" = $2';
-        } else if (bodyGenderArray.length === 3) {
-          where = 'where "gender" = $1 OR "gender" = $2 OR "gender" = $3';
+
+        // if the current user is a demo user, filter out the real users and select only the demo dummys
+        // else if NOT a demo user, pull all only the demoUser === false users (includes dummys)
+        if (currentUserInfo.demoUser) {
+          if (bodyGenderArray.length === 1) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR "userInfos"."gender" = $3) AND "users"."demoId" IS NOT NULL';
+          } else if (bodyGenderArray.length === 2) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2) AND "users"."demoId" IS NOT NULL';
+          } else if (bodyGenderArray.length === 3) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR "userInfos"."gender" = $3) AND "users"."demoId" IS NOT NULL';
+          }
+        } else if (currentUserInfo.demoUser === false) {
+          if (bodyGenderArray.length === 1) {
+            where = 'where "userInfos"."gender" = $1 AND "users"."demoUser" = $2';
+          } else if (bodyGenderArray.length === 2) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $3';
+          } else if (bodyGenderArray.length === 3) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $4';
+          }
         }
+
         const sql = `
-        select "friendPreferences".*,
+        select  "users"."firstName",
+                "users"."demoUser",
                 "userInfos".*,
-                "users"."firstName",
+                "users"."demoId",
+                "friendPreferences".*,
                 "profilePics"."url",
                 "profilePics"."fileName"
-          from "friendPreferences"
+          from "users"
           join "userInfos" using ("userId")
-          join "users" using ("userId")
+          join "friendPreferences" using ("userId")
           left join "profilePics" using ("userId")
           ${where}
         `;
         const params = bodyGenderArray.map(gender => {
           return gender.friendGender;
         });
+        if (!currentUserInfo.demoUser) {
+          params.push(false);
+        }
+
         db.query(sql, params)
           .then(result => {
             if (result.rows.length === 0) {
@@ -852,8 +876,11 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
                   } else where += `"userId"=$${index + 1} OR `;
                 });
 
-                const sql = ` select * from "userSelections"
-              ${where}`;
+                const sql = ` select "userSelections".*,
+                              "users"."demoId"
+                              from "userSelections"
+                              join "users" using ("userId")
+                              ${where}`;
 
                 db.query(sql, params)
                   .then(result => {
@@ -868,17 +895,25 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
                             if (potentialMatchSelect.selectionId === currentUserSelect.selectionId) {
                               let userId1;
                               let userId2;
+                              let demoId1;
+                              let demoId2;
 
                               if (currentUserSelect.userId < potentialMatchSelect.userId) {
                                 userId1 = currentUserSelect.userId;
+                                demoId1 = currentUserInfo.demoId;
                                 userId2 = potentialMatchSelect.userId;
+                                demoId2 = potentialMatchSelect.demoId;
                               } else {
                                 userId1 = potentialMatchSelect.userId;
+                                demoId1 = potentialMatchSelect.demoId;
                                 userId2 = currentUserSelect.userId;
+                                demoId2 = currentUserInfo.demoId;
                               }
                               const match = {
                                 userId1,
+                                demoId1,
                                 userId2,
+                                demoId2,
                                 categoryId: currentUserSelect.categoryId,
                                 selectionId: currentUserSelect.selectionId
                               };
@@ -903,9 +938,9 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
 });
 
 app.post('/api/auth/post-matches/', (req, res, next) => {
-  const { allMatchTypes, matchSelections, currentUser } = req.body;
-  if (!matchSelections || !allMatchTypes || !currentUser) {
-    throw new ClientError(400, 'matchSelections, allMatchTypes and currentUser are required');
+  const { allMatchTypes, matchSelections, user } = req.body;
+  if (!matchSelections || !allMatchTypes || !user) {
+    throw new ClientError(400, 'matchSelections, allMatchTypes and user are required');
   }
 
   const sql = `
@@ -913,7 +948,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
   where "userId1" = $1 OR "userId2" = $1
   returning *
   `;
-  const params = [currentUser];
+  const params = [user.userId];
   db.query(sql, params)
     .then(result => {
       const params = [];
@@ -954,11 +989,12 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
               select * from "matches"
               where "userId1" = $1 OR "userId2" = $1
               `;
-                const params = [currentUser];
+                const params = [user.userId];
 
                 db.query(sql, params)
                   .then(result => {
                     const existingMatches = result.rows;
+                    const postMatches = [];
                     const matchesToUpdate = [];
                     const matchesToUpload = [];
                     const matchesToReject = [];
@@ -991,8 +1027,6 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                       }
                     }
 
-                    const postMatches = [];
-
                     if (matchesToUpdate.length > 0) {
                       matchesToUpdate.forEach(match => {
                         postMatches.push(match);
@@ -1001,9 +1035,27 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
 
                     if (matchesToUpload.length > 0) {
                       matchesToUpload.forEach(match => {
-                        match.user1Status = 'pending';
-                        match.user2Status = 'pending';
-                        match.matchStatus = 'pending';
+                        if (user.demoUser) {
+                          if ((match.demoId1 !== null && match.demoId1 <= 10) || (match.demoId2 !== null && match.demoId2 <= 10)) {
+                            match.user1Status = 'accepted';
+                            match.user2Status = 'accepted';
+                            match.matchStatus = 'accepted';
+                          } else if ((match.demoId1 !== null && match.demoId1 > 10) || (match.demoId2 !== null && match.demoId2 > 10)) {
+                            if (user.userId === match.userId1) {
+                              match.user1Status = 'pending';
+                              match.user2Status = 'accepted';
+                              match.matchStatus = 'pending';
+                            } else {
+                              match.user1Status = 'accepted';
+                              match.user2Status = 'pending';
+                              match.matchStatus = 'pending';
+                            }
+                          }
+                        } else {
+                          match.user1Status = 'pending';
+                          match.user2Status = 'pending';
+                          match.matchStatus = 'pending';
+                        }
                         postMatches.push(match);
                       });
                     }
@@ -1020,6 +1072,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                         postMatches.push(match);
                       });
                     }
+
                     const params = [];
                     let values = 'values ';
                     postMatches.forEach((match, i) => {
@@ -1037,7 +1090,6 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                         values += `($${i - 5}, $${i - 4}, $${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
                       }
                     });
-
                     const sql = `
                   insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
                   ${values}
@@ -1078,7 +1130,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
               select * from "matches"
               where "userId1" = $1 OR "userId2" = $1
               `;
-            const params = [currentUser];
+            const params = [user.userId];
 
             db.query(sql, params)
               .then(result => {
