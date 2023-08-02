@@ -2,9 +2,32 @@ import React from 'react';
 import AppContext from '../lib/app-context';
 
 export default class Navbar extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+    };
+    this.signOut = this.signOut.bind(this);
+  }
+
+  signOut() {
+    const { user, handleSignOut } = this.context;
+    const xaccesstoken = localStorage.getItem('react-context-jwt');
+    const req = {
+      method: 'DELETE',
+      headers: {
+        'x-access-token': xaccesstoken
+      }
+    };
+    if (user.demoUser === true) {
+      fetch('api/auth/delete-demo-user', req)
+        .then(result => {
+        });
+    }
+    handleSignOut();
+  }
 
   render() {
-    const { user, handleSignOut } = this.context;
+    const { user } = this.context;
 
     const navStyle = {
       color: 'white',
@@ -65,7 +88,7 @@ export default class Navbar extends React.Component {
                   </a>
                 </li>
                 <li className="navitem">
-                  <a href="" className="a-nav" onClick={handleSignOut}>
+                  <a href="" className="a-nav" onClick={this.signOut}>
                     <i className="fa-solid fa-arrow-right-from-bracket pe-2"/>
                     Sign Out
                   </a>
