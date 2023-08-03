@@ -136,9 +136,8 @@ export default class HateSelectionsInputs extends React.Component {
                         }
                       });
                     });
-                    const currentUser = user.userId;
                     const body = {
-                      matchSelections, allMatchTypes, currentUser
+                      matchSelections, allMatchTypes, user
                     };
                     req.method = 'POST';
                     req.body = JSON.stringify(body);
@@ -203,6 +202,8 @@ export default class HateSelectionsInputs extends React.Component {
                     const { potentialMatches, matchSelections } = result;
 
                     const otherUsers = [];
+
+                    // if there are no potential matches
                     const uniqueOtherUsers = potentialMatches.map(potentialMatch => potentialMatch.userId);
                     if (matchSelections.length !== 0) {
                       matchSelections.forEach(matchSelection => {
@@ -260,9 +261,8 @@ export default class HateSelectionsInputs extends React.Component {
                         }
                       });
                     });
-                    const currentUser = user.userId;
                     const body = {
-                      matchSelections, allMatchTypes, currentUser
+                      matchSelections, allMatchTypes, user
                     };
                     req.method = 'POST';
                     req.body = JSON.stringify(body);

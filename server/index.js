@@ -716,6 +716,10 @@ app.get('/api/auth/user-info/:userId', (req, res, next) => {
 
 app.get('/api/auth/find-matches/', (req, res, next) => {
   const { userId } = req.user;
+  if (!userId) {
+    throw new ClientError(400, 'userId is required');
+  }
+
   const sql = `
   select "users"."demoUser",
         "users"."demoId",
@@ -754,7 +758,7 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
         let where;
 
         // if the current user is a demo user, filter out the real users and select only the demo dummys
-        // else if NOT a demo user, pull all only the demoUser === false users (includes dummys)
+        // else if NOT a demo user, pull all only the demoUser === false users (excludes dummys)
         if (currentUserInfo.demoUser) {
           if (bodyGenderArray.length === 1) {
             where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR "userInfos"."gender" = $3) AND "users"."demoId" IS NOT NULL';
@@ -765,11 +769,11 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
           }
         } else if (currentUserInfo.demoUser === false) {
           if (bodyGenderArray.length === 1) {
-            where = 'where "userInfos"."gender" = $1 AND "users"."demoUser" = $2';
+            where = 'where "userInfos"."gender" = $1 AND "users"."demoUser" = $2 AND "users"."demoId" IS NULL';
           } else if (bodyGenderArray.length === 2) {
-            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $3';
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $3 AND "users"."demoId" IS NULL';
           } else if (bodyGenderArray.length === 3) {
-            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $4';
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $4 AND "users"."demoId" IS NULL';
           }
         }
 

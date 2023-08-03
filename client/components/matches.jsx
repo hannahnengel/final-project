@@ -186,15 +186,16 @@ export default class Matches extends React.Component {
                       potentialMatch.user2Status = matchStatus.user2Status;
                       potentialMatch.matchStatus = matchStatus.matchStatus;
                       potentialMatch.matchSelections = matchStatus.matchSelections;
+                      potentialMatch.matchType = matchStatus.matchType;
                       potentialMatch.newUserStatus = 'pending';
                     }
                   });
                   if (currentUser === 'userId1') {
-                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                       matchesToDisplay.push(potentialMatch);
                     }
                   } else if (currentUser === 'userId2') {
-                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                       matchesToDisplay.push(potentialMatch);
                     }
                   }
@@ -217,12 +218,13 @@ export default class Matches extends React.Component {
                       potentialMatch.matchStatus = matchStatus.matchStatus;
                       potentialMatch.matchSelections = matchStatus.matchSelections;
                       potentialMatch.newUserStatus = 'pending';
+                      potentialMatch.matchType = matchStatus.matchType;
                       if (currentUser === 'userId1') {
-                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                           matchesToDisplay.push(potentialMatch);
                         }
                       } else if (currentUser === 'userId2') {
-                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                           matchesToDisplay.push(potentialMatch);
                         }
                       }
@@ -234,7 +236,7 @@ export default class Matches extends React.Component {
             });
 
         }
-
+        this.setState({ isLoading: false });
       });
   }
 
