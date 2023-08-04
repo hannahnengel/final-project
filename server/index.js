@@ -71,7 +71,7 @@ app.post('/api/auth/sign-in', (req, res, next) => {
   db.query(sql, params)
     .then(result => {
       const [user] = result.rows;
-      if (!user) {
+      if (result.rows.length === 0) {
         throw new ClientError(404, 'Invalid login, no user with this email exists');
       }
       const { userId, hashedPassword, demoUser, demoId } = user;
