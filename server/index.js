@@ -62,27 +62,35 @@ app.post('/api/auth/sign-in', (req, res, next) => {
   }
   const sql = `
   select "userId",
-          "hashedPassword"
+          "hashedPassword",
+          "demoUser",
+          "demoId"
         from "users"
       where "email" = $1`;
   const params = [email];
   db.query(sql, params)
     .then(result => {
       const [user] = result.rows;
-      if (!user) {
+      if (result.rows.length === 0) {
         throw new ClientError(404, 'Invalid login, no user with this email exists');
       }
-      const { userId, hashedPassword } = user;
-      return argon2
-        .verify(hashedPassword, password)
-        .then(isMatching => {
-          if (!isMatching) {
-            throw new ClientError(400, 'Invalid login, email or password is incorrect');
-          }
-          const payload = { userId, email };
-          const token = jwt.sign(payload, process.env.TOKEN_SECRET);
-          res.json({ token, user: payload });
-        });
+      const { userId, hashedPassword, demoUser, demoId } = user;
+      if (hashedPassword === process.env.DEMO_USER_PWD) {
+        const payload = { userId, email, demoUser, demoId };
+        const token = jwt.sign(payload, process.env.TOKEN_SECRET);
+        res.json({ token, user: payload });
+      } else {
+        return argon2
+          .verify(hashedPassword, password)
+          .then(isMatching => {
+            if (!isMatching) {
+              throw new ClientError(400, 'Invalid login, email or password is incorrect');
+            }
+            const payload = { userId, email, demoUser, demoId };
+            const token = jwt.sign(payload, process.env.TOKEN_SECRET);
+            res.json({ token, user: payload });
+          });
+      }
     })
     .catch(err => next(err));
 });
@@ -375,6 +383,157 @@ app.post('/api/match-status-update', (req, res, next) => {
     .catch(err => next(err));
 });
 
+app.post('/api/demo-ids', (req, res, next) => {
+  const demoData = req.body;
+
+  if (!demoData) {
+    throw new ClientError(400, 'demoUserData required');
+  }
+
+  /* first we search for the userIds and add them to the demoData array
+ "users" where demoId = values
+ */
+  let where = 'where ';
+  let demoUser;
+  const params2 = [];
+
+  demoData.forEach(demoDummy => {
+    if (demoDummy.demoId) {
+      params2.push(demoDummy.demoId);
+    } else {
+      demoUser = demoDummy;
+    }
+
+  });
+
+  params2.forEach((param, index) => {
+    if (index !== params2.length - 1) {
+      where += `"demoId" = $${index + 1} OR `;
+    } else {
+      where += `"demoId" = $${index + 1}`;
+    }
+  });
+
+  const sql2 = `
+  select * from "users"
+    ${where}
+  `;
+
+  const sql = `
+  insert into "users" ("firstName", "email", "hashedPassword", "demoUser")
+  values ($1, $2, $3, $4)
+  RETURNING *
+  `;
+
+  const params = [demoUser.firstName, demoUser.email, demoUser.hashedPassword, demoUser.demoUser];
+
+  db.query(sql, params)
+    .then(result => {
+      const demoUser = result.rows;
+      db.query(sql2, params2)
+        .then(result => {
+          const userData = result.rows;
+          userData.push(demoUser[0]);
+          res.status(201).json(userData);
+        });
+    })
+    .catch(err => next(err));
+});
+
+app.post('/api/setup-demo', (req, res, next) => {
+  const demoData = req.body;
+  if (!demoData) {
+    throw new ClientError(400, 'demoUserData required');
+  }
+
+  const sql = `
+WITH updated_userInfos AS (
+  INSERT INTO "userInfos" ("userId", "birthday", "gender", "phone", "contact")
+  VALUES ($1, $2, $3, $4, $5)
+  ON CONFLICT ON CONSTRAINT "userInfos_pk"
+  DO UPDATE
+    SET "birthday" = excluded."birthday",
+        "gender" = excluded."gender",
+        "phone" = excluded."phone",
+        "contact" = excluded."contact"
+  RETURNING *
+),
+updated_friendPreferences AS (
+INSERT INTO "friendPreferences" ("userId", "city", "zipCode", "lat", "lng", "mileRadius", "friendGender", "friendAge")
+VALUES ($1, $6, $7, $8, $9, $10, $11, $12)
+ON CONFLICT ON CONSTRAINT "friendPreferences_pk"
+DO UPDATE
+  SET "city" = excluded."city",
+      "zipCode" = excluded."zipCode",
+      "lat" = excluded."lat",
+      "lng" = excluded."lng",
+      "mileRadius" = excluded."mileRadius",
+      "friendGender" = excluded."friendGender",
+      "friendAge" = excluded."friendAge"
+  RETURNING *
+  )
+  INSERT INTO "profilePics" ("userId", "url", "fileName")
+  VALUES ($1, $13, $14)
+  ON CONFLICT ON CONSTRAINT "profilePics_pk"
+  DO UPDATE
+    SET "url" = excluded."url",
+        "fileName" = excluded."fileName"
+  RETURNING *
+
+  ;
+`;
+
+  const params = [demoData.userId,
+    demoData.userInfos.birthday, demoData.userInfos.gender, demoData.userInfos.phone, demoData.userInfos.contact,
+    demoData.friendPreferences.city, demoData.friendPreferences.zipCode, demoData.friendPreferences.lat, demoData.friendPreferences.lng, demoData.friendPreferences.mileRadius, demoData.friendPreferences.friendGender, demoData.friendPreferences.friendAge,
+    demoData.profilePics.url, demoData.profilePics.fileName
+  ];
+  db.query(sql, params)
+    .then(result => {
+      let values = 'values ';
+      const params2 = [];
+      demoData.userSelections.forEach((selection, index) => {
+        const { categoryId, selectionId } = selection;
+        if (!selectionId || !categoryId) {
+          throw new ClientError(400, 'SelectionIds and categoryIds are required fields');
+        }
+        if (!Number.isInteger(categoryId) || categoryId < 1) {
+          throw new ClientError(400, 'CategoryId must be a positive integer');
+        }
+        if (!Number.isInteger(selectionId) || selectionId < 1) {
+          throw new ClientError(400, 'SelectionId must be a positive integer');
+        }
+
+        params2.push(Number(demoData.userId), Number(categoryId), Number(selectionId));
+      });
+
+      params2.forEach((param, i) => {
+        if (i === params2.length - 1) {
+          values += `($${i - 1}, $${i}, $${i + 1})`;
+        } else if (i !== 0 && i % 3 === 0) {
+          values += `($${i - 2}, $${i - 1}, $${i}), `;
+        }
+      });
+
+      const sql2 = `
+         insert into "userSelections" ("userId", "categoryId", "selectionId")
+          ${values}
+          on conflict on constraint "userSelections_pk"
+            do
+            update set
+              "selectionId" = EXCLUDED."selectionId"
+          returning *
+      `;
+      db.query(sql2, params2)
+        .then(result => {
+          res.status(201).json(result.rows);
+        })
+        .catch(err => next(err));
+    })
+    .catch(err => next(err));
+
+});
+
 app.use(authorizationMiddleware);
 
 app.post('/api/auth/profile-info', (req, res, next) => {
@@ -557,11 +716,18 @@ app.get('/api/auth/user-info/:userId', (req, res, next) => {
 
 app.get('/api/auth/find-matches/', (req, res, next) => {
   const { userId } = req.user;
+  if (!userId) {
+    throw new ClientError(400, 'userId is required');
+  }
+
   const sql = `
-  select "friendPreferences".*,
+  select "users"."demoUser",
+        "users"."demoId",
+        "friendPreferences".*,
          "userInfos".*,
          "userSelections".*
-  from "friendPreferences"
+  from "users"
+  join "friendPreferences" using ("userId")
   join "userInfos" using ("userId")
   join "userSelections" using ("userId")
   where "userId" = $1
@@ -590,28 +756,48 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
           bodyGenderArray.push({ friendGender });
         });
         let where;
-        if (bodyGenderArray.length === 1) {
-          where = 'where "gender" = $1';
-        } else if (bodyGenderArray.length === 2) {
-          where = 'where "gender" = $1 OR "gender" = $2';
-        } else if (bodyGenderArray.length === 3) {
-          where = 'where "gender" = $1 OR "gender" = $2 OR "gender" = $3';
+
+        // if the current user is a demo user, filter out the real users and select only the demo dummys
+        // else if NOT a demo user, pull all only the demoUser === false users (excludes dummys)
+        if (currentUserInfo.demoUser) {
+          if (bodyGenderArray.length === 1) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR "userInfos"."gender" = $3) AND "users"."demoId" IS NOT NULL';
+          } else if (bodyGenderArray.length === 2) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2) AND "users"."demoId" IS NOT NULL';
+          } else if (bodyGenderArray.length === 3) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR "userInfos"."gender" = $3) AND "users"."demoId" IS NOT NULL';
+          }
+        } else if (currentUserInfo.demoUser === false) {
+          if (bodyGenderArray.length === 1) {
+            where = 'where "userInfos"."gender" = $1 AND "users"."demoUser" = $2 AND "users"."demoId" IS NULL';
+          } else if (bodyGenderArray.length === 2) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $3 AND "users"."demoId" IS NULL';
+          } else if (bodyGenderArray.length === 3) {
+            where = 'where ("userInfos"."gender" = $1 OR "userInfos"."gender" = $2 OR  "userInfos"."gender" = $3) AND "users"."demoUser" = $4 AND "users"."demoId" IS NULL';
+          }
         }
+
         const sql = `
-        select "friendPreferences".*,
+        select  "users"."firstName",
+                "users"."demoUser",
                 "userInfos".*,
-                "users"."firstName",
+                "users"."demoId",
+                "friendPreferences".*,
                 "profilePics"."url",
                 "profilePics"."fileName"
-          from "friendPreferences"
+          from "users"
           join "userInfos" using ("userId")
-          join "users" using ("userId")
+          join "friendPreferences" using ("userId")
           left join "profilePics" using ("userId")
           ${where}
         `;
         const params = bodyGenderArray.map(gender => {
           return gender.friendGender;
         });
+        if (!currentUserInfo.demoUser) {
+          params.push(false);
+        }
+
         db.query(sql, params)
           .then(result => {
             if (result.rows.length === 0) {
@@ -694,8 +880,11 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
                   } else where += `"userId"=$${index + 1} OR `;
                 });
 
-                const sql = ` select * from "userSelections"
-              ${where}`;
+                const sql = ` select "userSelections".*,
+                              "users"."demoId"
+                              from "userSelections"
+                              join "users" using ("userId")
+                              ${where}`;
 
                 db.query(sql, params)
                   .then(result => {
@@ -710,17 +899,25 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
                             if (potentialMatchSelect.selectionId === currentUserSelect.selectionId) {
                               let userId1;
                               let userId2;
+                              let demoId1;
+                              let demoId2;
 
                               if (currentUserSelect.userId < potentialMatchSelect.userId) {
                                 userId1 = currentUserSelect.userId;
+                                demoId1 = currentUserInfo.demoId;
                                 userId2 = potentialMatchSelect.userId;
+                                demoId2 = potentialMatchSelect.demoId;
                               } else {
                                 userId1 = potentialMatchSelect.userId;
+                                demoId1 = potentialMatchSelect.demoId;
                                 userId2 = currentUserSelect.userId;
+                                demoId2 = currentUserInfo.demoId;
                               }
                               const match = {
                                 userId1,
+                                demoId1,
                                 userId2,
+                                demoId2,
                                 categoryId: currentUserSelect.categoryId,
                                 selectionId: currentUserSelect.selectionId
                               };
@@ -745,9 +942,9 @@ app.get('/api/auth/find-matches/', (req, res, next) => {
 });
 
 app.post('/api/auth/post-matches/', (req, res, next) => {
-  const { allMatchTypes, matchSelections, currentUser } = req.body;
-  if (!matchSelections || !allMatchTypes || !currentUser) {
-    throw new ClientError(400, 'matchSelections, allMatchTypes and currentUser are required');
+  const { allMatchTypes, matchSelections, user } = req.body;
+  if (!matchSelections || !allMatchTypes || !user) {
+    throw new ClientError(400, 'matchSelections, allMatchTypes and user are required');
   }
 
   const sql = `
@@ -755,7 +952,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
   where "userId1" = $1 OR "userId2" = $1
   returning *
   `;
-  const params = [currentUser];
+  const params = [user.userId];
   db.query(sql, params)
     .then(result => {
       const params = [];
@@ -796,11 +993,12 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
               select * from "matches"
               where "userId1" = $1 OR "userId2" = $1
               `;
-                const params = [currentUser];
+                const params = [user.userId];
 
                 db.query(sql, params)
                   .then(result => {
                     const existingMatches = result.rows;
+                    const postMatches = [];
                     const matchesToUpdate = [];
                     const matchesToUpload = [];
                     const matchesToReject = [];
@@ -833,8 +1031,6 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                       }
                     }
 
-                    const postMatches = [];
-
                     if (matchesToUpdate.length > 0) {
                       matchesToUpdate.forEach(match => {
                         postMatches.push(match);
@@ -843,9 +1039,27 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
 
                     if (matchesToUpload.length > 0) {
                       matchesToUpload.forEach(match => {
-                        match.user1Status = 'pending';
-                        match.user2Status = 'pending';
-                        match.matchStatus = 'pending';
+                        if (user.demoUser) {
+                          if ((match.demoId1 !== null && match.demoId1 <= 10) || (match.demoId2 !== null && match.demoId2 <= 10)) {
+                            match.user1Status = 'accepted';
+                            match.user2Status = 'accepted';
+                            match.matchStatus = 'accepted';
+                          } else if ((match.demoId1 !== null && match.demoId1 > 10) || (match.demoId2 !== null && match.demoId2 > 10)) {
+                            if (user.userId === match.userId1) {
+                              match.user1Status = 'pending';
+                              match.user2Status = 'accepted';
+                              match.matchStatus = 'pending';
+                            } else {
+                              match.user1Status = 'accepted';
+                              match.user2Status = 'pending';
+                              match.matchStatus = 'pending';
+                            }
+                          }
+                        } else {
+                          match.user1Status = 'pending';
+                          match.user2Status = 'pending';
+                          match.matchStatus = 'pending';
+                        }
                         postMatches.push(match);
                       });
                     }
@@ -862,6 +1076,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                         postMatches.push(match);
                       });
                     }
+
                     const params = [];
                     let values = 'values ';
                     postMatches.forEach((match, i) => {
@@ -879,7 +1094,6 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
                         values += `($${i - 5}, $${i - 4}, $${i - 3}, $${i - 2}, $${i - 1}, $${i}), `;
                       }
                     });
-
                     const sql = `
                   insert into "matches" ("userId1", "userId2", "matchType", "user1Status", "user2Status", "matchStatus")
                   ${values}
@@ -920,7 +1134,7 @@ app.post('/api/auth/post-matches/', (req, res, next) => {
               select * from "matches"
               where "userId1" = $1 OR "userId2" = $1
               `;
-            const params = [currentUser];
+            const params = [user.userId];
 
             db.query(sql, params)
               .then(result => {
@@ -1357,8 +1571,16 @@ app.get('/api/auth/match-map-info', (req, res, next) => {
 
 app.post('/api/auth/profile-picture', uploadsMiddleware, (req, res, next) => {
   const { userId } = req.user;
-  const fileName = req.file.originalname;
-  const url = req.file.location;
+
+  let fileName;
+  let url;
+  if (process.env.NODE_ENV === 'development') {
+    fileName = req.file.filename;
+    url = '/imgs/' + fileName;
+  } else {
+    url = req.file.location;
+    fileName = req.file.originalname;
+  }
 
   const sql = `
   insert into "profilePics" ("userId", "url", "fileName")
@@ -1384,6 +1606,59 @@ app.delete('/api/auth/profile-picture', (req, res, next) => {
   delete from "profilePics"
     where "userId" = $1
   returning *`;
+  const params = [userId];
+  db.query(sql, params)
+    .then(result => {
+      res.status(204).json(result.rows);
+    })
+    .catch(err => next(err));
+});
+
+app.delete('/api/auth/delete-demo-user', (req, res, next) => {
+  const { userId } = req.user;
+  const sql = `
+ WITH deleted_profilePics AS (
+  DELETE FROM "profilePics"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_users AS (
+  DELETE FROM "users"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_userSelections AS (
+  DELETE FROM "userSelections"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_userInfos AS (
+  DELETE FROM "userInfos"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_friendPreferences AS (
+  DELETE FROM "friendPreferences"
+  WHERE "userId" = $1
+  RETURNING *
+),
+deleted_matches AS (
+  DELETE FROM "matches"
+  WHERE "userId1" = $1 OR "userId2" = $1
+  RETURNING *
+),
+deleted_matchSelections AS (
+  DELETE FROM "matchSelections"
+  WHERE "userId1" = $1 OR "userId2" = $1
+  RETURNING *
+)
+SELECT
+  (SELECT COUNT(*) FROM deleted_profilePics) AS profilePics_deleted,
+  (SELECT COUNT(*) FROM deleted_users) AS users_deleted,
+  (SELECT COUNT(*) FROM deleted_userSelections) AS userSelections_deleted,
+  (SELECT COUNT(*) FROM deleted_userInfos) AS userInfos_deleted,
+  (SELECT COUNT(*) FROM deleted_friendPreferences) AS friendPreferences_deleted;
+  `;
   const params = [userId];
   db.query(sql, params)
     .then(result => {

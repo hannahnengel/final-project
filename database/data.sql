@@ -14,3 +14,23 @@ insert into "selections"
   ('water', '/hate-selections-imgs/water.png', 8), ('soda', '/hate-selections-imgs/soda.png', 8), ('beer', '/hate-selections-imgs/beer.png', 8), ('wine', '/hate-selections-imgs/wine.png' , 8), ('coffee', '/hate-selections-imgs/coffee.png', 8), ('tea', '/hate-selections-imgs/tea.png', 8), ('milk', '/hate-selections-imgs/milk.png', 8), ('juice', '/hate-selections-imgs/juice.png', 8), ('cocktails', '/hate-selections-imgs/cocktails.png', 8), ('tequila', '/hate-selections-imgs/tequila.png', 8),
   ('harry potter', '/hate-selections-imgs/harry potter.png', 9), ('lord of the rings', '/hate-selections-imgs/LOTR.png', 9), ('star wars', '/hate-selections-imgs/starwars.png', 9), ('star trek', '/hate-selections-imgs/startrek.png', 9), ('pokemon', '/hate-selections-imgs/pokemon.png', 9), ('disney/ pixar', '/hate-selections-imgs/Disney.png', 9), ('marvel', '/hate-selections-imgs/marvel.png', 9), ('DC comics', '/hate-selections-imgs/DC.png', 9), ('game of thrones', '/hate-selections-imgs/GOT.png', 9), ('twilight', '/hate-selections-imgs/twilight.png', 9),
   ('pop', '/hate-selections-imgs/pop.png', 10), ('country', '/hate-selections-imgs/country.png', 10), ('EDM/ electronic', '/hate-selections-imgs/electronic.png', 10), ('classical', '/hate-selections-imgs/classical.png', 10), ('rock', '/hate-selections-imgs/Rock.png', 10), ('jazz', '/hate-selections-imgs/jazz.png', 10), ('rap', '/hate-selections-imgs/rap.png', 10), ('indie', '/hate-selections-imgs/indie.png', 10);
+
+
+insert into "users"
+  ("demoId", "firstName", "email", "hashedPassword")
+  values
+  (2, 'Ken', 'niroteni@hatemate.com', 'hashedPassword'),
+  (3, 'SailorMoon', 'ucuobopa@hatemate.com', 'hashedPassword'),
+  (4, 'Moogle', 'bu@hatemate.com', 'hashedPassword'),
+  (5, 'Cloud', 'ujafaw@hatemate.com', 'hashedPassword'),
+  (6, 'Jinx', 'nenuro@hatemate.com', 'hashedPassword'),
+  (7, 'NotBlitz', 'witaoka@hatemate.com', 'hashedPassword'),
+  (8, 'Toad', 'ape@hatemate.com', 'hashedPassword'),
+  (9, 'Mine', 'ocaukaz@hatemate.com', 'hashedPassword'),
+  (10, 'Korok', 'nasead@hatemate.com', 'hashedPassword'),
+  (11, 'Lily', 'akidane@hatemate.com', 'hashedPassword'),
+  (12, 'Zenitsu', 'fusve@hatemate.com', 'hashedPassword'),
+  (13, 'Anya', 'rij@hatemate.com', 'hashedPassword'),
+  (14, 'Rick', 'zaub@hatemate.com', 'hashedPassword'),
+  (15, 'Peach', 'do@hatemate.com', 'hashedPassword'),
+  (16, 'Peter', 'kutfafuc@hatemate.com', 'hashedPassword');

@@ -9,7 +9,8 @@ export default class AuthForm extends React.Component {
       email: '',
       password: '',
       confirmPassword: '',
-      error: false,
+      noUserError: false,
+      loginError: false,
       emailExists: false
     };
     this.handleChange = this.handleChange.bind(this);
@@ -42,7 +43,11 @@ export default class AuthForm extends React.Component {
       })
       .then(result => {
         if (result.error) {
-          this.setState({ error: true });
+          if (result.error === 'Invalid login, no user with this email exists') {
+            this.setState({ noUserError: true });
+          } else {
+            this.setState({ loginError: true });
+          }
           return;
         }
         if (action === 'register') {
@@ -88,14 +93,29 @@ export default class AuthForm extends React.Component {
       doesNotMatchClass = '';
     }
 
-    const { error, emailExists } = this.state;
-    let errorClass = 'hidden';
+    const { noUserError, loginError, emailExists } = this.state;
+    let errorClassIncorrect = 'hidden';
     let emailExistsClass = 'hidden';
-    if (error) {
-      errorClass = '';
+    let noUserClass = 'hidden';
+    if (loginError) {
+      errorClassIncorrect = '';
+    }
+    if (noUserError) {
+      noUserClass = '';
     }
     if (emailExists) {
       emailExistsClass = '';
+    }
+
+    let errorMsg =
+    <>
+        <span className={`${errorClassIncorrect} danger form-font mt-1 text-start`}>Incorrect email or password</span>
+    </>;
+    if (noUserError) {
+      errorMsg =
+      <>
+        <span className={`${noUserClass} danger form-font mt-1 text-start`}>No user with that email exists.</span>
+      </>;
     }
 
     const registerInputs =
@@ -173,7 +193,7 @@ export default class AuthForm extends React.Component {
           onChange={handleChange}
           className='form-control input-sm form-font border-0' />
         <a href='#sign-in' className='form-font py-1' data-bs-toggle="modal" data-bs-target="#forgotPassword"> Forgot Password? </a>
-          <span className={`${errorClass} danger form-font mt-1 text-start`}>Incorrect email or password</span>
+        {errorMsg}
       </>;
 
     const inputs = action === 'sign-in'
@@ -196,6 +216,18 @@ export default class AuthForm extends React.Component {
       ? signInButton
       : registerButton;
 
+    let belowButtonMsg =
+      <>
+          <p className={`${emailExistsClass} danger mt-1 text-start`}>Email already exsists. <a href='#sign-in'> <u>Sign here in instead.</u></a></p>
+      </>;
+
+    if (noUserError) {
+      belowButtonMsg =
+      <>
+          <p className={`${noUserClass}`} ><a href='#register'> <u>Register here in instead.</u></a></p>
+        </>;
+    }
+
     return (
       <>
       <ForgotPassword action='forgot-password' />
@@ -210,7 +242,7 @@ export default class AuthForm extends React.Component {
           </div>
       </form>
       <div className="row">
-          <p className={`${emailExistsClass} danger mt-1 text-start`}>Email already exsists. <a href='#sign-in'> <u>Sign here in instead.</u></a></p>
+        {belowButtonMsg}
       </div>
       </>
     );

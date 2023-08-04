@@ -89,9 +89,11 @@ export default class Matches extends React.Component {
       .then(result => {
         if (result !== 'no potential matches exist') {
           const { potentialMatches, matchSelections } = result;
-
           const otherUsers = [];
-          const uniqueOtherUsers = potentialMatches.map(potentialMatch => potentialMatch.userId);
+          // add demo id to unique other user
+          const uniqueOtherUsers = potentialMatches.map(potentialMatch => {
+            return { userId: potentialMatch.userId, demoId: potentialMatch.demoId };
+          });
           if (matchSelections.length !== 0) {
             matchSelections.forEach(matchSelection => {
               let otherUser;
@@ -103,14 +105,13 @@ export default class Matches extends React.Component {
               otherUsers.push(otherUser);
             });
           }
-
           const allMatchTypes = [];
-          uniqueOtherUsers.forEach(otherUser => {
+          uniqueOtherUsers.forEach(uniqueOtherUser => {
             let count = 0;
             let matchType = '';
             if (otherUsers.length !== 0) {
               otherUsers.forEach(occurance => {
-                if (otherUser === occurance) {
+                if (uniqueOtherUser.userId === occurance) {
                   count++;
                 }
               });
@@ -126,16 +127,24 @@ export default class Matches extends React.Component {
             }
             let userId1;
             let userId2;
-            if (user.userId < otherUser) {
+            let demoId1;
+            let demoId2;
+            if (user.userId < uniqueOtherUser.userId) {
               userId1 = user.userId;
-              userId2 = otherUser;
+              demoId1 = user.demoId;
+              userId2 = uniqueOtherUser.userId;
+              demoId2 = uniqueOtherUser.demoId;
             } else {
-              userId1 = otherUser;
+              userId1 = uniqueOtherUser.userId;
+              demoId1 = uniqueOtherUser.demoId;
               userId2 = user.userId;
+              demoId2 = user.demoId;
             }
             allMatchTypes.push({
               userId1,
+              demoId1,
               userId2,
+              demoId2,
               matchType
             });
 
@@ -149,9 +158,8 @@ export default class Matches extends React.Component {
             });
           });
           this.setState({ potentialMatches, matchSelections });
-          const currentUser = user.userId;
           const body = {
-            matchSelections, allMatchTypes, currentUser
+            matchSelections, allMatchTypes, user
           };
           req.method = 'POST';
           req.body = JSON.stringify(body);
@@ -178,15 +186,16 @@ export default class Matches extends React.Component {
                       potentialMatch.user2Status = matchStatus.user2Status;
                       potentialMatch.matchStatus = matchStatus.matchStatus;
                       potentialMatch.matchSelections = matchStatus.matchSelections;
+                      potentialMatch.matchType = matchStatus.matchType;
                       potentialMatch.newUserStatus = 'pending';
                     }
                   });
                   if (currentUser === 'userId1') {
-                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                       matchesToDisplay.push(potentialMatch);
                     }
                   } else if (currentUser === 'userId2') {
-                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
+                    if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                       matchesToDisplay.push(potentialMatch);
                     }
                   }
@@ -209,12 +218,13 @@ export default class Matches extends React.Component {
                       potentialMatch.matchStatus = matchStatus.matchStatus;
                       potentialMatch.matchSelections = matchStatus.matchSelections;
                       potentialMatch.newUserStatus = 'pending';
+                      potentialMatch.matchType = matchStatus.matchType;
                       if (currentUser === 'userId1') {
-                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user1Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                           matchesToDisplay.push(potentialMatch);
                         }
                       } else if (currentUser === 'userId2') {
-                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending') {
+                        if (potentialMatch.matchStatus === 'pending' && potentialMatch.user2Status === 'pending' && potentialMatch.matchType !== 'no longer a match') {
                           matchesToDisplay.push(potentialMatch);
                         }
                       }
